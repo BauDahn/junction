@@ -91,5 +91,5 @@ Keys (`CALA_API_KEY`, `GEMINI_API_KEY`, `VALKEY_URL`) go only in `backend/.env` 
 
 - **Cala** (main): real need, end-to-end execution, originality, Cala at the core.
 - **Google Gemini**: the product's AI (router, intent, audio, PDF context).
-- **Aiven**: shared Valkey cache for Cala queries and the local graph.
+- **Aiven**: shared Valkey cache for Cala queries and the local graph. **[How we use it and what it saves](docs/AIVEN.md)**: a repeated question goes from 27.7 s to 1.45 s, and a Valkey read takes ~30 ms with zero Cala calls.
 - **OpenAI Codex**: the code was written with Codex; evidence in [docs/CODEX.md](docs/CODEX.md) and [docs/PROCESO.md](docs/PROCESO.md).
