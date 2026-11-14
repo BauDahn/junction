@@ -3,6 +3,7 @@ import asyncio
 from cala_core import handle_message
 from cala_core import _profile_patch
 from cala_core.executor import _sources
+from cala_core.router import SYSTEM, SCHEMA
 from cala_core import executor
 from cala_core.claims import check
 
@@ -25,7 +26,7 @@ def run(coro): return asyncio.run(coro)
 
 
 def test_mixed_message_creates_each_block_type(monkeypatch):
-    async def fake_execute(text, **kwargs): return {"type": "cala_table", "columns": ["amount"], "rows": [[50]], "sources": []}
+    async def fake_execute(part, **kwargs): return {"type": "cala_table", "columns": ["amount"], "rows": [[50]], "sources": []}
     monkeypatch.setattr("cala_core.execute", fake_execute)
     llm = FakeLLM([{"parts": [
         {"type": "query", "text": "¿Quién invirtió en Mews?", "claim": None, "subject": None, "attribute": None, "user_value": None, "profile_patch": {}},
@@ -45,7 +46,7 @@ def test_empty_fallback_visits_entities_then_search_then_not_found(monkeypatch, 
     async def fake_answer(*args, **kwargs): return {"intent": {"entities": [{"name": "Mews"}]}, "result": {"query": "canonical query", "rows": []}}
     monkeypatch.setattr(executor, "answer", fake_answer)
     cala = FakeCala()
-    block = run(executor.execute("Mews", cala=cala, llm=FakeLLM([]), cache_dir=tmp_path))
+    block = run(executor.execute({"text": "Mews", "canonical_question_en": "Who invested in Mews?", "has_entity": True}, cala=cala, llm=FakeLLM([]), cache_dir=tmp_path))
     assert block["type"] == "not_found"
     assert [call[0] for call in cala.calls] == ["entity", "search"]
     assert [x["tool"] for x in block["tried"]] == ["knowledge_query", "entity", "knowledge_search"]
@@ -80,6 +81,65 @@ def test_sources_normalize_shape_and_deduplicate():
     ]
 
 
+def test_search_real_response_extracts_context_origins_sources_and_title():
+    canonical = "How many startups fail to secure venture capital, and how long does fundraising take?"
+    context = [{"content": "evidence", "origins": [
+        {"source": {"name": "fallback name", "url": "https://source.test/a"}, "document": {"name": "Cala report", "url": "https://docs.test/a"}},
+        {"source": {"name": "duplicate", "url": "https://docs.test/a"}, "document": {"name": "Duplicate", "url": "https://docs.test/a"}},
+        {"source": {"name": "Source only", "url": "https://source.test/b"}, "document": {"name": "", "url": ""}},
+    ]}]
+    for i in range(15):
+        context[0]["origins"].append({"document": {"name": f"Doc {i}", "url": f"https://docs.test/{i}"}, "source": {}})
+    cala = FakeCala(search={"content": "## Answer", "explainability": [{"content": "reason", "references": []}], "context": context, "entities": []})
+    block = run(executor.execute({"text": "pregunta", "canonical_question_en": canonical, "has_entity": False}, cala=cala))
+    assert block["type"] == "cala_answer"
+    assert block["markdown"] == "## Answer"
+    assert block["title"] == canonical[:80]
+    assert block["sources"][:2] == [
+        {"name": "Cala report", "url": "https://docs.test/a"},
+        {"name": "Source only", "url": "https://source.test/b"},
+    ]
+    assert len(block["sources"]) == 12
+
+
 def test_profile_patch_drops_empty_values_and_empty_interest_groups():
     assert _profile_patch({"startup_name": "", "competitors": [], "raising_amount": None,
                           "interests": {"regions": [], "stages": [""], "follows": {"companies": [], "investors": []}}}) == {}
+
+
+def test_open_question_searches_canonical_without_entity_lookup(monkeypatch, tmp_path):
+    async def unexpected_answer(*args, **kwargs): raise AssertionError("canonizador answer should not run")
+    monkeypatch.setattr(executor, "answer", unexpected_answer)
+    cala = FakeCala(search={"answer": "## Cala data", "sources": [{"name": "Cala source", "url": "https://example.test"}]})
+    block = run(executor.execute({"text": "queremos saber cuánto...", "canonical_question_en": "How many startups fail to secure venture capital?", "has_entity": False}, cala=cala, cache_dir=tmp_path))
+    assert block["type"] == "cala_answer"
+    assert block["call"]["query"] == "How many startups fail to secure venture capital?"
+    assert block["sources"][0]["name"] == "Cala source"
+    assert cala.calls == [("search", "How many startups fail to secure venture capital?")]
+
+
+def test_two_queries_and_multiple_profile_parts_merge(monkeypatch):
+    calls = []
+    async def fake_execute(part, **kwargs):
+        calls.append(part)
+        return {"type": "cala_answer", "markdown": part["canonical_question_en"], "sources": []}
+    monkeypatch.setattr("cala_core.execute", fake_execute)
+    base = {"claim": None, "subject": None, "attribute": None, "user_value": None, "profile_patch": {}, "has_entity": False}
+    llm = FakeLLM([{"parts": [
+        {**base, "type": "query", "text": "a", "canonical_question_en": "How many startups fail to raise?"},
+        {**base, "type": "query", "text": "b", "canonical_question_en": "How long does fundraising take?"},
+        {**base, "type": "profile", "text": "city and interests", "canonical_question_en": None, "profile_patch": {"location": "Barcelona", "interests": {"sectors": ["fintech"], "regions": ["Nordics"], "stages": ["SEED"]}}},
+        {**base, "type": "profile", "text": "startup", "canonical_question_en": None, "profile_patch": {"startup_name": "Stayflow"}},
+    ]}])
+    got = run(handle_message("mixed", {}, llm))
+    assert [b["markdown"] for b in got["blocks"][:2]] == ["How many startups fail to raise?", "How long does fundraising take?"]
+    assert got["blocks"][2] == {"type": "profile_update", "changes": {"location": "Barcelona", "interests": {"sectors": ["fintech"], "regions": ["Nordics"], "stages": ["SEED"]}, "startup_name": "Stayflow"}}
+    assert got["profile_patch"] == got["blocks"][2]["changes"]
+    assert len(calls) == 2
+
+
+def test_router_prompt_declares_classification_rules():
+    assert "cuánto/cuántos" in SYSTEM and "UNA sola parte profile" in SYSTEM
+    assert "Somos Stayflow en Barcelona; nos interesan las fintech nórdicas en etapa seed" in SYSTEM
+    assert "canonical_question_en" in SCHEMA["properties"]["parts"]["items"]["required"]
+    assert "has_entity" in SCHEMA["properties"]["parts"]["items"]["required"]

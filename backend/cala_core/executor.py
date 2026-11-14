@@ -6,10 +6,33 @@ def _sources(data):
     found, seen = [], set()
     def walk(value):
         if isinstance(value, dict):
+            for context in value.get("context", []) or []:
+                if not isinstance(context, dict):
+                    continue
+                for origin in context.get("origins", []) or []:
+                    if not isinstance(origin, dict):
+                        continue
+                    document = origin.get("document") or {}
+                    source = origin.get("source") or {}
+                    if isinstance(document, str): document = {"name": document}
+                    if isinstance(source, str): source = {"name": source}
+                    if not isinstance(document, dict): document = {}
+                    if not isinstance(source, dict): source = {}
+                    name = document.get("name") or source.get("name")
+                    url = document.get("url") or source.get("url")
+                    if name:
+                        key = ("url", url) if url else ("name", name)
+                        if key not in seen:
+                            seen.add(key)
+                            normalized = {"name": name}
+                            if url: normalized["url"] = url
+                            found.append(normalized)
             for source in value.get("sources", []) or []:
                 if isinstance(source, dict):
-                    name = source.get("name") or source.get("document")
-                    url = source.get("document") or source.get("url")
+                    document = source.get("document")
+                    document_obj = document if isinstance(document, dict) else {}
+                    name = source.get("name") or document_obj.get("name") or (document if isinstance(document, str) else None)
+                    url = document_obj.get("url") or (document if isinstance(document, str) and document.startswith("http") else None) or source.get("url")
                     if not name:
                         continue
                     normalized = {"name": name}
@@ -17,7 +40,7 @@ def _sources(data):
                     if source.get("date"): normalized["date"] = source["date"]
                     rank = source.get("source_rank") or source.get("rank")
                     if rank: normalized["source_rank"] = rank
-                    key = (normalized.get("url"), normalized["name"])
+                    key = ("url", normalized["url"]) if normalized.get("url") else ("name", normalized["name"])
                     if key not in seen:
                         seen.add(key)
                         found.append(normalized)
@@ -25,7 +48,7 @@ def _sources(data):
         elif isinstance(value, list):
             for child in value: walk(child)
     walk(data)
-    return found
+    return found[:12]
 
 
 def _call(tool, query):
@@ -94,9 +117,28 @@ async def _safe(call, default):
         return default
 
 
-async def execute(text, *, cala=None, llm=None, cache_dir=None):
-    result = await answer(text, llm=llm, client=cala, cache_dir=cache_dir)
+async def execute(part, *, cala=None, llm=None, cache_dir=None):
+    legacy_input = not isinstance(part, dict)
+    if isinstance(part, dict):
+        text = part.get("text", "")
+        canonical = part.get("canonical_question_en") or text
+        has_entity = bool(part.get("has_entity"))
+    else:  # Compatibility for internal callers during rollout.
+        text = canonical = str(part or "")
+        has_entity = True
+    client = cala or CalaClient(cache_dir=cache_dir or "cache")
+    if not has_entity:
+        return await _search_block(client, canonical, text)
+
+    result = await answer(canonical, llm=llm, client=client, cache_dir=cache_dir)
     data = result.get("result") or {}
+    intent = result.get("intent") or {}
+    intent_entities = intent.get("entities") or []
+    filters = intent.get("filters") or {}
+    list_filter = any(filters.get(k) not in (None, "", [], {}) for k in ("location", "sector", "min_funding", "round_label", "year"))
+    should_search = not legacy_input and (not intent_entities or (intent.get("attribute") == "other" and not list_filter))
+    if should_search:
+        return await _search_block(client, canonical, text, title=_title({"text": text}, intent))
     if isinstance(data, list):
         # Camino de entidades del canonizador: lista de retrieve/search, no filas de knowledge_query.
         ids = ",".join(result.get("entity_ids") or []) or text
@@ -116,11 +158,9 @@ async def execute(text, *, cala=None, llm=None, cache_dir=None):
                 "rows": values, "sources": data.get("sources") or _sources(rows)})
 
     closest = None
-    intent = result.get("intent") or {}
     subject = ((intent.get("entities") or [{}])[0].get("name") if isinstance(intent.get("entities"), list) else None)
     subject = subject or text
-    client = cala or CalaClient(cache_dir=cache_dir or "cache")
-    if client is not None:
+    if client is not None and len(subject.split()) <= 6 and len(subject) <= 60:
         tried.append(_call("entity", subject))
         entity_type = "COMPANY"
         entities = intent.get("entities") or []
@@ -143,12 +183,22 @@ async def execute(text, *, cala=None, llm=None, cache_dir=None):
                     closest["title"] = title
                     return _normalize_block_sources(closest)
     attribute = str(intent.get("attribute") or "company facts").replace("_", " ")
-    search_query = f"Find {attribute} for {subject}. Return only sourced Cala data."
+    search_query = canonical
     tried.append(_call("knowledge_search", search_query))
     if client is not None:
         searched = await _safe(client.search(search_query), {})
         markdown = searched.get("answer") or searched.get("markdown") or searched.get("content") or "" if isinstance(searched, dict) else ""
         if markdown:
-            return _normalize_block_sources({"type": "cala_answer", "title": title, "call": tried[-1], "markdown": markdown,
+            return _normalize_block_sources({"type": "cala_answer", "title": canonical[:80], "call": tried[-1], "markdown": markdown,
                     "sources": _sources(searched)})
+    return _normalize_block_sources({"type": "not_found", "title": title, "tried": tried, **({"closest": closest} if closest else {})})
+
+
+async def _search_block(client, canonical, text, *, title="Datos", tried=None, closest=None):
+    tried = list(tried or [])
+    tried.append(_call("knowledge_search", canonical))
+    searched = await _safe(client.search(canonical), {}) if client is not None else {}
+    markdown = (searched.get("answer") or searched.get("markdown") or searched.get("content") or "") if isinstance(searched, dict) else ""
+    if markdown:
+        return _normalize_block_sources({"type": "cala_answer", "title": canonical[:80], "call": tried[-1], "markdown": markdown, "sources": _sources(searched)})
     return _normalize_block_sources({"type": "not_found", "title": title, "tried": tried, **({"closest": closest} if closest else {})})

@@ -99,14 +99,25 @@ async def handle_message(text, profile, llm, cala=None, cache_dir=None):
         if kind == "profile":
             patch = _profile_patch(part.get("profile_patch"))
             _merge_patch(profile_patch, patch)
-            return {"type": "profile_update", "changes": patch} if patch else None
+            return None
         if kind == "chitchat":
             # part["text"] es el texto del usuario: no devolverlo como respuesta (eco).
             return {"type": "text", "text": "No he encontrado nada que consultar en Cala. Pregúntame por una empresa, un inversor o una ronda, o cuéntame un dato para verificarlo."}
-        evidence = await execute(part.get("text", text), cala=cala, llm=llm, cache_dir=cache_dir)
+        evidence = await execute(part, cala=cala, llm=llm, cache_dir=cache_dir)
         if kind == "claim":
             return await check(part, evidence, llm)
         return evidence
 
     results = await asyncio.gather(*(process(part) for part in parts))
-    return {"blocks": [_normalize_block_sources(block) for block in results if block], "profile_patch": _clean(profile_patch)}
+    merged_profile = _clean(profile_patch)
+    blocks = []
+    profile_inserted = False
+    for part, block in zip(parts, results):
+        if part.get("type") == "profile":
+            if merged_profile and not profile_inserted:
+                blocks.append({"type": "profile_update", "changes": merged_profile})
+                profile_inserted = True
+            continue
+        if block:
+            blocks.append(_normalize_block_sources(block))
+    return {"blocks": blocks, "profile_patch": merged_profile}
