@@ -106,7 +106,6 @@ async def _voice(session_id, request, llm, transcriber):
 
 
 @router.post("/api/sessions/{session_id}/context/voice")
-@router.post("/api/sessions/{session_id}/context/audio")
 async def post_voice(session_id: str, request: Request, llm=Depends(get_llm), transcriber=Depends(get_transcriber)):
     return await _voice(session_id, request, llm, transcriber)
 
@@ -124,7 +123,6 @@ async def post_note(session_id: str, request: Request, llm=Depends(get_llm)):
 
 
 @router.patch("/api/sessions/{session_id}/context/understood")
-@router.put("/api/sessions/{session_id}/context/understood")
 async def update_understood(session_id: str, request: Request):
     _session(session_id)
     try: body = await request.json()

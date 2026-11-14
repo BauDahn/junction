@@ -62,10 +62,9 @@ def test_pdf_sample_extracts_and_persists_context(setup_context):
     assert context["context_strength"]["signals_total"] == 6
 
 
-@pytest.mark.parametrize("route", ["voice", "audio"])
-def test_voice_alias_uses_transcriber_and_removes_temp_file(setup_context, route):
+def test_voice_uses_transcriber_and_removes_temp_file(setup_context):
     client, sid, _, paths = setup_context
-    response = client.post(f"/api/sessions/{sid}/context/{route}", files={"audio": ("memo.wav", b"audio-data", "audio/wav")})
+    response = client.post(f"/api/sessions/{sid}/context/voice", files={"audio": ("memo.wav", b"audio-data", "audio/wav")})
     assert response.status_code == 200, response.text
     assert paths and not paths[0].exists()
     assert response.json()["source"]["kind"] == "voice"
@@ -92,6 +91,8 @@ def test_context_error_responses(setup_context, monkeypatch):
     assert client.post(f"/api/sessions/{sid}/context/pdf", files={"file": ("a.pdf", b"", "application/pdf")}).status_code == 400
     assert client.post(f"/api/sessions/{sid}/context/note", json={"text": " "}).status_code == 400
     assert client.post(f"/api/sessions/{sid}/context/voice", files={"audio": ("a.wav", b"", "audio/wav")}).status_code == 422
+    assert client.post(f"/api/sessions/{sid}/context/audio", files={"audio": ("a.wav", b"x", "audio/wav")}).status_code == 404
+    assert client.put(f"/api/sessions/{sid}/context/understood", json={"seeking": ["Investors"]}).status_code == 405
     backend_app.app.dependency_overrides[get_llm] = lambda: FakeLLM(fail=True)
     backend_app.app.dependency_overrides[chat_get_llm] = lambda: FakeLLM(fail=True)
     assert client.post(f"/api/sessions/{sid}/context/note", json={"text": "some context"}).status_code == 502
