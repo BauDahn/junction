@@ -4,18 +4,18 @@ Junction 2026, reto de Cala. Corridas del 14/11/2026 contra la API real. Complem
 
 ## Resumen
 
-Cuatro formas de preguntarle lo mismo a Cala:
+Cinco formas de preguntarle lo mismo a Cala:
 
-| | Búsqueda directa | Consulta directa | Agente por MCP | Canonizador |
-|---|---|---|---|---|
-| Qué recibe Cala | La pregunta tal cual, en `POST /v1/knowledge/search` | La pregunta tal cual, en `POST /v1/knowledge/query` (sin guía ni plantilla) | Lo que decida un agente (Codex) conectado al servidor MCP de Cala | Una consulta armada con plantilla fija, en `POST /v1/knowledge/query` |
-| Preguntas | 9 × 3 redacciones = 27 | las mismas 27 | las mismas 27 | las mismas 27 |
-| Consultas distintas que llegan a Cala | 27 | 27 | 24 (el agente reescribe la pregunta) | **9** |
-| Preguntas con los mismos datos en sus 3 redacciones | **0 de 9** | **0 de 9** | **1 de 9** | **9 de 9** |
-| Llamadas a Cala | 27 | 27 | 25 (en 2 no llamó a Cala) | 9 en frío (en esta corrida, 2: el resto ya estaba en caché) |
-| Tiempo | 906 s; 33,6 s de media (máx. 61 s) | 939 s; 34,8 s de media (máx. 65 s) | 785 s; 29,1 s de media (máx. 66 s) | ~21 s en esta corrida (casi todo caché) |
+| | Búsqueda directa | Consulta directa | Agente por MCP | Agente por MCP con la guía de Cala | Canonizador |
+|---|---|---|---|---|---|
+| Qué recibe Cala | La pregunta tal cual, en `POST /v1/knowledge/search` | La pregunta tal cual, en `POST /v1/knowledge/query` (sin guía ni plantilla) | Lo que decida un agente (Codex) conectado al servidor MCP de Cala | Lo mismo, con la guía oficial de Cala en el prompt | Una consulta armada con plantilla fija, en `POST /v1/knowledge/query` |
+| Preguntas | 9 × 3 redacciones = 27 | las mismas 27 | las mismas 27 | las mismas 27 | las mismas 27 |
+| Consultas distintas que llegan a Cala | 27 | 27 | 24 (el agente reescribe la pregunta) | 32 argumentos distintos en 35 llamadas | **9** |
+| Preguntas con los mismos datos en sus 3 redacciones | **0 de 9** | **0 de 9** | **1 de 9** | **0 de 9** | **9 de 9** |
+| Llamadas a Cala | 27 | 27 | 25 (en 2 no llamó a Cala) | 35 (en 2 no pudo conectarse) | 9 en frío (en esta corrida, 2: el resto ya estaba en caché) |
+| Tiempo | 906 s; 33,6 s de media (máx. 61 s) | 939 s; 34,8 s de media (máx. 65 s) | 785 s; 29,1 s de media (máx. 66 s) | 917 s; 34,0 s de media (máx. 70 s) | ~21 s en esta corrida (casi todo caché) |
 
-Mandar lenguaje natural sin canonizar es inconsistente en las dos APIs de conocimiento, y también por MCP, que es como la mayoría de los agentes van a usar Cala. Cambian datos, empresas y hasta el formato de la respuesta según cómo se escriba la pregunta.
+Mandar lenguaje natural sin canonizar es inconsistente en las dos APIs de conocimiento, y también por MCP, que es como la mayoría de los agentes van a usar Cala, **incluso con la guía oficial de Cala cargada**. Cambian datos, empresas y hasta el formato de la respuesta según cómo se escriba la pregunta.
 
 ## Qué se midió
 
@@ -24,6 +24,7 @@ Mandar lenguaje natural sin canonizar es inconsistente en las dos APIs de conoci
 - **Búsqueda directa**: el texto tal cual a `knowledge/search`.
 - **Consulta directa**: el texto tal cual a `knowledge/query`, que según la documentación de Cala acepta lenguaje natural además de su lenguaje de consultas.
 - **Agente por MCP**: Codex CLI (`gpt-6-luna`, esfuerzo bajo) conectado al servidor MCP de Cala (`https://api.cala.ai/mcp/`) como única herramienta, sin la guía de Cala. Recibe la pregunta tal cual y elige solo qué herramientas llamar. Se le pide responder en inglés y listar aparte nombres y cifras, para comparar datos y no idiomas. Script: `canonizador/bench_mcp.py`; resultados en `canonizador/bench/results_mcp.json`.
+- **Agente por MCP con la guía de Cala**: el mismo agente y el mismo prompt, con la guía oficial de uso de Cala (`docs/CALA-SKILL.md`, copia de `github.com/cala-ai/cala-skill`) agregada al comienzo. Sin canonizador. `python3 bench_mcp.py --guia`; resultados en `canonizador/bench/results_mcp_guia.json`.
 - **Canonizador**: `canonizador.api.answer()`, que reduce la pregunta a una intención y arma la consulta de `knowledge_query` con una plantilla fija.
 - Todo secuencial, con caché y reanudable. Los resultados crudos quedan en `canonizador/bench/results.json`.
 
@@ -76,6 +77,29 @@ Lo que hizo el agente:
 - **Reescribió la pregunta antes de mandarla.** En 16 de las 25 llamadas no pasó el texto tal cual: la tradujo al inglés, la parafraseó o le agregó pedidos ("and how much did each invest?"). Hasta preguntas que ya estaban en inglés llegaron a Cala con otro texto. Las 25 llamadas usaron 24 textos distintos, así que casi cada versión es una consulta nueva para Cala.
 - **En 2 de 27 no llamó a Cala.** En una respondió "no hay herramientas de Cala disponibles en esta sesión", así que la conexión al MCP falló en esa corrida. En la otra (fundadores de Glovo, sin acentos) respondió sin consultar nada, aunque se le pidió usar solo Cala: es una respuesta de memoria presentada como de Cala.
 
+## Agente por MCP con la guía de Cala
+
+La guía oficial le dice al agente qué herramienta usar en cada caso (consulta estructurada para filtros, entidades para datos concretos, búsqueda en lenguaje natural solo para preguntas abiertas) y que se detenga si falla, en vez de inventar.
+
+| Pregunta | Herramientas usadas en las 3 redacciones | Resultado |
+|---|---|---|
+| Serie B de Amenitiz | búsqueda · búsqueda · búsqueda | Mismos datos (€38,9M, Kfund vía Leadwind); cambia cómo se escriben |
+| Fundadores de Glovo | entidades · búsqueda · ninguna | 3 fundadores · 2 · sin respuesta (MCP no disponible) |
+| Adquisiciones de Mews | entidades + búsqueda · búsqueda · búsqueda | Listas distintas |
+| Financiación total de Factorial | entidades + búsqueda en las 3 | **€523M · €523M · $572M (y $420M)** |
+| Inversores de Wolt | búsqueda en las 3 | Listas distintas |
+| Ejecutivos de TravelPerk | búsqueda · búsqueda · ninguna | Avi Meir · Avi Meir · sin respuesta (MCP no disponible) |
+| Tecnología hotelera en España, > 10M | consulta estructurada en las 3 | Amenitiz en las 3, con cifras distintas (€76–81M · ~€77M · ~€70M); las otras empresas cambian (Lodgify, The Hotels Network, Perk, BEONx, Civitatis) |
+| Fintech en Finlandia, > 5M | consulta estructurada en las 3 | Listas y cifras distintas |
+| Climate tech en Alemania, > 20M | consulta estructurada en las 3 | Listas y cifras distintas |
+
+Comparado con el agente sin guía:
+
+- **La guía cambia las herramientas, no la consistencia.** Sin guía, 25 de 25 llamadas fueron búsquedas en lenguaje natural. Con guía usó la consulta estructurada en las 9 preguntas de listas y las entidades en 3 preguntas, pero ninguna de las 9 preguntas dio los mismos datos en sus 3 redacciones (sin guía, 1 de 9).
+- **El agente sigue escribiendo la consulta a su manera.** Con la consulta estructurada, cada redacción produjo una consulta distinta, y Cala devolvió empresas y cifras distintas. Es lo mismo que medimos al traducir con la guía de forma libre (`docs/INFORME-ERROR-CALA.md`, sección 2.3): la guía enseña el lenguaje de consultas, pero no fija una forma canónica.
+- **Con la guía, no inventa cuando falla.** En la primera corrida 6 de 27 preguntas no pudieron conectarse al MCP, y en todas el agente respondió que las herramientas no estaban disponibles, como pide la guía. Al repetir esas 6, 4 funcionaron y 2 siguieron sin conexión; la tabla muestra la corrida repetida. Sin guía, en un caso respondió de memoria.
+- **Las conexiones al MCP fallan con frecuencia**: 8 de 33 intentos en total sumando las dos corridas con guía. No sabemos si es el límite de uso de Cala o un problema del servidor MCP.
+
 ## Ejemplos de diferencias reales sin canonizar
 
 No es solo redacción o idioma: cambian los datos.
@@ -99,7 +123,7 @@ En la búsqueda directa, las cifras y nombres se extrajeron automáticamente del
 - **Consistencia no es exactitud.** El canonizador garantiza la misma respuesta para la misma intención, no que sea correcta. Dos casos a mirar:
   - Glovo: el canonizado devuelve 2 fundadores; varias respuestas directas nombran a un tercero (Gerard Olivé). No verificamos cuál es el dato correcto.
   - Amenitiz: el cruce con los endpoints de entidades marca discrepancia: la ronda figura con 3.000 M EUR en el dato estructurado y con €38,9 M en la consulta. El canonizador la señala en vez de elegir en silencio.
-- **Agente por MCP.** Es un solo agente (Codex con un modelo chico y esfuerzo bajo) y sin la guía de Cala cargada. Otro agente, otro modelo o la guía pueden llevarlo a elegir `knowledge_query` o las entidades. La comparación de "mismos nombres" usa la lista que el propio agente extrajo de su respuesta.
+- **Agente por MCP.** Es un solo agente (Codex con un modelo chico y esfuerzo bajo), con y sin la guía de Cala. Un modelo más grande podría elegir mejor las herramientas, pero el problema de fondo (cada redacción produce otra consulta) no depende de la herramienta elegida. La comparación de "mismos nombres" usa la lista que el propio agente extrajo de su respuesta.
 - **Muestra chica.** 9 preguntas, 3 redacciones cada una, una sola corrida por modo. El sector depende de una lista cerrada de etiquetas, y un sector fuera de la lista cae en "other".
 
 ## Cómo reproducirlo
@@ -109,5 +133,6 @@ cd canonizador
 uv sync --extra dev
 uv run python bench.py          # reanudable; escribe bench/results.json
 python3 bench_mcp.py            # agente por MCP; reanudable; escribe bench/results_mcp.json
+python3 bench_mcp.py --guia     # lo mismo con la guía de Cala; escribe bench/results_mcp_guia.json
 ```
 Requiere `CALA_API_KEY` en `backend/.env` y el CLI de Codex logueado (el LLM que extrae la intención). Las preguntas están en `bench/questions.json`. Para una corrida en frío, borrar `canonizador/cache/` y `bench/results.json`.

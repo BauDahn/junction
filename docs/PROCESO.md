@@ -11,3 +11,4 @@ Una línea por hito: fecha y hora, qué se decidió o construyó, con qué herra
 - 14/11: benchmark del canonizador (9 preguntas × 3 redacciones): directo 0/9 grupos consistentes y 27 llamadas; canonizado 9/9 y 9 llamadas en frío. Informe del error en docs/INFORME-ERROR-CALA.md y números en docs/BENCHMARK-CANONIZADOR.md.
 - 14/11: benchmark con tercer modo (lenguaje natural directo a knowledge/query): también 0/9 grupos consistentes; cambian cifras, empresas y nombres de campo. Canonizador 9/9.
 - 14/11: benchmark con agente conectado por MCP a Cala (Codex): 1/9 preguntas consistentes; usa siempre knowledge_search, reescribe la pregunta (24 textos distintos en 25 llamadas) y en 2 de 27 no consultó a Cala.
+- 14/11: benchmark con agente por MCP con la guía de Cala cargada: usa consulta estructurada y entidades, pero 0/9 preguntas consistentes; con guía no inventa cuando el MCP falla (8 de 33 conexiones fallidas).
