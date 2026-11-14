@@ -3,6 +3,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -36,7 +37,8 @@ class NvidiaProvider:
         self.model = model or settings.nvidia_model
         self.client = client
 
-    async def complete_json(self, system, user, schema, images=None):
+    async def complete_json(self, system, user, schema, images=None, audio=None):
+        if audio: raise RuntimeError("NvidiaProvider no admite audio")
         content = [{"type": "text", "text": user}]
         for image in images or []:
             content.append({"type": "image_url", "image_url": {"url": "data:image/png;base64," + base64.b64encode(image).decode()}})
@@ -56,6 +58,69 @@ class NvidiaProvider:
         finally:
             if owns:
                 await client.aclose()
+
+
+def gemini_schema(schema):
+    """Convierte JSON Schema al subconjunto admitido por Gemini."""
+    schema = json.loads(json.dumps(schema))
+    def visit(node):
+        if isinstance(node, dict):
+            node.pop("additionalProperties", None)
+            kind = node.get("type")
+            if isinstance(kind, list):
+                remaining = [item for item in kind if item != "null"]
+                if "null" in kind: node["nullable"] = True
+                node["type"] = remaining[0] if len(remaining) == 1 else "string"
+            for child in node.values(): visit(child)
+        elif isinstance(node, list):
+            for child in node: visit(child)
+    visit(schema)
+    return schema
+
+
+def _gemini_http_error(response, api_key):
+    try:
+        message = response.json().get("error", {}).get("message", "")
+    except (ValueError, AttributeError, TypeError):
+        message = ""
+    message = str(message or "Error sin detalle")
+    if api_key: message = message.replace(api_key, "[redactado]")
+    message = re.sub(r"https?://\S+", "[URL omitida]", message)
+    return f"Gemini respondió HTTP {response.status_code}: {message[:300]}"
+
+
+class GeminiProvider:
+    def __init__(self, api_key=None, model=None, client=None):
+        self.api_key = api_key if api_key is not None else settings.gemini_api_key
+        self.model = model or settings.gemini_model
+        self.client = client
+
+    async def complete_json(self, system, user, schema, images=None, audio=None):
+        if not self.api_key: raise RuntimeError("Falta GEMINI_API_KEY (o GOOGLE_API_KEY)")
+        parts = [{"text": user}]
+        for image in images or []:
+            parts.append({"inlineData": {"mimeType": "image/png", "data": base64.b64encode(image).decode()}})
+        if audio:
+            data, mime_type = audio
+            parts.append({"inlineData": {"mimeType": mime_type, "data": base64.b64encode(data).decode()}})
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
+        owns = self.client is None
+        client = self.client or httpx.AsyncClient(timeout=60)
+        try:
+            for attempt in range(3):
+                response = await client.post(url, headers={"x-goog-api-key": self.api_key}, json={
+                    "systemInstruction": {"parts": [{"text": system}]},
+                    "contents": [{"role": "user", "parts": parts}],
+                    "generationConfig": {"responseMimeType": "application/json", "responseSchema": gemini_schema(schema), "temperature": 0},
+                })
+                if response.status_code != 429 and response.status_code < 500: break
+                if attempt < 2: await asyncio.sleep(2 ** attempt)
+            response.raise_for_status()
+            return parse_json(response.json()["candidates"][0]["content"]["parts"][0]["text"])
+        except httpx.HTTPStatusError as exc:
+            raise RuntimeError(_gemini_http_error(exc.response, self.api_key)) from None
+        finally:
+            if owns: await client.aclose()
 
 
 def strict_schema(schema):
@@ -78,7 +143,8 @@ class CodexProvider:
     def __init__(self, timeout=None):
         self.timeout = float(timeout if timeout is not None else os.getenv("CODEX_TIMEOUT", "420"))
 
-    async def complete_json(self, system, user, schema, images=None):
+    async def complete_json(self, system, user, schema, images=None, audio=None):
+        if audio: raise RuntimeError("CodexProvider no admite audio")
         binary = shutil.which("codex")
         if not binary:
             import glob
@@ -111,7 +177,8 @@ class CodexProvider:
 
 
 class ClaudeProvider:
-    async def complete_json(self, system, user, schema, images=None):
+    async def complete_json(self, system, user, schema, images=None, audio=None):
+        if audio: raise RuntimeError("ClaudeProvider no admite audio")
         if images:
             raise RuntimeError("ClaudeProvider solo admite texto")
         binary = shutil.which("claude")
@@ -130,19 +197,20 @@ class CachedLLM:
     def __init__(self, provider, name, cache_dir):
         self.provider, self.name, self.cache_dir = provider, name, Path(cache_dir)
 
-    async def complete_json(self, system, user, schema, images=None):
-        digest = hashlib.sha256(self.name.encode() + system.encode() + user.encode() + b"".join(images or [])).hexdigest()
+    async def complete_json(self, system, user, schema, images=None, audio=None):
+        audio_bytes = audio[0] if audio else b""
+        digest = hashlib.sha256(self.name.encode() + system.encode() + user.encode() + b"".join(images or []) + audio_bytes).hexdigest()
         path = self.cache_dir / "llm" / f"{digest}.json"
         if path.exists():
             return json.loads(path.read_text())
-        result = await self.provider.complete_json(system, user, schema, images)
+        result = await (self.provider.complete_json(system, user, schema, images, audio=audio) if audio else self.provider.complete_json(system, user, schema, images))
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(result, ensure_ascii=False))
         return result
 
 
-def make_llm(provider=None):
+def make_llm(provider=None, tier='strong'):
     name = provider or settings.llm_provider
-    implementation = {"nvidia": NvidiaProvider, "codex": CodexProvider, "claude": ClaudeProvider}[name]()
-    model = settings.nvidia_model if name == "nvidia" else ("gpt-6-luna" if name == "codex" else "claude")
+    model = (settings.gemini_fast_model if tier == "fast" else settings.gemini_model) if name == "gemini" else (settings.nvidia_model if name == "nvidia" else ("gpt-6-luna" if name == "codex" else "claude"))
+    implementation = {"nvidia": NvidiaProvider, "gemini": lambda: GeminiProvider(model=model), "codex": CodexProvider, "claude": ClaudeProvider}[name]()
     return CachedLLM(implementation, f"{name}:{model}", settings.cache_dir), model

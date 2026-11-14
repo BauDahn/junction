@@ -12,7 +12,7 @@ from pathlib import Path
 
 DEFAULT_TTL_S = 7 * 24 * 3600  # respuestas de Cala: 7 días
 NO_TTL_NAMESPACES = ("intents",)  # intenciones del LLM: no caducan
-ENV_KEYS = ("CALA_API_KEY", "VALKEY_URL", "CACHE_TTL_S")
+ENV_KEYS = ("CALA_API_KEY", "VALKEY_URL", "CACHE_TTL_S", "GEMINI_API_KEY", "GOOGLE_API_KEY", "GEMINI_MODEL", "GEMINI_FAST_MODEL", "LLM_PROVIDER")
 STATS = {"local_hits": 0, "remote_hits": 0, "misses": 0}  # acumulado del proceso (cachés de make_cache)
 
 

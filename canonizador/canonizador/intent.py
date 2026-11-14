@@ -4,7 +4,12 @@ import os
 import shutil
 import tempfile
 import glob
+import re
 from pathlib import Path
+
+from .cache import load_env
+
+load_env()
 
 SECTORS = ["hotel technology", "fintech", "healthtech", "climate tech", "saas", "ai", "cybersecurity", "edtech", "proptech", "mobility", "foodtech", "biotech", "ecommerce", "logistics", "gaming", "other"]
 SCHEMA = {"type": "object", "properties": {"entities": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}, "type": {"type": "string", "enum": ["Company", "Person", "Event", "Investor"]}}, "required": ["name", "type"]}}, "attribute": {"type": "string", "enum": ["funding_round", "total_funding", "investors", "lead_investors", "founders", "executives", "headcount", "acquisitions", "profile", "event_attendees", "company_list", "other"]}, "filters": {"type": "object", "properties": {"round_label": {"type": ["string", "null"]}, "year": {"type": ["integer", "null"]}, "location": {"type": ["string", "null"]}, "sector": {"type": ["string", "null"], "enum": [None, *SECTORS]}, "min_funding": {"type": ["integer", "null"]}}}}, "required": ["entities", "attribute", "filters"]}
@@ -86,10 +91,55 @@ class NvidiaProvider:
             return parse_json(r.json()["choices"][0]["message"]["content"])
 
 
+class GeminiProvider:
+    def __init__(self, api_key=None, model=None, client=None):
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY", "")
+        self.model = model or os.getenv("GEMINI_FAST_MODEL", "gemini-3.5-flash-lite")
+        self.client = client
+
+    async def complete_json(self, system, user, schema):
+        if not self.api_key: raise RuntimeError("Falta GEMINI_API_KEY (o GOOGLE_API_KEY)")
+        import httpx
+        def gemini_schema(value):
+            value = json.loads(json.dumps(value))
+            def visit(node):
+                if isinstance(node, dict):
+                    node.pop("additionalProperties", None)
+                    kind = node.get("type")
+                    if isinstance(kind, list):
+                        remaining = [item for item in kind if item != "null"]
+                        if "null" in kind: node["nullable"] = True
+                        node["type"] = remaining[0] if len(remaining) == 1 else "string"
+                    for child in node.values(): visit(child)
+                elif isinstance(node, list):
+                    for child in node: visit(child)
+            visit(value)
+            return value
+        owns = self.client is None
+        client = self.client or httpx.AsyncClient(timeout=60)
+        try:
+            for attempt in range(3):
+                r = await client.post(f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent", headers={"x-goog-api-key": self.api_key}, json={"systemInstruction": {"parts": [{"text": system}]}, "contents": [{"role": "user", "parts": [{"text": user}]}], "generationConfig": {"responseMimeType": "application/json", "responseSchema": gemini_schema(schema), "temperature": 0}})
+                if r.status_code != 429 and r.status_code < 500: break
+                if attempt < 2: await asyncio.sleep(2 ** attempt)
+            try: r.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                try: message = exc.response.json().get("error", {}).get("message", "")
+                except (ValueError, AttributeError, TypeError): message = ""
+                message = str(message or "Error sin detalle").replace(self.api_key, "[redactado]")
+                message = re.sub(r"https?://\S+", "[URL omitida]", message)
+                raise RuntimeError(f"Gemini respondió HTTP {exc.response.status_code}: {message[:300]}") from None
+            return parse_json(r.json()["candidates"][0]["content"]["parts"][0]["text"])
+        finally:
+            if owns: await client.aclose()
+
+
 class IntentParser:
     def __init__(self, provider=None, cache=None):
-        provider_name = os.getenv("LLM_PROVIDER", "codex")
-        self.provider = provider or (NvidiaProvider() if provider_name == "nvidia" else CodexProvider())
+        provider_name = os.getenv("LLM_PROVIDER", "").lower()
+        if not provider_name:
+            provider_name = "gemini" if (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")) else ("nvidia" if os.getenv("NVIDIA_API_KEY") else "codex")
+        self.provider = provider or ({"nvidia": NvidiaProvider, "gemini": GeminiProvider, "codex": CodexProvider}[provider_name]())
         self.cache = cache
 
     async def parse(self, question):
