@@ -130,6 +130,45 @@ async def answer(question, *, llm=None, client=None, cache_dir=None):
         ids = [company["id"]] if company else []
         response = {"intent": intent, "entity_ids": ids, "plan": build_plan(intent, ids[0]) if ids else [], "result": result, "cache_hit": query_hit, "cala_calls": cala.calls}
         return response
+    if intent.get("attribute") not in ("company_list", "other"):
+        query = build_query(intent)
+        qresult = cache.get("knowledge_queries", query)
+        query_hit = qresult is not None
+        if qresult is None and query:
+            qresult = await cala.knowledge_query(query)
+            cache.put("knowledge_queries", query, qresult)
+        rows = (qresult or {}).get("results", [])
+        resolved = await resolve_entities(intent, cala)
+        ids = sorted(x["chosen"]["id"] for x in resolved if x["chosen"] and x["chosen"].get("id"))
+        enrichment, structured_error = [], None
+        if ids:
+            entity_id = ids[0]
+            try:
+                introspection = await cala.introspection(entity_id)
+                available_props = introspection.get("properties", [])
+                available_rels = introspection.get("relationships", {})
+                available_obs = introspection.get("numerical_observations", {})
+                step = build_plan(intent, entity_id)[0]
+                props = [p for p in step.get("properties", []) if p in available_props]
+                relations = {}
+                for direction, rels in step.get("relationships", {}).items():
+                    names = available_rels.get(direction, [])
+                    selected = {name: config for name, config in rels.items() if name in names}
+                    if selected: relations[direction] = selected
+                requested_obs = step.get("numerical_observations", [])
+                observation_ids = [item["id"] for group in available_obs.values() for item in group
+                                   if item.get("name") in requested_obs and item.get("id")]
+                enrichment.append(await cala.retrieve(entity_id, properties=props, relationships=relations,
+                                                      numerical_observations=observation_ids))
+            except Exception as exc:
+                structured_error = str(exc)
+        result = {"query": query, "rows": rows, "sources": _sources(qresult or {}, enrichment)}
+        if structured_error:
+            result["structured_error"] = structured_error
+        result["structured"] = enrichment
+        response = {"intent": intent, "entity_ids": ids, "plan": [build_plan(intent, x) for x in ids],
+                    "result": result, "cache_hit": query_hit, "cala_calls": cala.calls}
+        return response
     if intent.get("attribute") == "company_list":
         query = build_query(intent)
         result = cache.get("knowledge_queries", query)

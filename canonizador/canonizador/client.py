@@ -54,8 +54,11 @@ class CalaClient:
         return await self.request("GET", f"/entities/{entity_id}/introspection")
 
     async def retrieve(self, entity_id, *, properties=None, relationships=None, numerical_observations=None):
-        body = {"entity_id": entity_id, "properties": properties or [], "relationships": relationships or {}}
-        if numerical_observations is not None: body["numerical_observations"] = numerical_observations
+        body = {"properties": properties or [], "relationships": relationships or {}}
+        # Cala exige un diccionario ({id_de_metrica: {...}}); una lista (aunque esté vacía) da 422.
+        if numerical_observations:
+            body["numerical_observations"] = (numerical_observations if isinstance(numerical_observations, dict)
+                                              else {oid: {"limit": 100} for oid in numerical_observations})
         return await self.request("POST", f"/entities/{entity_id}", body=body)
 
     async def search(self, input):

@@ -87,7 +87,7 @@ def build_plan(intent, entity_id):
     mapping = {"investors": ("incoming", "INVESTED_IN"), "founders": ("incoming", "FOUNDED"), "executives": ("incoming", "IS_CEO_OF"), "acquisitions": ("outgoing", CORP), "event_attendees": ("incoming", "PARTICIPATES_IN_EVENT")}
     if attr in mapping:
         direction, relation = mapping[attr]
-        rel = {direction: {relation: {"limit": 100, "offset": 0}}}
+        rel = {direction: {relation: {"limit": 100}}}
     if attr in ("total_funding", "profile", "headcount"):
         props = ["name", "description", "total_funding", "total_funding_units", "employee_count_range", "founding_date", "headquarters_address"]
         return [{"entity_id": entity_id, "properties": props, "relationships": {}, "numerical_observations": ["Number of employees"] if attr == "headcount" else []}]

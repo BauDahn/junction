@@ -45,6 +45,11 @@ def test_funding_plan_filters_issuer_and_leads():
     assert plan[1]["filters"]["is_lead"] is True
 
 
+def test_entity_relationship_request_uses_only_supported_limit_key():
+    plan = build_plan({"attribute": "founders", "filters": {}}, "x")
+    assert plan[0]["relationships"] == {"incoming": {"FOUNDED": {"limit": 100}}}
+
+
 def test_fixed_queries_for_same_intent_and_templates():
     intent = {"attribute": "funding_round", "entities": [{"name": "Amenitiz"}], "filters": {"round_label": "SERIES_B"}}
     assert build_query(intent, "Amenitiz") == build_query(intent, "Amenitiz") == "Amenitiz.funding_round.series=B.return(amount, lead investor, investors, date)"
@@ -121,3 +126,50 @@ async def test_intent_parser_fake_provider_is_cached(tmp_path):
     second = await parser.parse("Tell me about Mews")
     assert first == second
     assert provider.calls == 1
+
+
+@pytest.mark.asyncio
+async def test_entity_422_keeps_knowledge_query_rows_and_filters_retrieval(tmp_path):
+    class FakeLLM:
+        async def complete_json(self, system, user, schema):
+            return {"entities": [{"name": "Factorial", "type": "Company"}], "attribute": "total_funding", "filters": {}}
+
+    class FakeCala:
+        calls = 0
+        async def knowledge_query(self, query):
+            assert query == "Factorial.return(total funding)"
+            self.calls += 1
+            return {"results": [{"total_funding": 123}], "sources": [{"name": "query-source"}]}
+        async def entities(self, name, entity_type):
+            return [{"id": "factorial-id", "name": "Factorial"}]
+        async def introspection(self, entity_id):
+            return {"properties": ["name", "total_funding"], "relationships": {"incoming": ["INVESTED_IN"]},
+                    "numerical_observations": {"FinancialMetric": [{"id": "obs-id", "name": "Number of employees"}]}}
+        async def retrieve(self, entity_id, *, properties, relationships, numerical_observations):
+            assert properties == ["name", "total_funding"]
+            assert relationships == {}
+            assert numerical_observations == []
+            raise RuntimeError("422 Unprocessable Entity")
+
+    result = await __import__("canonizador.api", fromlist=["answer"]).answer(
+        "How much funding has Factorial raised?", llm=FakeLLM(), client=FakeCala(), cache_dir=tmp_path)
+    assert result["result"]["rows"] == [{"total_funding": 123}]
+    assert result["result"]["structured_error"] == "422 Unprocessable Entity"
+    assert result["result"]["sources"] == [{"name": "query-source"}]
+
+
+@pytest.mark.asyncio
+async def test_retrieve_body_has_only_cala_supported_keys(tmp_path):
+    from canonizador.client import CalaClient
+    class Response:
+        status_code = 200
+        def raise_for_status(self): pass
+        def json(self): return {}
+    class Http:
+        async def request(self, method, url, **kwargs):
+            self.body = kwargs["json"]
+            return Response()
+    http = Http()
+    client = CalaClient(api_key="test", cache_dir=tmp_path, client=http)
+    await client.retrieve("entity-id", properties=["name"], relationships={})
+    assert http.body == {"properties": ["name"], "relationships": {}}
