@@ -2,6 +2,7 @@ import uuid
 from cala_core import handle_message as cala_handle_message
 from verifier.config import settings
 from . import store
+from .focus import focus_table
 from .profile import empty_profile, merge
 
 SCHEMA = {"type": "object", "properties": {"reply": {"type": "string"}, "used_cards": {"type":"array", "items":{"type":"integer"}}, "profile_patch": {"type": "object", "properties": {
@@ -33,6 +34,9 @@ async def handle_text(session_id, text, llm, transcript=None, cala=None, context
     core_cala = cala if hasattr(cala, "knowledge_query") else None
     result = await cala_handle_message(text, profile, llm, cala=core_cala, cache_dir=getattr(settings, "cache_dir", None))
     blocks = result.get("blocks", [])
+    for block in blocks:
+        if isinstance(block, dict) and block.get("type") == "cala_table":
+            await focus_table(text, block, llm)
     patch = result.get("profile_patch", {})
     updated, changed = merge(profile, patch)
     user_msg = {"id": uuid.uuid4().hex, "session_id": session_id, "role": "user", "text": text, "transcript": transcript, "sources": [], "cards": [], "created_at": store.now_iso()}
@@ -42,6 +46,8 @@ async def handle_text(session_id, text, llm, transcript=None, cala=None, context
             if source not in reply_sources: reply_sources.append(source)
     if len(blocks) == 1 and blocks[0].get("type") == "text":
         reply_text = blocks[0].get("text", "")
+    elif (answers := [b["answer"] for b in blocks if b.get("answer")]) and len(answers) == 1:
+        reply_text = answers[0]
     elif any(b.get("type") == "cala_table" or b.get("type") == "cala_answer" for b in blocks):
         reply_text = "Esto es lo que tiene Cala."
     elif any(b.get("type") == "claim_check" for b in blocks):

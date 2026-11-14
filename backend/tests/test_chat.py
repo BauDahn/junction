@@ -63,7 +63,7 @@ def test_query_blocks_context_and_sources(monkeypatch, client):
     sid = client.post("/api/sessions").json()["session_id"]
     result = client.post(f"/api/sessions/{sid}/messages", json={"text":"¿Quién invirtió?", "context":{"journal_item_id":"x"}})
     assert result.status_code == 200
-    assert result.json()["reply"]["text"] == "Esto es lo que tiene Cala."
+    assert result.json()["reply"]["text"] == "Fondo"  # una sola fila: la respuesta es la celda de Cala
     assert result.json()["reply"]["blocks"][0]["type"] == "cala_table"
     assert result.json()["reply"]["sources"] == [{"name":"Cala", "url":"https://example.test"}]
     saved = client.get(f"/api/sessions/{sid}/messages").json()["messages"]
