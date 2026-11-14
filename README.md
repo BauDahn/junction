@@ -2,7 +2,7 @@
 
 **Un copiloto para founders e inversores construido sobre [Cala](https://cala.ai).** Le hablás (o escribís) y convierte lo que decís en consultas a Cala: muestra los datos tal cual, como tablas con fuentes, contrasta los datos que vos afirmás y arma un journal diario del ecosistema con lo que encuentra en Cala.
 
-Hecho en Junction 2026 (Espoo, 13–15 de noviembre de 2026) para el reto de Cala, con Codex como ejecutor y Nemotron 3.5 Super VL de NVIDIA como modelo.
+Hecho en Junction 2026 (Espoo, 13–15 de noviembre de 2026) para el reto de Cala.
 
 ## Qué hace
 
@@ -54,13 +54,3 @@ cd app && npm install && npx expo start   # en el celular (Expo Go): EXPO_PUBLIC
 ```
 
 Sin `NVIDIA_API_KEY`, el backend usa Codex como modelo (`LLM_PROVIDER=codex`). La app tiene un modo simulado si el backend no responde.
-
-## Cómo trabajamos
-
-Dos personas, cada una con su máquina, Claude Code y Codex. Claude planifica y revisa, y **el código lo escribe Codex** (registro en [docs/CODEX.md](docs/CODEX.md)). Las máquinas se coordinan con [claude-central](https://github.com/BauDahn/claude-central) (`equipo`), usando issues y PRs en este repo. Las reglas del repo, el reparto de áreas y el flujo de Git están en [CLAUDE.md](CLAUDE.md).
-
-### Puesta en marcha para el equipo (una vez por máquina)
-1. Instalar [claude-central](https://github.com/BauDahn/claude-central) (`git pull && ./install.sh`). Requiere Claude Code, `gh` autenticado y Codex (`npm i -g @openai/codex && codex login`).
-2. `gh repo clone BauDahn/junction ~/proyectos/junction` y crear `backend/.env`.
-3. Registrar la máquina: `equipo init --maquina <nombre> --rol miembro --repo BauDahn/junction --dir ~/proyectos/junction` (la máquina `bau` es la orquestadora).
-4. Abrir `central` y preguntarle "¿qué tengo asignado?".
