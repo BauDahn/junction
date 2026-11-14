@@ -483,7 +483,7 @@ export default function ContextScreen() {
                 ]}
               >
                 <Text style={s.secondaryButtonText}>
-                  {uploadingPdf ? 'Analyzing PDF...' : 'Choose PDF'}
+                  {uploadingPdf ? 'Analyzing PDF…' : 'Choose PDF'}
                 </Text>
               </Pressable>
               {Platform.OS === 'web' ? (
@@ -502,10 +502,10 @@ export default function ContextScreen() {
                 <Text style={s.rowTitle}>Record voice note</Text>
                 {recording ? (
                   <Text style={s.recordingStatus}>
-                    Recording... {formatClock(recordingSeconds)} / 02:00
+                    Recording… {formatClock(recordingSeconds)} / 02:00
                   </Text>
                 ) : uploadingVoice ? (
-                  <Text style={s.rowSubtitle}>Transcribing and extracting signals...</Text>
+                  <Text style={s.rowSubtitle}>Transcribing and extracting signals…</Text>
                 ) : (
                   <Text style={s.rowSubtitle}>
                     Speak your thesis, round targets, or investor criteria (up to 2 minutes).
@@ -523,7 +523,7 @@ export default function ContextScreen() {
               >
                 <Text style={recording ? s.primaryButtonText : s.secondaryButtonText}>
                   {uploadingVoice
-                    ? 'Transcribing...'
+                    ? 'Transcribing…'
                     : recording
                       ? 'Stop & save'
                       : 'Record'}
@@ -539,7 +539,7 @@ export default function ContextScreen() {
               <TextInput
                 value={noteText}
                 onChangeText={setNoteText}
-                placeholder="e.g. Raising €2.5M seed in Q1, seeking a Nordic or European B2B SaaS lead investor..."
+                placeholder="e.g. Raising €2.5M seed in Q1, seeking a Nordic or European B2B SaaS lead investor…"
                 placeholderTextColor={colors.textFaint}
                 multiline
                 maxLength={MAX_NOTE_CHARS}
@@ -560,7 +560,7 @@ export default function ContextScreen() {
                   ]}
                 >
                   <Text style={s.primaryButtonText}>
-                    {savingNote ? 'Saving...' : 'Save note'}
+                    {savingNote ? 'Saving…' : 'Save note'}
                   </Text>
                 </Pressable>
               </View>
@@ -638,7 +638,7 @@ export default function ContextScreen() {
                           (!newTagValue.trim() || isBusy) && s.disabledButton,
                         ]}
                       >
-                        <Text style={s.primaryButtonText}>{isBusy ? 'Saving...' : 'Add'}</Text>
+                        <Text style={s.primaryButtonText}>{isBusy ? 'Saving…' : 'Add'}</Text>
                       </Pressable>
                       <Pressable
                         accessibilityRole="button"
@@ -733,11 +733,12 @@ function SourceRow({
         accessibilityRole="button"
         accessibilityLabel={`Remove ${source.title}`}
         disabled={removing}
+        hitSlop={8}
         onPress={onRemove}
         style={s.removeButton}
       >
         <Text style={[s.removeButtonText, removing && s.disabledText]}>
-          {removing ? 'Removing...' : 'Remove'}
+          {removing ? 'Removing…' : 'Remove'}
         </Text>
       </Pressable>
     </View>
@@ -1007,6 +1008,7 @@ function createStyles(c: Colors) {
     },
     inputMeta: {
       flex: 1,
+      minWidth: 0,
       gap: 4,
     },
     rowTitle: {
@@ -1035,8 +1037,8 @@ function createStyles(c: Colors) {
       borderRadius: 8,
       backgroundColor: c.surface,
       color: c.text,
-      fontSize: 14,
-      lineHeight: 20,
+      fontSize: 16,
+      lineHeight: 22,
       paddingHorizontal: 12,
       paddingVertical: 10,
       minHeight: 80,
@@ -1056,6 +1058,7 @@ function createStyles(c: Colors) {
     primaryButton: {
       backgroundColor: c.accent,
       borderRadius: 8,
+      minHeight: 44,
       paddingHorizontal: 16,
       paddingVertical: 10,
       alignItems: 'center',
@@ -1064,6 +1067,7 @@ function createStyles(c: Colors) {
     primaryButtonCompact: {
       backgroundColor: c.accent,
       borderRadius: 6,
+      minHeight: 40,
       paddingHorizontal: 12,
       paddingVertical: 8,
       alignItems: 'center',
@@ -1079,8 +1083,9 @@ function createStyles(c: Colors) {
       borderWidth: 1,
       borderColor: c.border,
       borderRadius: 8,
+      minHeight: 44,
       paddingHorizontal: 14,
-      paddingVertical: 9,
+      paddingVertical: 10,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -1163,12 +1168,14 @@ function createStyles(c: Colors) {
     },
     addTagInput: {
       flex: 1,
+      minWidth: 0,
       borderWidth: 1,
       borderColor: c.accent,
       borderRadius: 6,
       backgroundColor: c.surface,
       color: c.text,
-      fontSize: 13,
+      fontSize: 16,
+      lineHeight: 22,
       paddingHorizontal: 10,
       paddingVertical: 7,
     },
@@ -1208,6 +1215,7 @@ function createStyles(c: Colors) {
     },
     sourceMain: {
       flex: 1,
+      minWidth: 0,
       gap: 4,
     },
     sourceTitle: {

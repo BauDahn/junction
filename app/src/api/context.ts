@@ -451,7 +451,7 @@ export async function addContextNote(
         id: `demo-note-${Date.now()}`,
         kind: 'note',
         title: cleanTitle || 'Quick note',
-        subtitle: cleanText.slice(0, 80) + (cleanText.length > 80 ? '...' : ''),
+        subtitle: cleanText.slice(0, 80) + (cleanText.length > 80 ? '…' : ''),
         status: 'ready',
         created_at: new Date().toISOString(),
       };
