@@ -1,123 +1,448 @@
-import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
-import { getProfile, getRecommendations, type Profile, type Recommendations } from '../src/api';
-import { mockProfile, mockRecommendations } from '../src/api/mock';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import {
+  ApiError,
+  getProfile,
+  getRecommendations,
+  type Profile,
+  type Recommendations,
+} from '../src/api';
 import CardView from '../src/components/CardView';
 import { getSessionId } from '../src/session';
-import { font, space, useTheme } from '../src/theme';
-import { Card, Screen, ScreenHeader, StateView } from '../src/ui';
+import { maxWidth, useTheme, type Colors } from '../src/theme';
+import { Button, StateView } from '../src/ui';
+
 const mockEnabled = process.env.EXPO_PUBLIC_MOCK === '1';
+
+const BACKEND_ERROR = 'Could not reach the backend. Check your connection and try again.';
+
+const DEMO_PROFILE: Profile = {
+  startup_name: 'Nordleaf',
+  one_liner: 'Energy efficiency and telemetry software for commercial buildings',
+  sector: 'ClimateTech',
+  stage: 'Pre-seed',
+  location: 'Helsinki',
+  raising: { round: 'Pre-seed', amount: '€1.2M' },
+  competitors: ['GreenBuild', 'Wattwise'],
+  target_customers: 'Commercial real estate operators',
+  role: 'founder',
+  interests: {
+    sectors: ['ClimateTech', 'PropTech', 'B2B SaaS'],
+    regions: ['Nordics', 'Baltics'],
+    stages: ['Pre-seed', 'Seed'],
+    follows: {
+      companies: ['Amenitiz'],
+      investors: ['Eight Roads Ventures', 'Chalfen Ventures'],
+    },
+  },
+  facts: [],
+  updated_at: new Date().toISOString(),
+};
+
+const DEMO_RECOMMENDATIONS: Recommendations = {
+  status: 'ready',
+  updated_at: new Date().toISOString(),
+  investors: [
+    {
+      type: 'investor',
+      title: 'Northzone',
+      subtitle: 'Pre-seed & Seed · Nordics',
+      reason: 'Active lead investor in Nordic B2B software and climate infrastructure.',
+      sources: [{ name: 'Cala', url: 'https://cala.ai' }],
+    },
+    {
+      type: 'investor',
+      title: 'Chalfen Ventures',
+      subtitle: 'Seed · Europe',
+      reason: 'Backs European enterprise software teams at initial institutional rounds.',
+      sources: [{ name: 'Cala', url: 'https://cala.ai' }],
+    },
+  ],
+  competitors: [
+    {
+      type: 'competitor',
+      title: 'GreenBuild',
+      subtitle: 'Building analytics · Sweden',
+      reason: 'Comparable building efficiency platform targeting Nordic property portfolios.',
+      sources: [{ name: 'Cala', url: 'https://cala.ai' }],
+    },
+  ],
+  prospects: [
+    {
+      type: 'prospect',
+      title: 'Nordic Estates',
+      subtitle: 'Commercial real estate · Finland',
+      reason: 'Multi-building portfolio matching your target customer profile.',
+      sources: [{ name: 'Cala', url: 'https://cala.ai' }],
+    },
+  ],
+};
+
+function formatError(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status >= 500) return 'The server could not load your profile. Try again.';
+    return error.message || BACKEND_ERROR;
+  }
+  if (error instanceof Error) {
+    const lower = error.message.toLowerCase();
+    if (
+      lower.includes('fetch') ||
+      lower.includes('network') ||
+      lower.includes('connect') ||
+      lower.includes('timeout') ||
+      lower.includes('abort')
+    ) {
+      return BACKEND_ERROR;
+    }
+    return error.message || BACKEND_ERROR;
+  }
+  return BACKEND_ERROR;
+}
+
+function formatRole(role?: Profile['role']): string | undefined {
+  if (role === 'founder') return 'Founder';
+  if (role === 'investor') return 'Investor';
+  if (role === 'other') return 'Other';
+  return undefined;
+}
+
+function formatDate(iso?: string): string | undefined {
+  if (!iso) return undefined;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return undefined;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function hasProfileContent(p: Profile, r: Recommendations | null): boolean {
+  const hasFields = Boolean(
+    p.startup_name ||
+      p.one_liner ||
+      p.sector ||
+      p.stage ||
+      p.location ||
+      p.target_customers ||
+      p.role ||
+      p.raising?.amount != null ||
+      p.raising?.round ||
+      p.competitors?.length ||
+      p.facts?.length ||
+      p.interests?.sectors?.length ||
+      p.interests?.regions?.length ||
+      p.interests?.stages?.length ||
+      p.interests?.follows?.companies?.length ||
+      p.interests?.follows?.investors?.length,
+  );
+  const hasRecs = Boolean(
+    r && (r.investors.length || r.competitors.length || r.prospects.length),
+  );
+  return hasFields || hasRecs;
+}
+
 export default function PerfilScreen() {
+  const router = useRouter();
   const { colors } = useTheme();
+  const s = useMemo(() => profileStyles(colors), [colors]);
+
   const [profile, setProfile] = useState<Profile | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendations | null>(null);
   const [loading, setLoading] = useState(true);
   const [empty, setEmpty] = useState(false);
   const [error, setError] = useState('');
-  useEffect(() => {
-    let alive = true;
-    getSessionId()
-      .then((sessionId) => {
-        if (!alive) return;
-        if (!sessionId) {
-          if (mockEnabled) {
-            setProfile(mockProfile);
-            setRecommendations(mockRecommendations);
-          } else setEmpty(true);
-          setLoading(false);
-          return;
+  const hasLoadedOnce = useRef(false);
+
+  const loadProfile = useCallback(async (background = false) => {
+    if (!background) {
+      setLoading(true);
+      setError('');
+    }
+    try {
+      const sessionId = await getSessionId();
+      if (!sessionId) {
+        if (mockEnabled) {
+          setProfile(DEMO_PROFILE);
+          setRecommendations(DEMO_RECOMMENDATIONS);
+          setEmpty(false);
+        } else {
+          setProfile(null);
+          setRecommendations(null);
+          setEmpty(true);
         }
-        Promise.all([getProfile(sessionId), getRecommendations(sessionId)])
-          .then(([p, r]) => {
-            if (alive) {
-              setProfile(p);
-              setRecommendations(r);
-            }
-          })
-          .catch((e: unknown) => {
-            if (!alive) return;
-            if ((e as { status?: number })?.status === 404) {
-              if (mockEnabled) {
-                setProfile(mockProfile);
-                setRecommendations(mockRecommendations);
-              } else setEmpty(true);
-            } else setError(e instanceof Error ? e.message : 'No se pudo cargar el perfil.');
-          })
-          .finally(() => {
-            if (alive) setLoading(false);
-          });
-      })
-      .catch((e: unknown) => {
-        if (!alive) return;
-        setError(e instanceof Error ? e.message : 'No se pudo leer la sesión.');
-        setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
+        return;
+      }
+
+      const [p, r] = await Promise.all([
+        getProfile(sessionId),
+        getRecommendations(sessionId).catch(() => null),
+      ]);
+      if (!hasProfileContent(p, r)) {
+        if (mockEnabled) {
+          setProfile(DEMO_PROFILE);
+          setRecommendations(DEMO_RECOMMENDATIONS);
+          setEmpty(false);
+        } else {
+          setProfile(null);
+          setRecommendations(null);
+          setEmpty(true);
+        }
+        return;
+      }
+      setProfile(p);
+      setRecommendations(r);
+      setEmpty(false);
+      setError('');
+    } catch (e: unknown) {
+      if (e instanceof ApiError && e.status === 404) {
+        if (mockEnabled) {
+          setProfile(DEMO_PROFILE);
+          setRecommendations(DEMO_RECOMMENDATIONS);
+          setEmpty(false);
+        } else {
+          setProfile(null);
+          setRecommendations(null);
+          setEmpty(true);
+        }
+      } else {
+        setError(formatError(e));
+      }
+    } finally {
+      hasLoadedOnce.current = true;
+      setLoading(false);
+    }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadProfile(hasLoadedOnce.current);
+    }, [loadProfile]),
+  );
+
   const sections = [
-    ['investors', 'Inversores'],
-    ['competitors', 'Competidores'],
-    ['prospects', 'Clientes potenciales'],
+    ['investors', 'Investors'],
+    ['competitors', 'Competitors'],
+    ['prospects', 'Potential customers'],
   ] as const;
+
+  const raisingValue = profile?.raising
+    ? [
+        profile.raising.round,
+        profile.raising.amount != null && profile.raising.amount !== ''
+          ? String(profile.raising.amount)
+          : undefined,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : undefined;
+
+  const hasFocus = Boolean(
+    profile?.interests?.sectors?.length ||
+      profile?.interests?.regions?.length ||
+      profile?.interests?.stages?.length,
+  );
+  const hasFollows = Boolean(
+    profile?.interests?.follows?.companies?.length ||
+      profile?.interests?.follows?.investors?.length,
+  );
+  const updatedLabel = formatDate(profile?.updated_at);
+
   return (
-    <Screen>
-      <ScreenHeader title="Perfil" subtitle="Tu startup y las recomendaciones de Cala, con fuentes." />
-      {loading ? <StateView kind="loading" title="Cargando perfil…" /> : null}
-      {error ? <StateView kind="error" title="No se pudo cargar" message={error} /> : null}
-      {empty ? (
-        <StateView
-          kind="empty"
-          title="Tu perfil todavía no está listo"
-          message="El perfil se arma cuando hables con el chat."
-        />
+    <ScrollView style={s.screen} contentContainerStyle={s.content}>
+      <View style={s.topBar}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+        >
+          <Text style={s.navAction}>Back</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel="Edit context"
+          onPress={() => router.push('/context')}
+        >
+          <Text style={s.navAction}>Edit context</Text>
+        </Pressable>
+      </View>
+
+      <View style={s.header}>
+        <Text accessibilityRole="header" style={s.title}>
+          Profile
+        </Text>
+        <Text style={s.subtitle}>
+          Your startup context, followed entities, and Cala recommendations.
+        </Text>
+      </View>
+
+      {loading ? (
+        <View style={s.stateWrap}>
+          <StateView kind="loading" title="Loading profile…" />
+        </View>
       ) : null}
-      {profile ? (
+
+      {!loading && error ? (
+        <View style={s.stateWrap}>
+          <StateView
+            kind="error"
+            title="Could not load profile"
+            message={error}
+            action={
+              <Button
+                label="Try again"
+                variant="secondary"
+                onPress={() => void loadProfile(false)}
+              />
+            }
+          />
+        </View>
+      ) : null}
+
+      {!loading && !error && empty ? (
+        <View style={s.stateWrap}>
+          <StateView
+            kind="empty"
+            title="No profile yet"
+            message="Add startup context or ask Cala a question to build your profile."
+            action={
+              <View style={s.emptyActions}>
+                <Button label="Add context" onPress={() => router.push('/context')} />
+                <Button
+                  label="Ask Cala"
+                  variant="secondary"
+                  onPress={() => router.push('/chat')}
+                />
+              </View>
+            }
+          />
+        </View>
+      ) : null}
+
+      {!loading && !error && profile ? (
         <>
-          <Card raised>
-            <Text style={{ color: colors.text, fontSize: font.h2, fontWeight: '800' }}>
-              {profile.startup_name || 'Tu startup'}
-            </Text>
-            {profile.one_liner ? (
-              <Text style={{ color: colors.textMuted, fontSize: font.body, lineHeight: 22, marginTop: space.xs, marginBottom: space.md }}>
-                {profile.one_liner}
+          <View style={s.section}>
+            <Text style={s.sectionLabel}>STARTUP</Text>
+            <Text style={s.startupName}>{profile.startup_name || 'Your startup'}</Text>
+            {profile.one_liner ? <Text style={s.oneLiner}>{profile.one_liner}</Text> : null}
+            <View style={s.rows}>
+              <InfoRow label="Role" value={formatRole(profile.role)} />
+              <InfoRow label="Sector" value={profile.sector} />
+              <InfoRow label="Stage" value={profile.stage} />
+              <InfoRow label="Location" value={profile.location} />
+              <InfoRow label="Target round" value={raisingValue} />
+              <InfoRow label="Target customers" value={profile.target_customers} />
+              <InfoRow
+                label="Competitors"
+                value={profile.competitors?.length ? profile.competitors.join(', ') : undefined}
+              />
+            </View>
+          </View>
+
+          {hasFocus ? (
+            <View style={s.section}>
+              <Text style={s.sectionLabel}>FOCUS</Text>
+              <View style={s.rows}>
+                <InfoRow
+                  label="Sectors"
+                  value={
+                    profile.interests?.sectors?.length
+                      ? profile.interests.sectors.join(', ')
+                      : undefined
+                  }
+                />
+                <InfoRow
+                  label="Regions"
+                  value={
+                    profile.interests?.regions?.length
+                      ? profile.interests.regions.join(', ')
+                      : undefined
+                  }
+                />
+                <InfoRow
+                  label="Stages"
+                  value={
+                    profile.interests?.stages?.length
+                      ? profile.interests.stages.join(', ')
+                      : undefined
+                  }
+                />
+              </View>
+            </View>
+          ) : null}
+
+          {hasFollows ? (
+            <View style={s.section}>
+              <Text style={s.sectionLabel}>FOLLOWS</Text>
+              <View style={s.rows}>
+                <InfoRow
+                  label="Companies"
+                  value={
+                    profile.interests?.follows?.companies?.length
+                      ? profile.interests.follows.companies.join(', ')
+                      : undefined
+                  }
+                />
+                <InfoRow
+                  label="Investors"
+                  value={
+                    profile.interests?.follows?.investors?.length
+                      ? profile.interests.follows.investors.join(', ')
+                      : undefined
+                  }
+                />
+              </View>
+            </View>
+          ) : null}
+
+          {profile.facts?.length ? (
+            <View style={s.section}>
+              <Text style={s.sectionLabel}>CAPTURED SIGNALS</Text>
+              <View style={s.rows}>
+                {profile.facts.map((fact, idx) => (
+                  <View key={`${fact.text}-${idx}`} style={s.factRow}>
+                    <Text style={s.factText}>{fact.text}</Text>
+                    <Text style={s.factOrigin}>
+                      {fact.origin === 'deck' ? 'Deck' : 'User context'}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          {recommendations ? (
+            <View style={s.recsSection}>
+              <Text accessibilityRole="header" style={s.recsHeading}>
+                Recommendations
               </Text>
-            ) : null}
-            <Info label="Sector" value={profile.sector} />
-            <Info label="Etapa" value={profile.stage} />
-            <Info label="Ciudad" value={profile.location} />
-            <Info label="Clientes objetivo" value={profile.target_customers} />
-            <Info label="Competidores" value={profile.competitors?.join(', ')} />
-          </Card>
-          {recommendations
-            ? sections.map(([key, label]) => (
-                <View key={key} style={{ marginTop: space.xl }}>
-                  <Text
-                    accessibilityRole="header"
-                    style={{ color: colors.text, fontSize: font.h2, fontWeight: '700' }}
-                  >
+              {recommendations.status === 'running' ? (
+                <Text style={s.recsStatus}>Updating recommendations from Cala…</Text>
+              ) : null}
+              {sections.map(([key, label]) => (
+                <View key={key} style={s.recGroup}>
+                  <Text accessibilityRole="header" style={s.recGroupTitle}>
                     {label}
                   </Text>
                   {recommendations[key].length ? (
-                    recommendations[key].map((card, i) => (
-                      <CardView key={`${card.title}-${i}`} card={card} />
-                    ))
+                    <View style={s.recList}>
+                      {recommendations[key].map((card, i) => (
+                        <CardView key={`${card.title}-${i}`} card={card} />
+                      ))}
+                    </View>
                   ) : (
-                    <Text style={{ color: colors.textMuted, fontSize: font.body, marginTop: space.sm }}>
-                      Aún no hay recomendaciones.
-                    </Text>
+                    <Text style={s.emptyRowText}>No recommendations yet.</Text>
                   )}
                 </View>
-              ))
-            : null}
+              ))}
+            </View>
+          ) : null}
+
+          {updatedLabel ? <Text style={s.updatedAt}>Updated {updatedLabel}</Text> : null}
         </>
       ) : null}
-    </Screen>
+    </ScrollView>
   );
 }
 
-function Info({ label, value }: { label: string; value?: string }) {
+function InfoRow({ label, value }: { label: string; value?: string }) {
   const { colors } = useTheme();
   if (!value) return null;
   return (
@@ -125,16 +450,159 @@ function Info({ label, value }: { label: string; value?: string }) {
       style={{
         flexDirection: 'row',
         justifyContent: 'space-between',
-        gap: space.md,
+        alignItems: 'flex-start',
+        gap: 16,
         borderTopWidth: 1,
         borderTopColor: colors.border,
-        paddingVertical: space.md,
+        paddingVertical: 12,
       }}
     >
-      <Text style={{ color: colors.textMuted, fontSize: font.small }}>{label}</Text>
-      <Text style={{ color: colors.text, fontSize: font.small, fontWeight: '600', textAlign: 'right', flexShrink: 1 }}>
+      <Text style={{ color: colors.textMuted, fontSize: 14 }}>{label}</Text>
+      <Text
+        style={{
+          color: colors.text,
+          fontSize: 14,
+          fontWeight: '500',
+          textAlign: 'right',
+          flexShrink: 1,
+        }}
+      >
         {value}
       </Text>
     </View>
   );
+}
+
+function profileStyles(c: Colors) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: c.bg,
+    },
+    content: {
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 48,
+      width: '100%',
+      maxWidth,
+      alignSelf: 'center',
+      flexGrow: 1,
+    },
+    topBar: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingBottom: 16,
+    },
+    navAction: {
+      color: c.accent,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    header: {
+      paddingBottom: 24,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      gap: 4,
+    },
+    title: {
+      color: c.text,
+      fontSize: 28,
+      fontWeight: '700',
+    },
+    subtitle: {
+      color: c.textMuted,
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    stateWrap: {
+      marginTop: 24,
+    },
+    emptyActions: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    section: {
+      marginTop: 24,
+    },
+    sectionLabel: {
+      color: c.textFaint,
+      fontSize: 11,
+      fontWeight: '600',
+      letterSpacing: 0.8,
+      marginBottom: 8,
+    },
+    startupName: {
+      color: c.text,
+      fontSize: 20,
+      fontWeight: '700',
+    },
+    oneLiner: {
+      color: c.textMuted,
+      fontSize: 15,
+      lineHeight: 22,
+      marginTop: 4,
+      marginBottom: 12,
+    },
+    rows: {
+      marginTop: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    factRow: {
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+      paddingVertical: 12,
+      gap: 4,
+    },
+    factText: {
+      color: c.text,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    factOrigin: {
+      color: c.textFaint,
+      fontSize: 12,
+    },
+    recsSection: {
+      marginTop: 32,
+    },
+    recsHeading: {
+      color: c.text,
+      fontSize: 20,
+      fontWeight: '700',
+    },
+    recsStatus: {
+      color: c.textMuted,
+      fontSize: 13,
+      marginTop: 4,
+    },
+    recGroup: {
+      marginTop: 24,
+    },
+    recGroupTitle: {
+      color: c.text,
+      fontSize: 15,
+      fontWeight: '600',
+      marginBottom: 8,
+    },
+    recList: {
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    emptyRowText: {
+      color: c.textMuted,
+      fontSize: 14,
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: c.border,
+      paddingVertical: 12,
+    },
+    updatedAt: {
+      color: c.textFaint,
+      fontSize: 12,
+      marginTop: 24,
+    },
+  });
 }
