@@ -15,6 +15,7 @@ export default function RootLayout() {
       <Tabs.Screen name="index" options={{ href: null }} />
       <Tabs.Screen name="deck" options={{ title: 'Deck', headerShown: false }} />
       <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
+      <Tabs.Screen name="journal" options={{ title: 'Journal' }} />
       <Tabs.Screen name="perfil" options={{ title: 'Perfil' }} />
       <Tabs.Screen name="estado" options={{ title: 'Estado' }} />
     </Tabs>

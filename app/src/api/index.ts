@@ -46,6 +46,22 @@ export type Block =
   | ProfileUpdateBlock
   | NotFoundBlock
   | TextBlock;
+export type JournalItem = { id: string; is_new: boolean; block: Block };
+export type JournalSection = {
+  id: string;
+  title: string;
+  description: string;
+  items: JournalItem[];
+};
+export type Journal = {
+  edition: 'ecosistema' | 'founders';
+  date: string;
+  status: 'generating' | 'ready' | 'error';
+  generated_at?: string;
+  progress?: { done: number; total: number };
+  sections: JournalSection[];
+  error?: string;
+};
 export type Card = {
   type: 'investor' | 'company' | 'competitor' | 'prospect' | 'claim';
   title: string;
@@ -173,6 +189,28 @@ export async function createSession(): Promise<string> {
     return mock.createMockSession();
   }
   return (await request<{ session_id: string }>('/api/sessions', { method: 'POST' })).session_id;
+}
+export function getEcosystemJournal(date?: string): Promise<Journal> {
+  if (mockEnabled) return import('./mock').then((mock) => mock.getMockJournal('ecosistema', date));
+  return request(`/api/journal/ecosistema${date ? `?date=${encodeURIComponent(date)}` : ''}`);
+}
+export function getSessionJournal(sessionId: string, date?: string): Promise<Journal> {
+  if (mockEnabled)
+    return import('./mock').then((mock) => mock.getMockJournal('founders', date, sessionId));
+  return request(
+    `/api/sessions/${encodeURIComponent(sessionId)}/journal${date ? `?date=${encodeURIComponent(date)}` : ''}`,
+  );
+}
+export function regenerateEcosystemJournal(): Promise<{ status: 'generating' }> {
+  if (mockEnabled) return import('./mock').then((mock) => mock.regenerateMockJournal('ecosistema'));
+  return request('/api/journal/ecosistema/regenerate', { method: 'POST' });
+}
+export function regenerateSessionJournal(sessionId: string): Promise<{ status: 'generating' }> {
+  if (mockEnabled)
+    return import('./mock').then((mock) => mock.regenerateMockJournal('founders', sessionId));
+  return request(`/api/sessions/${encodeURIComponent(sessionId)}/journal/regenerate`, {
+    method: 'POST',
+  });
 }
 export function sendText(
   sessionId: string,
