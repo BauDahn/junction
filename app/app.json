@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Junction",
+    "slug": "junction",
+    "scheme": "junction",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-router",
+      ["expo-audio", { "microphonePermission": "Permite que Junction grabe mensajes de voz." }]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
