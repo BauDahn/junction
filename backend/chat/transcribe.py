@@ -60,7 +60,7 @@ def _whisper_transcribe(path, hint=None):
 
 
 SCHEMA = {"type": "object", "properties": {key: {"type": "string"} for key in ("transcript", "text", "language")}, "required": ["transcript", "text", "language"]}
-SYSTEM = ('Return transcript as the exact words spoken, verbatim, word for word. Return text as what the speaker intended, applying their self-corrections and removing fillers and hesitation, in the SAME language they spoke, without adding facts or answering the question. For example, "Series A... no, sorry, Series B of Amenitiz" in a question context should become "Who led Series B of Amenitiz?". Return language as the ISO 639-1 language code.')
+SYSTEM = ('Return transcript as the exact words spoken, verbatim, word for word. Return text as only the speaker’s intended request or question, applying self-corrections and removing fillers and discourse openers wherever they occur, including "bueno", "a ver", "eh", "o sea", "um", "so", "like", and "you know". Preserve proper names exactly; do not add facts or answer the question, and keep the SAME language. Examples: "Series A... no, sorry, Series B of Amenitiz" → "Who led Series B of Amenitiz?"; "Bueno, a ver, compare Factorial with Amenitiz" → "Compare Factorial with Amenitiz." Return language as the ISO 639-1 language code.')
 
 
 async def _gemini_transcribe(path: Path, hint: str | None, mime: str):
