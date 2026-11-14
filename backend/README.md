@@ -23,7 +23,9 @@ uv run pytest
 | Variable | Para qué |
 |---|---|
 | `CALA_API_KEY` | Clave de Cala (obligatoria) |
-| `LLM_PROVIDER` | `nvidia` (por defecto si hay clave), `codex` o `claude` |
+| `LLM_PROVIDER` | `gemini` (por defecto si hay clave Gemini), `nvidia` (si hay clave NVIDIA), `codex` o `claude` |
+| `GEMINI_API_KEY`, `GOOGLE_API_KEY` | Clave para Gemini (se acepta cualquiera de los dos nombres) |
+| `GEMINI_MODEL`, `GEMINI_FAST_MODEL` | Modelos Gemini fuerte (`gemini-flash-latest`) y rápido (`gemini-3.5-flash-lite`) |
 | `NVIDIA_API_KEY`, `NVIDIA_BASE_URL`, `NVIDIA_MODEL` | Nemotron. build.nvidia.com: `https://integrate.api.nvidia.com/v1` con `nvidia/nemotron-3.5-super-vl-120b-a12b` y una clave `nvapi-` |
 | `TRANSCRIPTION_PROVIDER`, `WHISPER_MODEL` | `whisper` (local, por defecto `small`), `nvidia` o `none` |
 | `CHAT_DB_PATH` | Base SQLite del chat (por defecto `data/chat.db`) |

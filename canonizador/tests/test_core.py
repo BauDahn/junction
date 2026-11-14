@@ -8,6 +8,53 @@ from canonizador.plan import build_plan, build_query, effective_attribute, _fund
 from canonizador.resolve import resolve_entities
 
 
+@pytest.mark.asyncio
+async def test_gemini_intent_provider_uses_fast_model_and_parses(monkeypatch):
+    import httpx
+    from canonizador.intent import GeminiProvider
+    seen = {}
+    def handler(request):
+        seen["url"] = str(request.url)
+        seen["headers"] = request.headers
+        seen["body"] = __import__("json").loads(request.content)
+        return httpx.Response(200, json={"candidates":[{"content":{"parts":[{"text":"```json\n{\"ok\":true}\n```"}]}}]})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        provider = GeminiProvider(api_key="fake", model="fast-test", client=client)
+        schema = {"type":"object", "properties":{"user_value":{"type":["string","number","null"]}}}
+        assert await provider.complete_json("system", "question", schema) == {"ok":True}
+    assert "/models/fast-test:generateContent" in seen["url"]
+    assert seen["headers"]["x-goog-api-key"] == "fake"
+    assert seen["body"]["generationConfig"]["temperature"] == 0
+    converted = seen["body"]["generationConfig"]["responseSchema"]
+    assert converted["properties"]["user_value"] == {"type":"string", "nullable":True}
+
+
+@pytest.mark.asyncio
+async def test_gemini_intent_schema_unions_and_sanitized_http_error():
+    import httpx
+    from canonizador.intent import GeminiProvider
+    seen = {}
+    def handler(request):
+        seen["schema"] = __import__("json").loads(request.content)["generationConfig"]["responseSchema"]
+        return httpx.Response(400, json={"error":{"message":"bad fake https://host/path?key=secret " + "z" * 350}})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        provider = GeminiProvider(api_key="fake", client=client)
+        with pytest.raises(RuntimeError) as caught:
+            schema = {"properties": {"v": {"anyOf": [{"type": ["integer", "null"]}, {"type": ["number", "string"]}]}, "a": {"items": {"type": ["boolean", "null"]}}}}
+            await provider.complete_json("s", "u", schema)
+    assert seen["schema"]["properties"]["v"]["anyOf"] == [{"type":"integer", "nullable":True}, {"type":"string"}]
+    assert seen["schema"]["properties"]["a"]["items"] == {"type":"boolean", "nullable":True}
+    message = str(caught.value)
+    assert "HTTP 400" in message and "fake" not in message and "?key=" not in message
+    assert len(message.split(": ", 1)[1]) == 300
+
+
+def test_intent_parser_selects_gemini(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("GEMINI_API_KEY", "fake")
+    assert isinstance(IntentParser().provider, __import__("canonizador.intent", fromlist=["GeminiProvider"]).GeminiProvider)
+
+
 def test_normalize():
     assert normalize("¿  ‘Mews’   Café!") == "'Mews' Café!"
 
