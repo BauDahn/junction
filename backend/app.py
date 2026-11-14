@@ -5,8 +5,11 @@ import time
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.responses import FileResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from verifier.config import settings
 from verifier.llm import make_llm
@@ -15,6 +18,35 @@ from verifier.pipeline import verify_pdf
 ROOT = Path(__file__).parent
 MAX_PDF_BYTES = 20 * 1024 * 1024
 app = FastAPI(title="Deck Verifier")
+ERROR_CODES = {
+    400: "bad_request",
+    404: "not_found",
+    405: "method_not_allowed",
+    413: "payload_too_large",
+    415: "unsupported_media_type",
+    422: "invalid_request",
+    429: "rate_limited",
+}
+
+
+def _error(status: int, message: str) -> JSONResponse:
+    # Formato de docs/API.md: {"error": {"code", "message"}}
+    code = ERROR_CODES.get(status, "server_error" if status >= 500 else "http_error")
+    return JSONResponse({"error": {"code": code, "message": message}}, status_code=status)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error(_: Request, exc: StarletteHTTPException):
+    return _error(exc.status_code, str(exc.detail))
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(_: Request, exc: RequestValidationError):
+    first = exc.errors()[0] if exc.errors() else {}
+    where = ".".join(str(part) for part in first.get("loc", ()))
+    return _error(422, f"{where}: {first.get('msg', 'invalid request')}".strip(": "))
+
+
 jobs: dict[str, dict] = {}
 tasks: dict[str, asyncio.Task] = {}
 
@@ -63,7 +95,13 @@ async def health():
         _, model = make_llm()
     except Exception:
         model = os.getenv("LLM_MODEL", "")
-    return {"provider": settings.llm_provider, "model": model, "cala": bool(settings.cala_api_key)}
+    return {
+        "provider": settings.llm_provider,
+        "model": model,
+        "cala": bool(settings.cala_api_key),
+        # Aún no hay transcripción: "none" hasta elegir proveedor (issue #4).
+        "transcription": os.getenv("TRANSCRIPTION_PROVIDER", "none"),
+    }
 
 
 @app.post("/api/verify")
