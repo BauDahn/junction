@@ -33,6 +33,30 @@ def parse_amount(value):
     vals = [v for v in vals if v is not None]
     return sum(vals) / len(vals) if vals else None
 
+def ticket_bounds(value):
+    """Normaliza un importe o rango de cheque a sus extremos numéricos."""
+    if isinstance(value, dict):
+        low, high = parse_amount(value.get("min")), parse_amount(value.get("max"))
+        if low is None and high is None: return None
+        return (high if low is None else low, low if high is None else high)
+    if isinstance(value, (int, float)):
+        amount = parse_amount(value)
+        return (amount, amount) if amount is not None else None
+    if not isinstance(value, str) or not value.strip(): return None
+    text = value.casefold().replace(",", "").replace("–", "-").replace("—", "-")
+    parts = re.split(r"\s*(?:-|\bto\b)\s*", text, maxsplit=1)
+    # Si el sufijo aparece solo en el segundo extremo, también aplica al primero.
+    suffix = re.search(r"(bn|billion|m|million|mm|k|thousand)\b", text)
+    if len(parts) == 2 and suffix:
+        for i, part in enumerate(parts):
+            if not re.search(r"(bn|billion|m|million|mm|k|thousand)\b", part):
+                parts[i] = part + suffix.group(1)
+    vals = [parse_amount(part) for part in parts]
+    vals = [val for val in vals if val is not None]
+    if not vals: return None
+    if len(vals) == 1: return (vals[0], vals[0])
+    return (min(vals), max(vals))
+
 def _sector_key(v): return re.sub(r"[^\w\s]", " ", str(v).casefold()).strip()
 def sector_match(a, b):
     """Compara sectores por texto y grupos de sinónimos."""
@@ -112,7 +136,7 @@ def score_candidate(profile, candidate, *, today=None, weights=WEIGHTS):
         loc=attrs.get("country") or attrs.get("hq"); val=max(region_match(loc,x) for x in regions); add("region",val,f"Headquartered in {country_of(loc) or loc}",attrs["sources"])
     else: add("region",None)
     if signals[0]["value"] is not None and not rounds and _ai_tagged(attrs.get("ai_tagged"), "sectors"): signals[0]["text"] += " (AI-tagged)"
-    ticket=profile.get("ticket") or {}; lo=parse_amount(ticket.get("min")); hi=parse_amount(ticket.get("max")); amounts=[parse_amount(r.get("funding_amount")) for r in rounds]; amounts=[x for x in amounts if x]
+    bounds=ticket_bounds(profile.get("ticket")) or ticket_bounds(profile.get("ticket_range")); lo,hi=bounds or (None,None); amounts=[parse_amount(r.get("funding_amount")) for r in rounds]; amounts=[x for x in amounts if x]
     if (lo is None and hi is None): add("ticket",None)
     elif not amounts and feature_sources and isinstance(feats.get("amount"),dict) and (feats["amount"].get("min") is not None or feats["amount"].get("max") is not None):
         a=parse_amount(feats["amount"].get("min")); b=parse_amount(feats["amount"].get("max")); a=b if a is None else a; b=a if b is None else b

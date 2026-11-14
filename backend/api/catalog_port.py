@@ -67,8 +67,12 @@ class ValkeyCatalog(MemoryCatalog):
         if not self.remote:return
         def read(c):
             keys=list(c.scan_iter(match='cat:v1:feat:*',count=1000)); vals=[]
+            pipe=c.pipeline()
             for i in range(0,len(keys),500):
-                pipe=c.pipeline(); pipe.mget(keys[i:i+500]); vals.extend(pipe.execute())
+                pipe.mget(keys[i:i+500])
+            if keys:
+                results=pipe.execute()
+                vals=[value for command_result in results for value in command_result]
             return keys,vals,c.get('cat:v1:status')
         try: ok,data=self.remote._run(read)
         except Exception: ok,data=False,None

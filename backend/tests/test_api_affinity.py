@@ -1,6 +1,6 @@
 from datetime import date
 import pytest
-from api.affinity import score_candidate, parse_amount, norm_stage, sector_match, rank
+from api.affinity import score_candidate, parse_amount, norm_stage, sector_match, rank, ticket_bounds
 from api.regions import country_of, region_match
 
 SRC=[{"name":"Cala", "url":"https://cala.test"}]
@@ -107,3 +107,14 @@ def test_ticket_text_uses_one_value_for_single_amount_range():
     investor={"type":"investor","rounds":[round_(funding_amount="3M")]}
     signal=score_candidate({"ticket":{"min":3_000_000,"max":3_000_000}},investor)["signals"][3]
     assert signal["text"]=="Typical round size 3M; you are raising 3M"
+
+
+def test_ticket_bounds_accepts_ranges_and_single_amounts():
+    assert ticket_bounds("500k-1M") == (500_000, 1_000_000)
+    assert ticket_bounds("500k to 1M") == (500_000, 1_000_000)
+    assert ticket_bounds("2.5M") == (2_500_000, 2_500_000)
+    candidate = {"type": "investor", "rounds": [], "features": {"amount": {"min": 400_000, "max": 600_000}, "sources": [SRC]}, "attrs": {"sources": [SRC]}}
+    result = score_candidate({"ticket": "500k-1M"}, candidate)
+    assert result["signals"][3]["value"] == 1
+    result = score_candidate({"ticket_range": {"min": 500_000, "max": 1_000_000}}, candidate)
+    assert result["signals"][3]["value"] == 1

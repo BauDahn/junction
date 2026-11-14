@@ -16,20 +16,45 @@ def test_normalize_features_activity_counts_are_integers():
 def test_valkey_reads_features_in_batches_not_gets():
     raw={'name':'X','kinds':['investor']}
     class Pipe:
-        def __init__(self,c):self.c=c;self.keys=[]
-        def mget(self,keys):self.keys=keys
-        def execute(self):return [json.dumps(raw | {'id':key.rsplit(':',1)[-1]}) for key in self.keys]
+        def __init__(self,c):self.c=c;self.chunks=[]
+        def mget(self,keys):self.chunks.append(keys)
+        def execute(self):return [[json.dumps(raw | {'id':key.rsplit(':',1)[-1]}) for key in keys] for keys in self.chunks]
     class Client:
-        def __init__(self):self.gets=[];self.pipes=0
+        def __init__(self):self.gets=[];self.pipes=0;self.pipeline_calls=0
         def scan_iter(self,**kw):return [f"cat:v1:feat:{i}" for i in range(501)]
-        def pipeline(self):self.pipes+=1;return Pipe(self)
+        def pipeline(self):self.pipeline_calls+=1;return Pipe(self)
         def get(self,key):self.gets.append(key);return '{}'
     class Remote:
         def __init__(self):self.client=Client()
         def _run(self,fn):return True,fn(self.client)
     remote=Remote();cat=ValkeyCatalog(remote,refresh_s=30)
     assert len(cat.list_features('investor'))==501
-    assert remote.client.pipes==2 and remote.client.gets==['cat:v1:status']
+    assert remote.client.pipeline_calls==1 and remote.client.gets==['cat:v1:status']
+
+
+def test_valkey_load_flattens_redis_pipeline_results_for_multiple_chunks():
+    class Pipe:
+        def __init__(self): self.commands=[]
+        def mget(self, keys): self.commands.append(list(keys))
+        def execute(self):
+            return [[json.dumps({'id':key.rsplit(':',1)[-1], 'name':'Fund', 'kinds':['investor']})
+                     for key in chunk] for chunk in self.commands]
+    class Client:
+        def __init__(self): self.pipeline_count=0; self.feature_gets=0
+        def scan_iter(self, **kwargs): return [f'cat:v1:feat:{i}' for i in range(600)]
+        def pipeline(self): self.pipeline_count+=1; return Pipe()
+        def get(self, key):
+            if key.startswith('cat:v1:feat:'): self.feature_gets+=1
+            return '{}'
+    class Remote:
+        def __init__(self): self.client=Client()
+        def _run(self, fn): return True, fn(self.client)
+    remote=Remote(); catalog=ValkeyCatalog(remote, refresh_s=30)
+    features=catalog.list_features('investor')
+    assert len(features)==600
+    assert features[0]['id']=='0' and features[-1]['id']=='599'
+    assert remote.client.pipeline_count==1
+    assert remote.client.feature_gets==0
 
 
 def test_valkey_catalog_refresh_uses_environment_interval(monkeypatch):
@@ -39,7 +64,7 @@ def test_valkey_catalog_refresh_uses_environment_interval(monkeypatch):
             self.keys = keys
 
         def execute(self):
-            return [json.dumps({"id": "fund", "name": "Fund", "kinds": ["investor"]})]
+            return [[json.dumps({"id": "fund", "name": "Fund", "kinds": ["investor"]})]]
 
     class Client:
         def __init__(self):

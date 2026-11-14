@@ -1,7 +1,8 @@
 """Construcción rápida del feed sobre datos locales."""
 import time
-from .affinity import parse_amount, rank, score_candidate
+from .affinity import rank, score_candidate, ticket_bounds
 from .enrich import rounds_for
+from .graph_port import neighbors_batch
 
 _BFS = {}
 
@@ -24,28 +25,29 @@ def normalize_profile(profile, mode, seeds):
     profile = profile or {}
     interests = profile.get("interests") or {}
     raising = profile.get("raising") or {}
-    sectors = interests.get("sectors") or []
     understood = profile.get("what_we_understood") or {}
-    if (sectors == ["other"] or not sectors) and understood.get("sector_focus"):
-        sectors = [understood["sector_focus"]]
+    sectors = [value for value in (interests.get("sectors") or [])
+               if str(value).strip().casefold() != "other"]
+    focus = understood.get("sector_focus")
+    focus = focus if isinstance(focus, (list, tuple)) else [focus]
+    focus = [value for value in focus if value is not None and str(value).strip().casefold() != "other"]
+    if not sectors and focus:
+        sectors = focus
     profile_sector = profile.get("sector")
-    if profile_sector and str(profile_sector).casefold() == "other" and understood.get("sector_focus"):
+    if profile_sector and str(profile_sector).strip().casefold() == "other":
         profile_sector = None
     sectors = _uniq(([profile_sector] if profile_sector else []) + sectors)
     regions = _uniq(([profile.get("location")] if profile.get("location") else [])
                     + (interests.get("regions") or []))
     if mode == "raising":
         stages = _uniq([raising.get("round") or profile.get("stage")])
-        ticket_range = profile.get("ticket_range")
-        if isinstance(ticket_range, dict) and any(ticket_range.get(k) is not None for k in ("min", "max")):
-            ticket = {"min": ticket_range.get("min"), "max": ticket_range.get("max")}
-        else:
-            amount = parse_amount(raising.get("amount"))
-            ticket = {"min": amount, "max": amount} if amount is not None else None
     else:
         stages = _uniq((interests.get("stages") or [])
                        + ([profile.get("stage")] if profile.get("stage") else []))
-        ticket = None
+    bounds = ticket_bounds(profile.get("ticket_range")) or ticket_bounds(profile.get("ticket"))
+    if bounds is None and mode == "raising":
+        bounds = ticket_bounds(raising.get("amount"))
+    ticket = {"min": bounds[0], "max": bounds[1]} if bounds is not None else None
     return {"sectors": sectors, "stage": stages[0] if stages else None, "stages": stages,
             "regions": regions, "ticket": ticket, "seeds": list(seeds or [])}
 
@@ -78,7 +80,7 @@ def bfs_for_user(session_id, profile, store):
     edges = {}
     frontier = list(seeds)
     for depth in range(1, 4):
-        batch = store.neighbors(frontier)
+        batch = neighbors_batch(store, frontier)
         next_frontier = []
         for ident in frontier:
             for edge, node in batch.get(str(ident), []):
@@ -133,7 +135,7 @@ def candidate_for_entity(ident, session_id, profile, mode, catalog, store):
         kind = "investor" if mode == "raising" else "startup"
     candidate = _feature_candidate(features, kind, graph_data, ident) if features else None
     if candidate is None and node:
-        edges = store.neighbors([ident]).get(str(ident), [])
+        edges = neighbors_batch(store, [ident]).get(str(ident), [])
         local_data = {"nodes": {str(ident): node}, "edges": [edge for edge, _ in edges]}
         candidate = _graph_candidate(ident, kind, local_data)
         if candidate is None:

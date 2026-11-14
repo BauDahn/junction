@@ -61,6 +61,24 @@ def test_detail_contract_sources_and_score_matches_feed(client):
     assert size == "1M–5M"
 
 
+def test_detail_score_matches_feed_for_roundless_investor_with_aggregate_features(client):
+    feature = {"id": "fund", "name": "Fund", "kinds": ["investor"], "sectors": ["Fintech"],
+               "stages": ["Seed"], "country": "Finland", "amount": {"min": 500_000, "max": 2_000_000},
+               "activity": {"rounds_24m": 3, "led_24m": 1}, "rounds": [], "sources": [SOURCE]}
+    graph = MemoryGraph()
+    graph.add_node({"id": "seed", "name": "My Startup", "props": {}})
+    graph.add_node({"id": "fund", "name": "Fund", "props": {}})
+    graph.add_edge({"id": "edge", "src": "fund", "dst": "seed", "rel": "INVESTED_IN", "sources": [SOURCE]})
+    backend_app.app.dependency_overrides[get_catalog] = lambda: MemoryCatalog([feature])
+    backend_app.app.dependency_overrides[get_graph] = lambda: graph
+    session_id = create_session(client, {"startup_name": "My Startup", "sector": "Fintech", "stage": "Seed",
+                                         "location": "Finland", "raising": {"amount": "1M", "round": "Seed"}})
+    card = client.get("/api/feed", params={"session_id": session_id}).json()["items"][0]
+    detail = client.get("/api/entities/fund", params={"session_id": session_id}).json()
+    assert detail["score"] == card["score"]
+    assert detail["confidence"] == card["confidence"]
+
+
 def test_detail_without_session_omits_score_fields(client):
     feature = {"id": "fund", "name": "Fund", "kinds": ["investor"], "sources": [SOURCE]}
     backend_app.app.dependency_overrides[get_catalog] = lambda: MemoryCatalog([feature])

@@ -9,7 +9,7 @@ from .affinity import format_amount, rank
 from . import enrich
 from .candidates import build_feed, candidate_for_entity
 from .catalog_port import get_catalog
-from .graph_port import get_graph
+from .graph_port import get_graph, neighbors_batch
 
 router = APIRouter()
 _cala = None
@@ -164,7 +164,7 @@ def _entity_type(features, node, edges, mode):
 def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
     features = catalog.get_features(entity_id)
     node = graph.get_node(entity_id)
-    edges = graph.neighbors([entity_id]).get(str(entity_id), []) if node else []
+    edges = neighbors_batch(graph, [entity_id]).get(str(entity_id), []) if node else []
     if not features and not node:
         raise HTTPException(404, "Entity not found.")
     entity_type = _entity_type(features, node, edges, mode)

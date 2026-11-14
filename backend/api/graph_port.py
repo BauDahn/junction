@@ -1,5 +1,24 @@
 """Implementación local mínima de la interfaz del grafo."""
 from typing import Protocol
+
+def neighbors_batch(store, ids, rels=None):
+    """Obtiene vecinos por lote y tolera almacenes que solo aceptan IDs escalares."""
+    ids = list(ids or [])
+    try:
+        result = store.neighbors(ids, rels=rels) if rels is not None else store.neighbors(ids)
+        if isinstance(result, dict):
+            return {str(ident): result.get(str(ident), []) for ident in ids}
+    except (TypeError, AttributeError):
+        pass
+    output = {}
+    for ident in ids:
+        try:
+            result = store.neighbors(ident, rels=rels) if rels is not None else store.neighbors(ident)
+        except (TypeError, AttributeError):
+            result = []
+        output[str(ident)] = result if isinstance(result, list) else []
+    return output
+
 class GraphPort(Protocol):
     def get_node(self,node_id): ...
     def get_nodes(self,ids): ...

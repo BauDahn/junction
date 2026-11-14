@@ -213,6 +213,37 @@ def test_profile_ticket_range_and_sector_focus_fallback():
     assert normalized["ticket"] == {"min": 4_000_000, "max": 8_000_000}
 
 
+def test_profile_normalizes_sector_focus_lists_and_ticket_priority():
+    from api.candidates import normalize_profile
+    profile = {"sector": "OTHER", "interests": {"sectors": ["Other"]},
+               "what_we_understood": {"sector_focus": ["Fintech", "SaaS", "other"]},
+               "ticket_range": {"min": 1_000_000, "max": 3_000_000},
+               "ticket": "9M", "raising": {"amount": "10M"}}
+    normalized = normalize_profile(profile, "raising", [])
+    assert normalized["sectors"] == ["Fintech", "SaaS"]
+    assert normalized["ticket"] == {"min": 1_000_000, "max": 3_000_000}
+    fallback = normalize_profile({"ticket": "500k-1M"}, "investing", [])
+    assert fallback["ticket"] == {"min": 500_000, "max": 1_000_000}
+
+
+def test_feed_and_detail_work_with_scalar_only_neighbors(client):
+    from api.routes import get_catalog as route_catalog, get_graph as route_graph
+    class ScalarGraph(MemoryGraph):
+        def neighbors(self, node_id, rels=None):
+            if isinstance(node_id, (list, tuple, set)):
+                raise TypeError("scalar id required")
+            return super().neighbors(node_id, rels)
+    graph = ScalarGraph()
+    graph.add_node({"id": "seed", "name": "My Startup", "props": {}})
+    graph.add_node({"id": "fund", "name": "Fund", "props": {"sources": [SOURCE], "industries": ["Fintech"]}})
+    graph.add_edge({"id": "edge", "src": "fund", "dst": "seed", "rel": "INVESTED_IN", "sources": [SOURCE]})
+    backend_app.app.dependency_overrides[route_graph] = lambda: graph
+    backend_app.app.dependency_overrides[route_catalog] = lambda: MemoryCatalog([investor("fund", "Fund")])
+    session_id = create_session(client, {"startup_name": "My Startup", "sector": "Fintech"})
+    assert client.get("/api/feed", params={"session_id": session_id}).status_code == 200
+    assert client.get("/api/entities/fund", params={"session_id": session_id}).status_code == 200
+
+
 def test_feed_ranks_three_thousand_candidates_under_one_second():
     from api.candidates import build_feed
     features = [investor(str(i), f"Fund {i:04}") for i in range(3000)]
