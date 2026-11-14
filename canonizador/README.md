@@ -11,7 +11,7 @@ uv run python bench.py
 uv run pytest
 ```
 
-La CLI carga `CALA_API_KEY` desde `../backend/.env` si no está en el entorno. Las peticiones Cala son secuenciales y tienen caché cruda. El benchmark directo y canonizado se ejecuta con `bench.py`.
+La CLI carga `CALA_API_KEY` desde `../backend/.env` si no está en el entorno. Las peticiones tienen caché cruda. `CalaClient` limita knowledge/query y knowledge/search con `knowledge_interval` (8 s) y entidades con `entities_interval` (0,7 s); se configuran también con `CALA_KNOWLEDGE_INTERVAL` y `CALA_ENTITIES_INTERVAL`. Las entidades permiten hasta 2 peticiones simultáneas (`entities_concurrency` / `CALA_ENTITIES_CONCURRENCY`). `CALA_429_WAIT` fija la espera exponencial base en segundos (5 por defecto); se respeta `Retry-After`, con un máximo de 60 s.
 
 ## Caché compartida (Aiven Valkey)
 
