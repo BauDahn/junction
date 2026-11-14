@@ -1,3 +1,4 @@
+import logging
 import os
 import asyncio
 import tempfile
@@ -16,6 +17,7 @@ from . import recommend
 
 router = APIRouter()
 _recommendation_tasks = set()
+logger = logging.getLogger("uvicorn.error")
 
 
 class MessageInput(BaseModel):
@@ -52,6 +54,7 @@ async def _process_text(session_id, text, llm, cala, transcript=None, context=No
     try:
         user, reply, profile = await handle_text(session_id, text, llm, transcript=transcript, cala=cala, context=context)
     except Exception as exc:
+        logger.exception("chat: fallo procesando el mensaje")
         raise HTTPException(502, "El modelo no respondió, intenta de nuevo.") from exc
     store.add_message(user)
     store.add_message(reply)
@@ -95,6 +98,7 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
             except Exception as exc:
                 if "no configurada" in str(exc).lower():
                     raise HTTPException(503, "Transcripción no configurada") from exc
+                logger.exception("chat: fallo transcribiendo %s (%s, %d bytes)", audio.filename, audio.content_type, len(data))
                 raise HTTPException(502, "No se pudo transcribir el audio.") from exc
             text = result.get("text", "").strip()
             if not text:
