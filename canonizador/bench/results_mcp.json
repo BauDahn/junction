@@ -1,0 +1,886 @@
+{
+ "Ronda concreta (Serie B de Amenitiz)": {
+  "¿Cuánto levantó Amenitiz en su Serie B y quién lideró la ronda?": {
+   "final": {
+    "answer": "Amenitiz levantó **45 millones de dólares (aproximadamente 39 millones de euros)** en su Serie B. La ronda fue liderada por **Kfund**, a través de su fondo Leadwind.",
+    "names": [
+     "Amenitiz",
+     "Kfund",
+     "Leadwind"
+    ],
+    "amounts": [
+     "45 millones de dólares",
+     "aproximadamente 39 millones de euros"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "¿Cuánto levantó Amenitiz en su Serie B y quién lideró la ronda?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 9.5,
+   "exit": 0,
+   "error": null
+  },
+  "quien lidero y de cuanto fue la serie b de amenitiz": {
+   "final": {
+    "answer": "Amenitiz’s Series B was led by Kfund, through its Leadwind growth fund. It raised €38.9 million (approximately $45 million).",
+    "names": [
+     "Kfund",
+     "Leadwind"
+    ],
+    "amounts": [
+     "€38.9 million",
+     "approximately $45 million"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Who led Amenitiz's Series B funding round, and how much was it?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 18.0,
+   "exit": 0,
+   "error": null
+  },
+  "How much did Amenitiz raise in its Series B and who led the round?": {
+   "final": {
+    "answer": "Amenitiz raised €38.9 million (approximately $45 million) in its Series B. Kfund led the round through its growth fund, Leadwind.",
+    "names": [
+     "Amenitiz",
+     "Kfund",
+     "Leadwind"
+    ],
+    "amounts": [
+     "€38.9 million",
+     "$45 million"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "How much did Amenitiz raise in its Series B and who led the round?",
+      "explainability": true,
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 8.0,
+   "exit": 0,
+   "error": null
+  }
+ },
+ "Fundadores (Glovo)": {
+  "¿Quiénes fundaron Glovo?": {
+   "final": {
+    "answer": "Glovo was founded by Oscar Pierre, Sacha Michaud, and Gerard Olivé.",
+    "names": [
+     "Oscar Pierre",
+     "Sacha Michaud",
+     "Gerard Olivé"
+    ],
+    "amounts": []
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "¿Quiénes fundaron Glovo?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 8.2,
+   "exit": 0,
+   "error": null
+  },
+  "Glovo: quienes son sus fundadores": {
+   "final": {
+    "answer": "Glovo was founded by Oscar Pierre and Sacha Michaud.",
+    "names": [
+     "Oscar Pierre",
+     "Sacha Michaud"
+    ],
+    "amounts": []
+   },
+   "tools": [],
+   "seconds": 5.8,
+   "exit": 0,
+   "error": null
+  },
+  "Who are the founders of Glovo?": {
+   "final": {
+    "answer": "Glovo was co-founded by Óscar Pierre and Sacha Michaud.",
+    "names": [
+     "Óscar Pierre",
+     "Sacha Michaud"
+    ],
+    "amounts": []
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Who are the founders of Glovo?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 10.5,
+   "exit": 0,
+   "error": null
+  }
+ },
+ "Adquisiciones (Mews)": {
+  "¿Qué empresas ha comprado Mews?": {
+   "final": {
+    "answer": "Según la información de Cala, Mews ha comprado Base7Booking, Hotel Perfect, Cenium, Bizzon, Hotello, Nomi, Frontdesk Anywhere, HS/3 Hotelsoftware, Quotelo, Atomize, Clarity Hospitality Software Solutions, Flexkeeping y Data Chat.",
+    "names": [
+     "Base7Booking",
+     "Hotel Perfect",
+     "Cenium",
+     "Bizzon",
+     "Hotello",
+     "Nomi",
+     "Frontdesk Anywhere",
+     "HS/3 Hotelsoftware",
+     "Quotelo",
+     "Atomize",
+     "Clarity Hospitality Software Solutions",
+     "Flexkeeping",
+     "Data Chat"
+    ],
+    "amounts": []
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "What companies has Mews acquired?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 32.8,
+   "exit": 0,
+   "error": null
+  },
+  "adquisiciones hechas por Mews": {
+   "final": {
+    "answer": "Cala reports that Mews had completed 14 acquisitions by late 2025. They were Base7booking (around 2020), Planet Winner (2019), Hotel Perfect (2021), Cenium (2022), Bizzon (2022), Hotello (2023), Nomi (2023), Frontdesk Anywhere (2024), HS/3 Hotelsoftware (2024), Quotelo (2024), Atomize (2024), Clarity Hospitality Software Solutions (2025), Flexkeeping (2025), and Data Chat (2025). Cala did not provide acquisition prices.",
+    "names": [
+     "Mews",
+     "Base7booking",
+     "Planet Winner",
+     "Hotel Perfect",
+     "Cenium",
+     "Bizzon",
+     "Hotello",
+     "Nomi",
+     "Frontdesk Anywhere",
+     "HS/3 Hotelsoftware",
+     "Quotelo",
+     "Atomize",
+     "Clarity Hospitality Software Solutions",
+     "Flexkeeping",
+     "Data Chat"
+    ],
+    "amounts": []
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "What acquisitions has Mews made?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 43.6,
+   "exit": 0,
+   "error": null
+  },
+  "Which companies has Mews acquired?": {
+   "final": {
+    "answer": "Cala lists these Mews acquisitions: Planet Winner, Base7Booking, Hotel Perfect, Cenium, Bizzon, Hotello, Nomi, Frontdesk Anywhere, HS/3 Hotelsoftware, Quotelo, Atomize, Clarity Hospitality Software Solutions, Flexkeeping, and Data Chat.",
+    "names": [
+     "Planet Winner",
+     "Base7Booking",
+     "Hotel Perfect",
+     "Cenium",
+     "Bizzon",
+     "Hotello",
+     "Nomi",
+     "Frontdesk Anywhere",
+     "HS/3 Hotelsoftware",
+     "Quotelo",
+     "Atomize",
+     "Clarity Hospitality Software Solutions",
+     "Flexkeeping",
+     "Data Chat"
+    ],
+    "amounts": []
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Which companies has Mews acquired?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 10.3,
+   "exit": 0,
+   "error": null
+  }
+ },
+ "Financiación total (Factorial)": {
+  "¿Cuánta financiación total ha levantado Factorial?": {
+   "final": {
+    "answer": "Factorial has raised approximately €523 million in total across 9 funding rounds.",
+    "names": [
+     "Factorial"
+    ],
+    "amounts": [
+     "€523 million"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "How much total funding has Factorial raised?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 33.1,
+   "exit": 0,
+   "error": null
+  },
+  "Factorial, financiacion total levantada hasta hoy": {
+   "final": {
+    "answer": "Cala’s sources report Factorial has raised approximately $370–$420 million to date, depending on whether certain debt facilities are included. The reported totals include its June 2026 Series D. [InforCapital](https://inforcapital.com/companies/factorial) reports $420 million, while [Nordic9](https://nordic9.com/news/factorial-raised-150m-in-series-d-funding-at) reports $370.02 million.",
+    "names": [
+     "Factorial"
+    ],
+    "amounts": [
+     "$370–$420 million",
+     "$420 million",
+     "$370.02 million"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Factorial total funding raised to date",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 35.2,
+   "exit": 0,
+   "error": null
+  },
+  "How much funding has Factorial raised in total?": {
+   "final": {
+    "answer": "Factorial has raised approximately $572 million in total funding across 9 rounds, as of November 2026.",
+    "names": [
+     "Factorial"
+    ],
+    "amounts": [
+     "$572 million"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "How much funding has Factorial raised in total?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 7.5,
+   "exit": 0,
+   "error": null
+  }
+ },
+ "Inversores (Wolt)": {
+  "¿Quiénes son los inversores de Wolt?": {
+   "final": {
+    "answer": "Cala lists Wolt’s investors as ICONIQ Capital (also known as ICONIQ Growth), EQT Ventures, 83North, Highland Europe, Goldman Sachs, Coatue Management, DST Global, EQT Growth, KKR, Tiger Global, Prosus, Vintage Investment Partners, Lifeline Ventures, Inventure, Atomico, and angel investor Lukasz Gadowski. DoorDash acquired Wolt in 2021 and is its current owner.",
+    "names": [
+     "ICONIQ Capital",
+     "ICONIQ Growth",
+     "EQT Ventures",
+     "83North",
+     "Highland Europe",
+     "Goldman Sachs",
+     "Coatue Management",
+     "DST Global",
+     "EQT Growth",
+     "KKR",
+     "Tiger Global",
+     "Prosus",
+     "Vintage Investment Partners",
+     "Lifeline Ventures",
+     "Inventure",
+     "Atomico",
+     "Lukasz Gadowski",
+     "DoorDash"
+    ],
+    "amounts": []
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Who are the investors in Wolt?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 33.4,
+   "exit": 0,
+   "error": null
+  },
+  "Wolt: inversores que han puesto dinero": {
+   "final": {
+    "answer": "Wolt’s named investors include EQT Ventures; Niklas Zennström, Ilkka Paananen and Risto Siilasmaa; 83North; Highland Europe; ICONIQ Capital/ICONIQ Growth; Lifeline Ventures; Goldman Sachs Growth Equity; Coatue; DST; EQT Growth; KKR; Tiger Global; Prosus; Vintage Investment Partners; and Lukasz Gadowski. The reported rounds include $12.5 million (Series A), $30 million (Series B), $130 million (Series C), $110 million (Series D), €7.5 million (Gadowski’s investment) and $530 million (Series E). These are round totals, except Gadowski’s individual investment; individual allocations among most co-investors were not reported.",
+    "names": [
+     "EQT Ventures",
+     "Niklas Zennström",
+     "Ilkka Paananen",
+     "Risto Siilasmaa",
+     "83North",
+     "Highland Europe",
+     "ICONIQ Capital/ICONIQ Growth",
+     "Lifeline Ventures",
+     "Goldman Sachs Growth Equity",
+     "Coatue",
+     "DST",
+     "EQT Growth",
+     "KKR",
+     "Tiger Global",
+     "Prosus",
+     "Vintage Investment Partners",
+     "Lukasz Gadowski"
+    ],
+    "amounts": [
+     "$12.5 million",
+     "$30 million",
+     "$130 million",
+     "$110 million",
+     "€7.5 million",
+     "$530 million"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Which investors have invested money in Wolt, and how much did each invest?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 63.1,
+   "exit": 0,
+   "error": null
+  },
+  "Who has invested in Wolt?": {
+   "final": {
+    "answer": "Cala identifies Wolt’s investors as EQT Ventures, Lifeline Ventures, 83North, Highland Europe, ICONIQ Capital and ICONIQ Growth, Inventure, Atomico, Goldman Sachs Growth Equity, Coatue Management, DST Global, EQT Growth, KKR, Tiger Global, Prosus, and Vintage Investment Partners. DoorDash later acquired Wolt.",
+    "names": [
+     "EQT Ventures",
+     "Lifeline Ventures",
+     "83North",
+     "Highland Europe",
+     "ICONIQ Capital",
+     "ICONIQ Growth",
+     "Inventure",
+     "Atomico",
+     "Goldman Sachs Growth Equity",
+     "Coatue Management",
+     "DST Global",
+     "EQT Growth",
+     "KKR",
+     "Tiger Global",
+     "Prosus",
+     "Vintage Investment Partners",
+     "DoorDash"
+    ],
+    "amounts": []
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Who has invested in Wolt?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 10.3,
+   "exit": 0,
+   "error": null
+  }
+ },
+ "Ejecutivos (TravelPerk)": {
+  "¿Quién es el CEO de TravelPerk?": {
+   "final": {
+    "answer": "TravelPerk’s CEO is Avi Meir.",
+    "names": [
+     "Avi Meir"
+    ],
+    "amounts": []
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Who is the CEO of TravelPerk?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 14.0,
+   "exit": 0,
+   "error": null
+  },
+  "TravelPerk, quien es su CEO": {
+   "final": {
+    "answer": "TravelPerk’s CEO is Avi Meir.",
+    "names": [
+     "Avi Meir"
+    ],
+    "amounts": []
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Who is the CEO of TravelPerk?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 7.8,
+   "exit": 0,
+   "error": null
+  },
+  "Who runs TravelPerk as chief executive?": {
+   "final": {
+    "answer": "Avi Meir is TravelPerk’s chief executive officer and co-founder.",
+    "names": [
+     "Avi Meir"
+    ],
+    "amounts": []
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Who runs TravelPerk as chief executive?",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 8.0,
+   "exit": 0,
+   "error": null
+  }
+ },
+ "Lista: tecnología hotelera en España, más de 10M": {
+  "¿Qué startups españolas de tecnología hotelera levantaron más de 10 millones?": {
+   "final": {
+    "answer": "Cala identifies **TravelPerk** (about €669 million raised) and **Amenitiz** (about €75 million+) as Spanish hotel/travel technology startups that raised more than €10 million. It also includes **HolaCamp**, a tech-enabled camping and glamping company, reporting total funding of about $35–38 million; Cala separately notes a €10 million investment, which by itself does not exceed the threshold.",
+    "names": [
+     "TravelPerk",
+     "Amenitiz",
+     "HolaCamp"
+    ],
+    "amounts": [
+     "about €669 million",
+     "about €75 million+",
+     "about $35–38 million",
+     "€10 million"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Which Spanish hotel technology startups raised more than €10 million? Include company names and amounts raised.",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 48.7,
+   "exit": 0,
+   "error": null
+  },
+  "mas de 10 millones levantados startups hoteleras tecnologia españa": {
+   "final": {
+    "answer": "Cala found no identified Spanish hotel technology startup with more than €10 million raised. The closest is Hotelverse, with approximately €8.2 million across four funding rounds.",
+    "names": [
+     "Hotelverse"
+    ],
+    "amounts": [
+     "€10 million",
+     "approximately €8.2 million"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Spanish hotel technology startups that have raised more than €10 million in funding; identify companies and reported funding amounts.",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 51.2,
+   "exit": 0,
+   "error": null
+  },
+  "Which Spanish hotel tech startups have raised more than 10 million?": {
+   "final": {
+    "answer": "Cala identifies Amenitiz (~€76M), Lodgify (~$36M), and HolaCamp (~$10.9M) as Spanish hotel tech startups that have raised more than €10 million. (HolaCamp’s reported €10M investment alone is not above the threshold; Cala also reports total funding of ~$10.9M.)",
+    "names": [
+     "Amenitiz",
+     "Lodgify",
+     "HolaCamp"
+    ],
+    "amounts": [
+     "~€76M",
+     "~$36M",
+     "~$10.9M"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Which Spanish hotel tech startups have raised more than 10 million?",
+      "return_entities": true,
+      "explainability": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 13.2,
+   "exit": 0,
+   "error": null
+  }
+ },
+ "Lista: fintech en Finlandia, más de 5M": {
+  "¿Qué startups fintech de Finlandia han levantado más de 5 millones?": {
+   "final": {
+    "answer": "Cala’s results list these Finnish fintech startups as having raised more than €5 million: Enfuce (~€62 M), CrediNord (~€48 M), Multitude (~€48 M), ePassi (~€41.5 M), Blue Finance (~€40 M), Streamr (~€26 M), Tesseract (~€21 M), Zevoy (~€18.8 M), AREX (~€11.8 M+), Fellow Bank (~€11.0 M), Bonusway (~€9.3 M), Basware (~€8.2 M) and Invesdor (~€6.2 M). The same results include AlphaSense (~€442 M), though they describe it as founded by Finnish founders and headquartered in New York, and categorize Silo AI (€10 M) as fintech only in some rankings. Cala’s figures are reported as cumulative totals and may have changed.",
+    "names": [
+     "Enfuce",
+     "CrediNord",
+     "Multitude",
+     "ePassi",
+     "Blue Finance",
+     "Streamr",
+     "Tesseract",
+     "Zevoy",
+     "AREX",
+     "Fellow Bank",
+     "Bonusway",
+     "Basware",
+     "Invesdor",
+     "AlphaSense",
+     "Silo AI"
+    ],
+    "amounts": [
+     "~€62 M",
+     "~€48 M",
+     "~€48 M",
+     "~€41.5 M",
+     "~€40 M",
+     "~€26 M",
+     "~€21 M",
+     "~€18.8 M",
+     "~€11.8 M+",
+     "~€11.0 M",
+     "~€9.3 M",
+     "~€8.2 M",
+     "~€6.2 M",
+     "~€442 M",
+     "€10 M"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Which fintech startups in Finland have raised more than 5 million? Include company names and amounts raised.",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 65.6,
+   "exit": 0,
+   "error": null
+  },
+  "De Finlandia, fintechs que levantaron mas de 5M": {
+   "final": {
+    "answer": "Cala’s results list these Finland fintechs as having raised more than $5 million: AlphaSense (€442.3M); Enfuce (€62M); CrediNord (€48.4M); Multitude (€48M); ePassi (€41.5M); Tesseract ($25M); Zevoy (€18.8M); Midaxo (€15.4M); Heeros (€13.7M); Zervant (€13.7M); Basware (€8.2M); Invesdor (€6.2M); and Holvi (€5.4M). The list is based on reported funding data compiled in the 2022 Finland fintech rankings, with some later figures in Cala’s results. AlphaSense was founded in Finland but is now headquartered in New York.",
+    "names": [
+     "AlphaSense",
+     "Enfuce",
+     "CrediNord",
+     "Multitude",
+     "ePassi",
+     "Tesseract",
+     "Zevoy",
+     "Midaxo",
+     "Heeros",
+     "Zervant",
+     "Basware",
+     "Invesdor",
+     "Holvi"
+    ],
+    "amounts": [
+     "€442.3M",
+     "€62M",
+     "€48.4M",
+     "€48M",
+     "€41.5M",
+     "$25M",
+     "€18.8M",
+     "€15.4M",
+     "€13.7M",
+     "€13.7M",
+     "€8.2M",
+     "€6.2M",
+     "€5.4M"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Which fintech companies based in Finland have raised more than $5 million in funding? Include company names and reported amounts.",
+      "return_entities": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 65.6,
+   "exit": 0,
+   "error": null
+  },
+  "Finnish fintech startups with more than 5 million raised": {
+   "final": {
+    "answer": "Based on the Helsinki Fintech Farm’s 2022 ranking, Finnish fintech companies reported to have raised more than €5 million include AlphaSense (€442.3M), Enfuce (€62.0M), CrediNord (€48.4M), Multitude (€48.0M), ePassi (€41.5M), Blue Finance (€40.0M), Bonusway (€9.3M), Basware (€8.2M), and Invesdor (€6.2M). Silo AI also appeared in the top 20, but the source did not specify its funding amount. Figures are from the 2022 ranking.",
+    "names": [
+     "AlphaSense",
+     "Enfuce",
+     "CrediNord",
+     "Multitude",
+     "ePassi",
+     "Blue Finance",
+     "Bonusway",
+     "Basware",
+     "Invesdor",
+     "Silo AI"
+    ],
+    "amounts": [
+     "€442.3M",
+     "€62.0M",
+     "€48.4M",
+     "€48.0M",
+     "€41.5M",
+     "€40.0M",
+     "€9.3M",
+     "€8.2M",
+     "€6.2M"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Which Finnish fintech startups have raised more than €5 million in total funding? Include each company and reported amount raised.",
+      "return_entities": true,
+      "explainability": false
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 59.6,
+   "exit": 0,
+   "error": null
+  }
+ },
+ "Lista: climate tech en Alemania, más de 20M": {
+  "Startups de climate tech en Alemania con más de 20 millones de financiación": {
+   "final": {
+    "answer": "Cala lists these German climate tech startups with more than €20 million in funding: Enpal — ~$4.4–4.9 billion (including equity and debt); Proxima Fusion — ~€826 million; 1KOMMA5° — ~$644–718 million; Sunfire — ~$487–493 million; Reverion — ~€154 million; Thermondo — ~$113–115 million; Zolar — ~€140 million; IONITY — ~$327 million; ENVIRIA — ~$225 million; H2 MOBILITY — ~$131 million; Sono Motors — ~$119 million; and Formo — ~$109 million. Cala notes that amounts may include equity, debt, grants, or guarantee financing and can vary by source.",
+    "names": [
+     "Enpal",
+     "Proxima Fusion",
+     "1KOMMA5°",
+     "Sunfire",
+     "Reverion",
+     "Thermondo",
+     "Zolar",
+     "IONITY",
+     "ENVIRIA",
+     "H2 MOBILITY",
+     "Sono Motors",
+     "Formo"
+    ],
+    "amounts": [
+     "~$4.4–4.9 billion",
+     "~€826 million",
+     "~$644–718 million",
+     "~$487–493 million",
+     "~€154 million",
+     "~$113–115 million",
+     "~€140 million",
+     "~$327 million",
+     "~$225 million",
+     "~$131 million",
+     "~$119 million",
+     "~$109 million"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Climate tech startups in Germany with more than €20 million in total funding. List company names and total funding amounts.",
+      "return_entities": true,
+      "explainability": true
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 56.9,
+   "exit": 0,
+   "error": null
+  },
+  "En Alemania, ¿qué startups climáticas superan los 20 millones levantados?": {
+   "final": {
+    "answer": "No puedo determinarlo: no hay herramientas de Cala MCP disponibles en esta sesión.",
+    "names": [],
+    "amounts": []
+   },
+   "tools": [],
+   "seconds": 10.2,
+   "exit": 0,
+   "error": null
+  },
+  "Which German climate tech startups have raised over 20 million?": {
+   "final": {
+    "answer": "Cala’s results identify these German climate tech startups as having raised over $20 million: Enpal (~$3.2 billion), Sunfire ($500 million+), Flix ($886 million), IONITY ($770 million), 1KOMMA5° ($644–823 million), Forto ($616 million), TIER Mobility (multi-hundred million), Focused Energy (~$327 million), Hy2gen (~$278 million), ENVIRIA (~$225 million), Sonnen (~$163 million), H2 MOBILITY (~$131 million), and Thermondo (~€50 million+). Amounts are reported as given in Cala’s results; the results contain differing totals for some companies.",
+    "names": [
+     "Enpal",
+     "Sunfire",
+     "Flix",
+     "IONITY",
+     "1KOMMA5°",
+     "Forto",
+     "TIER Mobility",
+     "Focused Energy",
+     "Hy2gen",
+     "ENVIRIA",
+     "Sonnen",
+     "H2 MOBILITY",
+     "Thermondo"
+    ],
+    "amounts": [
+     "~$3.2 billion",
+     "$500 million+",
+     "$886 million",
+     "$770 million",
+     "$644–823 million",
+     "$616 million",
+     "multi-hundred million",
+     "~$327 million",
+     "~$278 million",
+     "~$225 million",
+     "~$163 million",
+     "~$131 million",
+     "~€50 million+"
+    ]
+   },
+   "tools": [
+    {
+     "tool": "knowledge_search",
+     "arguments": {
+      "input": "Which German climate tech startups have raised over 20 million? Include company names and total funding amounts.",
+      "return_entities": true,
+      "explainability": false
+     },
+     "status": "completed",
+     "error": null
+    }
+   ],
+   "seconds": 55.0,
+   "exit": 0,
+   "error": null
+  }
+ }
+}
