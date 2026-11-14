@@ -5,4 +5,7 @@ __pycache__/
 *.pyc
 .venv/
 node_modules/
-demo/cache/
+backend/cache/
+.expo/
+dist/
+web-build/
