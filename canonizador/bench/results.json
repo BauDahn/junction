@@ -1,0 +1,2912 @@
+{
+ "Ronda concreta (Serie B de Amenitiz)": {
+  "direct": {
+   "¿Cuánto levantó Amenitiz en su Serie B y quién lideró la ronda?": {
+    "fact_ids": [
+     "2d7f987b-7f27-42ce-b29b-cd89f935365d",
+     "4a072a39-b934-4aca-b26f-cbcb955ac752",
+     "679a7363-a019-4da1-b328-bfbdf40526c3",
+     "e69abd4d-b5c8-4359-9e72-3bf357312399",
+     "ec0101ca-1f71-44bb-87f7-fa4f43d7574f"
+    ],
+    "entity_ids": [
+     "2c557cbb-4e37-44db-9f47-5bc327a86320",
+     "73c397c8-3456-4b21-874a-d1f49f55152e",
+     "7687f5f8-2ae7-4c5f-859b-7a929f81eff5",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "c10b7226-55b9-4994-92b2-6a799a661c96",
+     "db95edaa-058f-494d-a4f4-5f56bf81afd9"
+    ],
+    "answer_hash": "3f8ba8b8df",
+    "answer": "Amenitiz, la startup de tecnología hotelera con sede en Barcelona, cerró su **Serie B en noviembre de 2025** por un total de **45 millones de dólares (aproximadamente 39 millones de euros)**. Se trató de una combinación de capital (equity) y líneas de crédito.\n\nLa ronda fue **liderada por Kfund**, a través de su vehículo de crecimiento **Leadwind**. También participaron el fondo estadounidense **T",
+    "calls": 1,
+    "seconds": 0.5
+   },
+   "quien lidero y de cuanto fue la serie b de amenitiz": {
+    "fact_ids": [
+     "2cdcd5f6-e8e4-4a98-b1e5-e9011a59e0a1",
+     "42642de6-c109-422a-a1e3-d452247d2b2b",
+     "8993778f-0bb8-487b-b22b-860bdb89a7b2",
+     "f6ba3f3b-8974-4570-ad61-9b0622bdec7f"
+    ],
+    "entity_ids": [
+     "04fcf0f4-92bf-4d4c-aa8c-7f64dd20e50a",
+     "2c557cbb-4e37-44db-9f47-5bc327a86320",
+     "37ea4d4a-d853-45de-9e29-d95df4ac0da3",
+     "3fb8df43-c996-43f4-9223-275ed38d9676",
+     "561be92a-68c3-4c2a-9df5-25e03b7f5132",
+     "7687f5f8-2ae7-4c5f-859b-7a929f81eff5",
+     "79992082-af3a-4c45-b286-71ad79a7af46",
+     "92a05950-81ab-5fb4-aa0e-e24e097405cd",
+     "db95edaa-058f-494d-a4f4-5f56bf81afd9"
+    ],
+    "answer_hash": "2f2d7ca68c",
+    "answer": "## Serie B de Amenitiz\n\nLa startup barcelonesa **Amenitiz** cerró su ronda de financiación **Serie B** por un total de **45 millones de dólares** (aproximadamente **39 millones de euros**), en una combinación de capital riesgo y líneas de crédito.\n\nLa ronda fue **liderada por Kfund**, a través de su fondo growth **Leadwind**. También participaron nuevos inversores como **Thayer Ventures** (San Fra",
+    "calls": 1,
+    "seconds": 23.9
+   },
+   "How much did Amenitiz raise in its Series B and who led the round?": {
+    "fact_ids": [
+     "35ce1148-e4e7-418b-8805-512abd196ebf",
+     "462c52e9-af38-4e96-b863-54f6241831d3",
+     "76249c69-31ea-4096-80e4-7e999e5376d4",
+     "cc2fe71f-f6aa-4dca-8c02-6ef290212254"
+    ],
+    "entity_ids": [
+     "04fcf0f4-92bf-4d4c-aa8c-7f64dd20e50a",
+     "2c557cbb-4e37-44db-9f47-5bc327a86320",
+     "561be92a-68c3-4c2a-9df5-25e03b7f5132",
+     "7687f5f8-2ae7-4c5f-859b-7a929f81eff5",
+     "79992082-af3a-4c45-b286-71ad79a7af46",
+     "9d6e8eee-5c24-4262-8e3c-1f8e799e7bd9",
+     "c10b7226-55b9-4994-92b2-6a799a661c96",
+     "c934f7e3-6ee3-4983-b0e1-f7827df567f9",
+     "db95edaa-058f-494d-a4f4-5f56bf81afd9",
+     "fe8d46dc-340c-4374-afc9-0968c5e9db9e"
+    ],
+    "answer_hash": "770fb9bdd9",
+    "answer": "Amenitiz raised **€38.9 million (approximately $45 million)** in its Series B round, which closed in November 2025. The round was **led by Kfund** through its growth fund, **Leadwind**.\n\nOther participants included **Thayer Ventures** and **Columbia Lake Partners**, alongside existing investors **Eight Roads Ventures**, **Point Nine**, **Otium Capital**, **Backed VC**, and **Chalfen Ventures**.",
+    "calls": 1,
+    "seconds": 8.2
+   }
+  },
+  "canonical": {
+   "¿Cuánto levantó Amenitiz en su Serie B y quién lideró la ronda?": {
+    "query": "Amenitiz.funding_round.series=B.return(amount, lead investor, investors, date)",
+    "rows_hash": "3dd0eac6ff",
+    "rows": [
+     {
+      "name": "Amenitiz",
+      "amount": "€38.9 million (~$45 million)",
+      "lead investor": "Kfund (via its Leadwind growth fund)",
+      "investors": "Thayer Ventures, Columbia Lake Partners, Eight Roads Ventures, Point Nine (Point9), Otium Capital, Backed VC, Chalfen Ventures",
+      "date": "November 11, 2025"
+     }
+    ],
+    "cross_check": {
+     "structured_amount": 3000000000.0,
+     "query_amount": "€38.9 million (~$45 million)",
+     "match": false,
+     "note": "Discrepancia entre knowledge_query y entidades"
+    },
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Amenitiz",
+       "type": "Company"
+      }
+     ],
+     "attribute": "funding_round",
+     "filters": {
+      "round_label": "SERIES_B",
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 2,
+    "cache_hit": true,
+    "seconds": 12.8
+   },
+   "quien lidero y de cuanto fue la serie b de amenitiz": {
+    "query": "Amenitiz.funding_round.series=B.return(amount, lead investor, investors, date)",
+    "rows_hash": "3dd0eac6ff",
+    "rows": [
+     {
+      "name": "Amenitiz",
+      "amount": "€38.9 million (~$45 million)",
+      "lead investor": "Kfund (via its Leadwind growth fund)",
+      "investors": "Thayer Ventures, Columbia Lake Partners, Eight Roads Ventures, Point Nine (Point9), Otium Capital, Backed VC, Chalfen Ventures",
+      "date": "November 11, 2025"
+     }
+    ],
+    "cross_check": {
+     "structured_amount": 3000000000.0,
+     "query_amount": "€38.9 million (~$45 million)",
+     "match": false,
+     "note": "Discrepancia entre knowledge_query y entidades"
+    },
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Amenitiz",
+       "type": "Company"
+      }
+     ],
+     "attribute": "funding_round",
+     "filters": {
+      "round_label": "SERIES_B",
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "How much did Amenitiz raise in its Series B and who led the round?": {
+    "query": "Amenitiz.funding_round.series=B.return(amount, lead investor, investors, date)",
+    "rows_hash": "3dd0eac6ff",
+    "rows": [
+     {
+      "name": "Amenitiz",
+      "amount": "€38.9 million (~$45 million)",
+      "lead investor": "Kfund (via its Leadwind growth fund)",
+      "investors": "Thayer Ventures, Columbia Lake Partners, Eight Roads Ventures, Point Nine (Point9), Otium Capital, Backed VC, Chalfen Ventures",
+      "date": "November 11, 2025"
+     }
+    ],
+    "cross_check": {
+     "structured_amount": 3000000000.0,
+     "query_amount": "€38.9 million (~$45 million)",
+     "match": false,
+     "note": "Discrepancia entre knowledge_query y entidades"
+    },
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Amenitiz",
+       "type": "Company"
+      }
+     ],
+     "attribute": "funding_round",
+     "filters": {
+      "round_label": "SERIES_B",
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 3.4
+   }
+  }
+ },
+ "Fundadores (Glovo)": {
+  "direct": {
+   "¿Quiénes fundaron Glovo?": {
+    "fact_ids": [
+     "21d35e99-e6a9-4403-985b-80524f43576f",
+     "55371916-a330-4852-a638-283f63651f4b",
+     "dc84f612-2b37-47cb-89a9-4db77aac9a7b"
+    ],
+    "entity_ids": [
+     "170031db-8a34-4ac5-a5ab-fb112fcd6bea",
+     "52625ae6-9fb2-418e-ac3c-2d0e968dbfa0",
+     "651cbbe8-fb40-45c8-8eab-73a330b8cbab",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "b7e22939-a5ca-44af-8e80-fe5b80950b6b",
+     "bfcd3b17-8e15-4a0b-aa79-2cbded0456df",
+     "f2ae28ce-e983-4491-ac31-7048f6302a53"
+    ],
+    "answer_hash": "68f26290a2",
+    "answer": "## Fundadores de Glovo\n\nGlovo fue fundada en 2015 en Barcelona por tres cofundadores:\n\n- **Oscar Pierre** (también referido como Óscar Pierre)\n- **Sacha Michaud**\n- **Gerard Olivé**\n\nOscar Pierre y Sacha Michaud han sido las figuras más visibles de la compañía, liderando su equipo directivo desde sus inicios. Gerard Olivé, por su parte, llegó a Glovo a través del venture builder Antai, del cual er",
+    "calls": 1,
+    "seconds": 20.1
+   },
+   "Glovo: quienes son sus fundadores": {
+    "fact_ids": [
+     "0de4bfc4-76e2-4223-9d57-ceffd0e99bef",
+     "4b700a96-242d-4813-a691-ee3ab70f5fb1",
+     "4f777d6f-ed07-4d7a-a092-48300281e5bd"
+    ],
+    "entity_ids": [
+     "170031db-8a34-4ac5-a5ab-fb112fcd6bea",
+     "52625ae6-9fb2-418e-ac3c-2d0e968dbfa0",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "95e1e774-7b2f-44e7-8e8a-a20fa6b80ab2",
+     "b7e22939-a5ca-44af-8e80-fe5b80950b6b",
+     "bfcd3b17-8e15-4a0b-aa79-2cbded0456df",
+     "c0518a61-9306-4455-913b-c5d02c2b73ea"
+    ],
+    "answer_hash": "77d2b612ac",
+    "answer": "## Fundadores de Glovo\n\n**Glovo** es una empresa española de entrega a domicilio y logística bajo demanda, fundada en **2015** y con sede en Barcelona. Sus fundadores son:\n\n- **Oscar Pierre** — cofundador y CEO de Glovo.\n- **Sacha Michaud** — cofundador de Glovo.\n- **Gerard Olivé** — cofundador, vinculado al venture builder Antai Venture Builder.\n\nOscar Pierre y Sacha Michaud son las figuras más v",
+    "calls": 1,
+    "seconds": 25.0
+   },
+   "Who are the founders of Glovo?": {
+    "fact_ids": [
+     "3407a72c-a24a-4115-ba8c-65cb0198788c",
+     "97a68e67-783a-4ece-844b-39451c6d2d35"
+    ],
+    "entity_ids": [
+     "022c1505-3e75-460c-8788-04e1c58ce336",
+     "181db6c2-316c-4b15-ad34-e0b5d5fc8a03",
+     "2101a904-d52c-500a-b90f-85ca10bccf55",
+     "3991d008-04da-40fd-83dc-b742d890a2b8",
+     "3b89b33d-7f9b-48cf-81ea-8ded0de0c860",
+     "52625ae6-9fb2-418e-ac3c-2d0e968dbfa0",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "b7e22939-a5ca-44af-8e80-fe5b80950b6b",
+     "bfcd3b17-8e15-4a0b-aa79-2cbded0456df",
+     "db2a9bff-cfc8-43e8-883c-8685d571b3bd",
+     "db3c1f2b-dc8c-4c1b-bb92-d8b9420a4faf"
+    ],
+    "answer_hash": "ebd41acffe",
+    "answer": "## Founders of Glovo\n\nGlovo was co-founded in 2015 in Barcelona by:\n\n- **Óscar Pierre** – CEO and co-founder. He studied at the Universitat Politècnica de Catalunya before transferring to Georgia Tech in the U.S. After graduating, he worked as an aerodynamics engineer at Airbus in Toulouse before launching Glovo.\n- **Sacha Michaud** – Co-founder. A Canadian-born UK national with decades of experie",
+    "calls": 1,
+    "seconds": 20.3
+   }
+  },
+  "canonical": {
+   "¿Quiénes fundaron Glovo?": {
+    "query": "Glovo.founders.return(name)",
+    "rows_hash": "9b036196ef",
+    "rows": [
+     {
+      "name": "Oscar Pierre"
+     },
+     {
+      "name": "Sacha Michaud"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Glovo",
+       "type": "Company"
+      }
+     ],
+     "attribute": "founders",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "Glovo: quienes son sus fundadores": {
+    "query": "Glovo.founders.return(name)",
+    "rows_hash": "9b036196ef",
+    "rows": [
+     {
+      "name": "Oscar Pierre"
+     },
+     {
+      "name": "Sacha Michaud"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Glovo",
+       "type": "Company"
+      }
+     ],
+     "attribute": "founders",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "Who are the founders of Glovo?": {
+    "query": "Glovo.founders.return(name)",
+    "rows_hash": "9b036196ef",
+    "rows": [
+     {
+      "name": "Oscar Pierre"
+     },
+     {
+      "name": "Sacha Michaud"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Glovo",
+       "type": "Company"
+      }
+     ],
+     "attribute": "founders",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   }
+  }
+ },
+ "Adquisiciones (Mews)": {
+  "direct": {
+   "¿Qué empresas ha comprado Mews?": {
+    "fact_ids": [
+     "0b97047e-e205-4a61-8495-ec9955bf6f56",
+     "1d32bdc0-2dde-4878-afed-13fe67044c9d",
+     "2ca89849-64b8-496e-b9d8-62a2c7ea0b9b",
+     "337d92d9-11c6-4147-b72d-631d73c245a0",
+     "4c0b0ad9-a59e-49b0-b4ea-5d72d0da688b",
+     "5e4d74cb-3e60-4343-be45-7c90ea74241b",
+     "b952fdb2-cfe5-4fb6-8278-23473d42aa5e",
+     "cfa5082f-e765-4d4d-aac0-34543719b1ce",
+     "d37739a5-1507-48bb-9901-b2791816a03f",
+     "ee4aec69-6e76-4499-b7f1-f70196587019",
+     "fe8ed063-0197-45d5-9b09-b26fde948ce3"
+    ],
+    "entity_ids": [
+     "0850fd43-4707-4d40-b50e-068984fc3019",
+     "27422d0d-d68a-5707-934b-61c5906d8061",
+     "34906a63-741e-46f8-a0bc-014ade86e630",
+     "36508864-ffa6-55a1-81fa-5fc517927f5b",
+     "3a1def7a-b794-4c6b-8eb4-d1d197858075",
+     "6644a332-ad6f-4280-b7a0-c89487a7f921",
+     "763bd3ad-e18f-4284-a5b3-76d48c8855b9",
+     "a024c56e-470f-4b7d-b207-9a7dcf181148",
+     "ede937ad-0e87-47b7-b828-04f29c9f6181"
+    ],
+    "answer_hash": "3308c2dcf3",
+    "answer": "## Adquisiciones de Mews\n\n**Mews** (Mews Systems), la plataforma de tecnología hotelera con sede en Ámsterdam, ha realizado al menos **14 adquisiciones** a través de su brazo de inversión **Mews Ventures**. A continuación se listan las empresas adquiridas conocidas, ordenadas cronológicamente:\n\n| Fecha | Empresa adquirida | Descripción |\n|---|---|---|\n| 2019 | **Planet Winner** | Tecnología hotele",
+    "calls": 1,
+    "seconds": 39.6
+   },
+   "adquisiciones hechas por Mews": {
+    "fact_ids": [
+     "1cd3416a-d58a-4d0b-a96b-05e4347c5cc1",
+     "37ad24e6-1393-4372-b141-053bc8c5aeb4",
+     "440433f0-9ff4-4936-9014-4640a26667eb",
+     "467d5acc-7b0e-46a8-937c-b504306df814",
+     "4702cb4b-ca2d-4cd1-a2fb-a833cdabede2",
+     "85a24c49-1a8a-4517-a49c-65f25dfdaf67",
+     "8f1feb76-1f0e-45ec-9932-89fdfa67ecde",
+     "abd8bafa-3d39-48d0-98ae-93eb8d4dd3fa",
+     "ae88b6dd-8530-40e8-8cf6-9e2068d5b897",
+     "b49d0850-583e-465b-b2e9-0fd678b42022",
+     "bc88ee5a-5348-4232-ae18-fa7e2bdeb820",
+     "e3b2cf07-0255-453d-9d59-918f814adbde",
+     "e7518766-86cc-48d4-9fc3-35bc1f76e777",
+     "ff0b7acc-97d1-41cb-9dd9-f515e8dcced1"
+    ],
+    "entity_ids": [
+     "27422d0d-d68a-5707-934b-61c5906d8061",
+     "34906a63-741e-46f8-a0bc-014ade86e630",
+     "36508864-ffa6-55a1-81fa-5fc517927f5b",
+     "3935a48e-3ab7-4e9d-becc-ef018025defc",
+     "4498f7f8-fecf-4e62-9d76-0246d41791c4",
+     "6972de2f-f4c4-4ff5-9d2a-7dae9b6de8d2",
+     "6b6f3214-49f8-5658-a642-e7fd35d23c5e",
+     "736e3367-69c4-5817-a3b1-bfdfc63db275",
+     "a024c56e-470f-4b7d-b207-9a7dcf181148",
+     "a49f2e24-b6a0-4e9e-9046-daf198bff94b",
+     "acb7262b-d660-5d94-b05e-8c2bcd517304",
+     "d2b682af-68c7-43a9-bd7b-4447e49d37d3",
+     "e96d0b39-1ca2-4680-9fa0-e4890cb2415a",
+     "ede937ad-0e87-47b7-b828-04f29c9f6181",
+     "f389d1b6-9fe3-4dc3-8aa7-b4c1cc2cc408"
+    ],
+    "answer_hash": "276d67b381",
+    "answer": "## Adquisiciones realizadas por Mews\n\nMews, la plataforma de tecnología hotelera con sede en Ámsterdam (fundada en Praga en 2012), ha llevado a cabo una agresiva estrategia de adquisiciones a través de su brazo de inversión **Mews Ventures**. A noviembre de 2026, se le atribuyen al menos **14 adquisiciones**. A continuación el listado cronológico de las más documentadas:\n\n| # | Empresa adquirida |",
+    "calls": 1,
+    "seconds": 47.9
+   },
+   "Which companies has Mews acquired?": {
+    "fact_ids": [
+     "47630c4e-6121-40af-b796-4a81b2f75505",
+     "64aebae0-2315-4835-885d-a3c183dcf6a2",
+     "670c2dd8-5a34-4802-a604-1aab6f455fd4",
+     "760a55ea-83c6-4e2f-9390-ba4bba81ac67",
+     "76bee45d-b6fe-49e9-8fbf-3725748c4039",
+     "8bb8b97a-ca06-4b04-a5df-150c8a8c5dff",
+     "9e598be7-2abc-4299-9761-7ed9fde4e56d",
+     "adf38502-9735-4610-b0c9-dee6b4af9edf",
+     "d17897de-c0a2-404c-8010-30e56485dbda"
+    ],
+    "entity_ids": [
+     "27422d0d-d68a-5707-934b-61c5906d8061",
+     "28104468-c1b3-43be-a62d-e751b9c26cb4",
+     "36508864-ffa6-55a1-81fa-5fc517927f5b",
+     "3a1def7a-b794-4c6b-8eb4-d1d197858075",
+     "3c6292c5-50d3-5cf8-b52c-ce69baeec2a0",
+     "4498f7f8-fecf-4e62-9d76-0246d41791c4",
+     "842388ab-13fc-438c-91f0-bb245b78a5d2",
+     "a024c56e-470f-4b7d-b207-9a7dcf181148",
+     "acb7262b-d660-5d94-b05e-8c2bcd517304",
+     "b6f57d8b-33dd-409a-9fbb-269947c54e23",
+     "d2b682af-68c7-43a9-bd7b-4447e49d37d3",
+     "e96d0b39-1ca2-4680-9fa0-e4890cb2415a",
+     "ede937ad-0e87-47b7-b828-04f29c9f6181"
+    ],
+    "answer_hash": "0577ceeb5b",
+    "answer": "## Companies Acquired by Mews\n\nMews, the Amsterdam-based hospitality cloud platform, has made a series of acquisitions through its **Mews Ventures** arm. Here is the comprehensive list of companies Mews has acquired, in chronological order:\n\n| # | Company | Year | Description |\n|---|---------|------|-------------|\n| 1 | **Planet Winner** | 2019 | Property management system |\n| 2 | **Base7Booking**",
+    "calls": 1,
+    "seconds": 39.2
+   }
+  },
+  "canonical": {
+   "¿Qué empresas ha comprado Mews?": {
+    "query": "Mews.acquisitions.return(name, date, amount)",
+    "rows_hash": "05f5588422",
+    "rows": [
+     {
+      "name": "Planet Winner",
+      "date": "2019",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Base7Booking",
+      "date": "November 2020",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Hotel Perfect",
+      "date": "2021",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Cenium",
+      "date": "2022",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Bizzon",
+      "date": "2022",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Hotello",
+      "date": "April 13, 2023",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Nomi",
+      "date": "October 4, 2023",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Frontdesk Anywhere",
+      "date": "January 31, 2024",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "HS/3 Hotelsoftware",
+      "date": "May 14, 2024",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Quotelo",
+      "date": "November 4, 2024",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Atomize",
+      "date": "November 21, 2024",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Clarity Hospitality Software Solutions",
+      "date": "January 7, 2025",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Flexkeeping",
+      "date": "September 30, 2025",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "DataChat",
+      "date": "October 28, 2025",
+      "amount": "Not disclosed"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Mews",
+       "type": "Company"
+      }
+     ],
+     "attribute": "acquisitions",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "adquisiciones hechas por Mews": {
+    "query": "Mews.acquisitions.return(name, date, amount)",
+    "rows_hash": "05f5588422",
+    "rows": [
+     {
+      "name": "Planet Winner",
+      "date": "2019",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Base7Booking",
+      "date": "November 2020",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Hotel Perfect",
+      "date": "2021",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Cenium",
+      "date": "2022",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Bizzon",
+      "date": "2022",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Hotello",
+      "date": "April 13, 2023",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Nomi",
+      "date": "October 4, 2023",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Frontdesk Anywhere",
+      "date": "January 31, 2024",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "HS/3 Hotelsoftware",
+      "date": "May 14, 2024",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Quotelo",
+      "date": "November 4, 2024",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Atomize",
+      "date": "November 21, 2024",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Clarity Hospitality Software Solutions",
+      "date": "January 7, 2025",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Flexkeeping",
+      "date": "September 30, 2025",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "DataChat",
+      "date": "October 28, 2025",
+      "amount": "Not disclosed"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Mews",
+       "type": "Company"
+      }
+     ],
+     "attribute": "acquisitions",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "Which companies has Mews acquired?": {
+    "query": "Mews.acquisitions.return(name, date, amount)",
+    "rows_hash": "05f5588422",
+    "rows": [
+     {
+      "name": "Planet Winner",
+      "date": "2019",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Base7Booking",
+      "date": "November 2020",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Hotel Perfect",
+      "date": "2021",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Cenium",
+      "date": "2022",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Bizzon",
+      "date": "2022",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Hotello",
+      "date": "April 13, 2023",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Nomi",
+      "date": "October 4, 2023",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Frontdesk Anywhere",
+      "date": "January 31, 2024",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "HS/3 Hotelsoftware",
+      "date": "May 14, 2024",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Quotelo",
+      "date": "November 4, 2024",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Atomize",
+      "date": "November 21, 2024",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Clarity Hospitality Software Solutions",
+      "date": "January 7, 2025",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "Flexkeeping",
+      "date": "September 30, 2025",
+      "amount": "Not disclosed"
+     },
+     {
+      "name": "DataChat",
+      "date": "October 28, 2025",
+      "amount": "Not disclosed"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Mews",
+       "type": "Company"
+      }
+     ],
+     "attribute": "acquisitions",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   }
+  }
+ },
+ "Financiación total (Factorial)": {
+  "direct": {
+   "¿Cuánta financiación total ha levantado Factorial?": {
+    "fact_ids": [
+     "1459f33f-bf60-4ff6-8bf1-aa9bff2ed493",
+     "1faa7f4d-c953-400c-b370-40d33523d952",
+     "520b812e-6a34-40ec-a342-d2464e1d9f91",
+     "531df3f3-577c-4290-9824-04c633039c46",
+     "8ed8e3ed-185c-43b5-b0d0-7c9687ebe623",
+     "9296fdc4-8a98-42be-ab91-76ec72f8ec99",
+     "9a8624bb-b009-4b52-a9f4-db95f5cb99be",
+     "9e7f42f3-34e4-4de1-bf51-05b00add8b3e",
+     "ba31f0d1-4d85-44a4-8098-1d7875e4485f",
+     "c1cea789-eb99-4610-a7f1-605bac5cb68d",
+     "fbde13ad-a730-4fb0-b3ec-ca22335ac8f6"
+    ],
+    "entity_ids": [
+     "276a7aad-f22b-43f4-b755-cc923da7e6f5",
+     "2d3926fc-f4fa-4863-8493-b0a50f706eb5",
+     "4712a5e8-fa2e-4f27-9375-73b8fdbd3faf",
+     "6972de2f-f4c4-4ff5-9d2a-7dae9b6de8d2",
+     "6af5e296-4dce-4fa0-91db-fc0a17f64ab0",
+     "741e026e-344c-4f0b-9af1-19945cfd582b",
+     "7befda4a-a211-4361-bc7d-adf8564a222c",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "8daff491-270c-489b-a9ab-a3949f282c49",
+     "c0b628e2-94d1-4f5f-8dce-669177846dda",
+     "c934f7e3-6ee3-4983-b0e1-f7827df567f9",
+     "d108a1a5-d9cc-42f8-87f4-3872b111c5a5",
+     "d4640009-5578-485e-9f77-3ab64881cddd"
+    ],
+    "answer_hash": "f0e47ccf55",
+    "answer": "## Financiación total de Factorial\n\n**Factorial**, la plataforma de software de gestión de recursos humanos fundada en Barcelona en 2016, ha levantado un total estimado de entre **$420M y €523M** (según la fuente y la moneda de referencia) a lo largo de múltiples rondas de financiación.\n\n### Principales rondas de financiación conocidas:\n\n| Ronda | Fecha aprox. | Importe |\n|-------|-------------|--",
+    "calls": 1,
+    "seconds": 35.4
+   },
+   "Factorial, financiacion total levantada hasta hoy": {
+    "fact_ids": [
+     "0d78fed2-7c48-41c8-be79-e8bb9a6e6a81",
+     "140a3785-3bb5-476c-9e5e-4068f309c4b1",
+     "30e2c267-a233-49a9-8da9-4179cdf0b0b2",
+     "5e559f2e-88a8-4e39-9d38-23ad60c86121",
+     "79087b87-37be-4841-bccf-18982c5d2c01",
+     "8195ce2a-260b-400d-ba22-c863db846962",
+     "9ac88e46-a9d6-42f4-98ef-3b7822a957fe",
+     "c238234a-213d-4116-87f6-de7f8d409d8d",
+     "c5bb69bd-ce81-4ff5-9e5b-53cf1a9900f4",
+     "c764a5c1-be87-467b-ad79-81344442ef12"
+    ],
+    "entity_ids": [
+     "276a7aad-f22b-43f4-b755-cc923da7e6f5",
+     "37ea4d4a-d853-45de-9e29-d95df4ac0da3",
+     "3efa5440-48c8-4eb3-8358-b826f3cb07c0",
+     "4712a5e8-fa2e-4f27-9375-73b8fdbd3faf",
+     "5daed632-899a-4893-90c2-690c6004ec3d",
+     "694ae57f-167f-4bb2-a21f-6df77def8f8e",
+     "6972de2f-f4c4-4ff5-9d2a-7dae9b6de8d2",
+     "6af5e296-4dce-4fa0-91db-fc0a17f64ab0",
+     "7befda4a-a211-4361-bc7d-adf8564a222c",
+     "7d4ebd18-3539-4f19-a2e0-93bebb838554",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "9389170b-144d-4b10-b01a-813862fcc9bd",
+     "d108a1a5-d9cc-42f8-87f4-3872b111c5a5"
+    ],
+    "answer_hash": "9cfd9778dc",
+    "answer": "## Factorial — Financiación total levantada\n\n**Factorial** es una plataforma de software de gestión de recursos humanos para pymes, fundada en **2016** en **Barcelona, España**. A lo largo de su historia ha completado múltiples rondas de financiación, acumulando un total estimado de entre **€523 millones** (~$570 millones) según diversas fuentes.\n\n### Historial de rondas de financiación\n\n| Año | R",
+    "calls": 1,
+    "seconds": 40.4
+   },
+   "How much funding has Factorial raised in total?": {
+    "fact_ids": [
+     "3b9581a3-a8e4-4641-870d-13dce6b042b1",
+     "42b0d67a-67f0-438d-a1e7-2c878c44c64d",
+     "567c9f51-1250-4701-bc5d-d19879960556",
+     "8ac5757c-18f6-4f4d-b9d0-c5b6ed8b85c7",
+     "9ef98ef1-f3e2-4e62-8765-e03c479b5fb7"
+    ],
+    "entity_ids": [
+     "276a7aad-f22b-43f4-b755-cc923da7e6f5",
+     "6972de2f-f4c4-4ff5-9d2a-7dae9b6de8d2",
+     "7befda4a-a211-4361-bc7d-adf8564a222c",
+     "7d4ebd18-3539-4f19-a2e0-93bebb838554",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "afca0430-09dd-4f80-b601-600908cb63b1",
+     "c0b628e2-94d1-4f5f-8dce-669177846dda",
+     "d4640009-5578-485e-9f77-3ab64881cddd"
+    ],
+    "answer_hash": "8f56619ec5",
+    "answer": "## Factorial – Total Funding\n\n**Factorial**, the Barcelona-based HR software platform founded in 2016, has raised approximately **$572 million** in total funding across **9 rounds** (as of November 2026). Key rounds include:\n\n| Date | Round | Amount | Lead Investor |\n|------|-------|--------|---------------|\n| Jun 2017 | Angel | $500K | — |\n| Oct 2018 | Seed | $3M | Creandum |\n| Apr 2020 | Series ",
+    "calls": 1,
+    "seconds": 31.7
+   }
+  },
+  "canonical": {
+   "¿Cuánta financiación total ha levantado Factorial?": {
+    "query": "Factorial.return(total funding)",
+    "rows_hash": "9daa55a5ef",
+    "rows": [
+     {
+      "name": "Factorial",
+      "total_funding": "$572 million"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Factorial",
+       "type": "Company"
+      }
+     ],
+     "attribute": "total_funding",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "Factorial, financiacion total levantada hasta hoy": {
+    "query": "Factorial.return(total funding)",
+    "rows_hash": "9daa55a5ef",
+    "rows": [
+     {
+      "name": "Factorial",
+      "total_funding": "$572 million"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Factorial",
+       "type": "Company"
+      }
+     ],
+     "attribute": "total_funding",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "How much funding has Factorial raised in total?": {
+    "query": "Factorial.return(total funding)",
+    "rows_hash": "9daa55a5ef",
+    "rows": [
+     {
+      "name": "Factorial",
+      "total_funding": "$572 million"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Factorial",
+       "type": "Company"
+      }
+     ],
+     "attribute": "total_funding",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   }
+  }
+ },
+ "Inversores (Wolt)": {
+  "direct": {
+   "¿Quiénes son los inversores de Wolt?": {
+    "fact_ids": [
+     "98ac0ee2-a1ec-4c86-8131-8b07bc02ff8e",
+     "bcb7d9e1-5f51-4771-8b67-891bb9cf5ebc",
+     "cea79dc6-bce1-4066-810a-ffc6b32af544",
+     "d4bb6eb1-7c8d-450f-89d1-a4a91b642d1f",
+     "d4fca7d4-733e-48de-adb1-29beb0f3a695",
+     "dceb05bd-f2f4-4532-a8df-861c6d9cba2b"
+    ],
+    "entity_ids": [
+     "07f8aa83-a5d1-4944-affc-d9bb01ff4c96",
+     "0ea158b7-ab05-4d2a-b0af-4970f672ca9e",
+     "17ffd618-a879-4bb3-99dd-af07d6b45f75",
+     "254fb3b3-9fd8-482f-a21e-5643514da7e4",
+     "2c43483a-8d36-4ae6-9887-e4746dd5dccb",
+     "3a2558c8-10f6-409c-95c0-857ebe600751",
+     "476a73ac-afa2-4713-9f73-188bc7ec0b95",
+     "5086a57c-5b9a-4878-a225-f150d30f8ff2",
+     "680000b7-a490-418f-8098-9b1757db2e58",
+     "6972de2f-f4c4-4ff5-9d2a-7dae9b6de8d2",
+     "7ce1d675-ad79-461a-863f-b0a1a85aebf1",
+     "a15341c8-487b-441a-92f1-c9bff0f4a77b",
+     "b8b961c3-60f7-4630-af4c-b52002f222ab",
+     "c5846e9e-7cf8-4886-bb0a-34ecc24bfe0c",
+     "d4640009-5578-485e-9f77-3ab64881cddd",
+     "d6cf13e1-92ff-4567-bd72-30316f2498e5",
+     "dea0f32c-bbbe-4471-8ca9-6a0b2b1cfea1",
+     "e3d5b106-930a-4cbc-85d6-efa2e804f946",
+     "f389d1b6-9fe3-4dc3-8aa7-b4c1cc2cc408",
+     "fd3ba350-0e55-40b5-96e3-013994777fdc"
+    ],
+    "answer_hash": "b8fd6a69d9",
+    "answer": "## Inversores de Wolt\n\n**Wolt** es una plataforma finlandesa de entrega de comida fundada en 2014, adquirida por DoorDash en noviembre de 2021 por aproximadamente €7.000 millones. A lo largo de 8 rondas de financiación, Wolt recaudó alrededor de $825–860 millones.\n\n### Principales inversores\n\n- **ICONIQ Capital / ICONIQ Growth** — Lideró la ronda Serie E ($530 M, enero 2021) y co-lideró la Serie C",
+    "calls": 1,
+    "seconds": 34.9
+   },
+   "Wolt: inversores que han puesto dinero": {
+    "fact_ids": [
+     "48195317-a00e-4090-8252-b121d4b4a877",
+     "67e6daf1-3302-4cac-9754-9ae253dea0fb",
+     "6813e08e-50b0-4ac9-9ad1-102eb9d0810c",
+     "7d3c92f3-2510-447c-9573-9a2bd5b71a67",
+     "984e07ab-6156-4e9c-b1e6-e879bd369d77"
+    ],
+    "entity_ids": [
+     "07f8aa83-a5d1-4944-affc-d9bb01ff4c96",
+     "0ea158b7-ab05-4d2a-b0af-4970f672ca9e",
+     "2c43483a-8d36-4ae6-9887-e4746dd5dccb",
+     "3a2558c8-10f6-409c-95c0-857ebe600751",
+     "476a73ac-afa2-4713-9f73-188bc7ec0b95",
+     "5086a57c-5b9a-4878-a225-f150d30f8ff2",
+     "680000b7-a490-418f-8098-9b1757db2e58",
+     "6972de2f-f4c4-4ff5-9d2a-7dae9b6de8d2",
+     "7ce1d675-ad79-461a-863f-b0a1a85aebf1",
+     "a15341c8-487b-441a-92f1-c9bff0f4a77b",
+     "b8b961c3-60f7-4630-af4c-b52002f222ab",
+     "c5846e9e-7cf8-4886-bb0a-34ecc24bfe0c",
+     "c8f5b101-4e40-4286-b684-214ab973f64c",
+     "d4640009-5578-485e-9f77-3ab64881cddd",
+     "d6cf13e1-92ff-4567-bd72-30316f2498e5",
+     "dea0f32c-bbbe-4471-8ca9-6a0b2b1cfea1",
+     "e3d5b106-930a-4cbc-85d6-efa2e804f946",
+     "f389d1b6-9fe3-4dc3-8aa7-b4c1cc2cc408",
+     "fd3ba350-0e55-40b5-96e3-013994777fdc"
+    ],
+    "answer_hash": "50e0e1e5fc",
+    "answer": "## Inversores de Wolt\n\n**Wolt** es una plataforma finlandesa de entrega de comida fundada en 2014, adquirida por DoorDash en noviembre de 2021 por aproximadamente €7.000 millones. A lo largo de 8 rondas de financiación, Wolt recaudó alrededor de **$825 millones** en total.\n\n### Principales inversores\n\n| Inversor | Rol destacado |\n|---|---|\n| **ICONIQ Capital / ICONIQ Growth** | Lideró la Serie C (",
+    "calls": 1,
+    "seconds": 33.9
+   },
+   "Who has invested in Wolt?": {
+    "fact_ids": [
+     "38912988-bb45-4716-b5e7-a69f9fae603f",
+     "4352f159-fdc0-4c47-a145-37df8a9653a6",
+     "472e4dae-2a0e-449a-b0b8-afbdf5225cd2",
+     "8c470fb9-01a6-4c3d-8670-97fcc9ac1051",
+     "dd67be33-4600-4090-aecd-ee089dbe77c1"
+    ],
+    "entity_ids": [
+     "07f8aa83-a5d1-4944-affc-d9bb01ff4c96",
+     "0ea158b7-ab05-4d2a-b0af-4970f672ca9e",
+     "17ffd618-a879-4bb3-99dd-af07d6b45f75",
+     "2c43483a-8d36-4ae6-9887-e4746dd5dccb",
+     "3794cb88-1519-4ed6-b8dd-cbd641d85c62",
+     "3a2558c8-10f6-409c-95c0-857ebe600751",
+     "4193a076-2f73-429a-a3b0-b3f032b38d14",
+     "476a73ac-afa2-4713-9f73-188bc7ec0b95",
+     "680000b7-a490-418f-8098-9b1757db2e58",
+     "6972de2f-f4c4-4ff5-9d2a-7dae9b6de8d2",
+     "7ce1d675-ad79-461a-863f-b0a1a85aebf1",
+     "8f929584-4c5e-409e-9140-d820fe57b6df",
+     "9145d2e5-bf37-420d-9e45-e657587f0b90",
+     "a15341c8-487b-441a-92f1-c9bff0f4a77b",
+     "b8b961c3-60f7-4630-af4c-b52002f222ab",
+     "c5846e9e-7cf8-4886-bb0a-34ecc24bfe0c",
+     "d6cf13e1-92ff-4567-bd72-30316f2498e5",
+     "dea0f32c-bbbe-4471-8ca9-6a0b2b1cfea1",
+     "e3d5b106-930a-4cbc-85d6-efa2e804f946"
+    ],
+    "answer_hash": "4a64529ba7",
+    "answer": "## Investors in Wolt\n\nWolt, the Finnish food-delivery platform founded in 2014 (acquired by DoorDash in November 2021 for ~$7 billion), raised approximately $825–860 million across 8 funding rounds. The following investors have participated:\n\n### Key Investors by Round\n\n| Round | Date | Amount | Notable Investors |\n|-------|------|--------|-------------------|\n| **Seed** | Nov 2014 | $500K | Early",
+    "calls": 1,
+    "seconds": 32.5
+   }
+  },
+  "canonical": {
+   "¿Quiénes son los inversores de Wolt?": {
+    "query": "Wolt.investors.return(name, is_lead)",
+    "rows_hash": "3adeba61bc",
+    "rows": [
+     {
+      "name": "ICONIQ Capital / ICONIQ Growth",
+      "is_lead": true
+     },
+     {
+      "name": "EQT Ventures",
+      "is_lead": true
+     },
+     {
+      "name": "Goldman Sachs (Growth Equity)",
+      "is_lead": true
+     },
+     {
+      "name": "83North",
+      "is_lead": true
+     },
+     {
+      "name": "Lukasz Gadowski",
+      "is_lead": true
+     },
+     {
+      "name": "Highland Europe",
+      "is_lead": false
+     },
+     {
+      "name": "KKR",
+      "is_lead": false
+     },
+     {
+      "name": "Tiger Global",
+      "is_lead": false
+     },
+     {
+      "name": "DST Global",
+      "is_lead": false
+     },
+     {
+      "name": "Coatue",
+      "is_lead": false
+     },
+     {
+      "name": "Prosus Ventures",
+      "is_lead": false
+     },
+     {
+      "name": "EQT Growth",
+      "is_lead": false
+     },
+     {
+      "name": "Vintage Investment Partners",
+      "is_lead": false
+     },
+     {
+      "name": "Lifeline Ventures",
+      "is_lead": false
+     },
+     {
+      "name": "Inventure",
+      "is_lead": false
+     },
+     {
+      "name": "Atomico",
+      "is_lead": false
+     },
+     {
+      "name": "DoorDash",
+      "is_lead": false
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Wolt",
+       "type": "Company"
+      }
+     ],
+     "attribute": "investors",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "Wolt: inversores que han puesto dinero": {
+    "query": "Wolt.investors.return(name, is_lead)",
+    "rows_hash": "3adeba61bc",
+    "rows": [
+     {
+      "name": "ICONIQ Capital / ICONIQ Growth",
+      "is_lead": true
+     },
+     {
+      "name": "EQT Ventures",
+      "is_lead": true
+     },
+     {
+      "name": "Goldman Sachs (Growth Equity)",
+      "is_lead": true
+     },
+     {
+      "name": "83North",
+      "is_lead": true
+     },
+     {
+      "name": "Lukasz Gadowski",
+      "is_lead": true
+     },
+     {
+      "name": "Highland Europe",
+      "is_lead": false
+     },
+     {
+      "name": "KKR",
+      "is_lead": false
+     },
+     {
+      "name": "Tiger Global",
+      "is_lead": false
+     },
+     {
+      "name": "DST Global",
+      "is_lead": false
+     },
+     {
+      "name": "Coatue",
+      "is_lead": false
+     },
+     {
+      "name": "Prosus Ventures",
+      "is_lead": false
+     },
+     {
+      "name": "EQT Growth",
+      "is_lead": false
+     },
+     {
+      "name": "Vintage Investment Partners",
+      "is_lead": false
+     },
+     {
+      "name": "Lifeline Ventures",
+      "is_lead": false
+     },
+     {
+      "name": "Inventure",
+      "is_lead": false
+     },
+     {
+      "name": "Atomico",
+      "is_lead": false
+     },
+     {
+      "name": "DoorDash",
+      "is_lead": false
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Wolt",
+       "type": "Company"
+      }
+     ],
+     "attribute": "investors",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "Who has invested in Wolt?": {
+    "query": "Wolt.investors.return(name, is_lead)",
+    "rows_hash": "3adeba61bc",
+    "rows": [
+     {
+      "name": "ICONIQ Capital / ICONIQ Growth",
+      "is_lead": true
+     },
+     {
+      "name": "EQT Ventures",
+      "is_lead": true
+     },
+     {
+      "name": "Goldman Sachs (Growth Equity)",
+      "is_lead": true
+     },
+     {
+      "name": "83North",
+      "is_lead": true
+     },
+     {
+      "name": "Lukasz Gadowski",
+      "is_lead": true
+     },
+     {
+      "name": "Highland Europe",
+      "is_lead": false
+     },
+     {
+      "name": "KKR",
+      "is_lead": false
+     },
+     {
+      "name": "Tiger Global",
+      "is_lead": false
+     },
+     {
+      "name": "DST Global",
+      "is_lead": false
+     },
+     {
+      "name": "Coatue",
+      "is_lead": false
+     },
+     {
+      "name": "Prosus Ventures",
+      "is_lead": false
+     },
+     {
+      "name": "EQT Growth",
+      "is_lead": false
+     },
+     {
+      "name": "Vintage Investment Partners",
+      "is_lead": false
+     },
+     {
+      "name": "Lifeline Ventures",
+      "is_lead": false
+     },
+     {
+      "name": "Inventure",
+      "is_lead": false
+     },
+     {
+      "name": "Atomico",
+      "is_lead": false
+     },
+     {
+      "name": "DoorDash",
+      "is_lead": false
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "Wolt",
+       "type": "Company"
+      }
+     ],
+     "attribute": "investors",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   }
+  }
+ },
+ "Ejecutivos (TravelPerk)": {
+  "direct": {
+   "¿Quién es el CEO de TravelPerk?": {
+    "fact_ids": [
+     "53a40146-dcb1-4797-9704-5ebc5f7caba8",
+     "73a491ef-4abf-4e04-b564-d32b86a842c8",
+     "96f5f746-4354-4040-ac45-72fe17927f16"
+    ],
+    "entity_ids": [
+     "11864d84-ddaa-49d6-b991-8073282d16c9",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "8e314888-357a-4f24-a5f1-bc579e86942a",
+     "c6d13efd-1ec8-40c9-8175-6949f795b58e"
+    ],
+    "answer_hash": "0c12789e9d",
+    "answer": "El CEO de TravelPerk es **Avi Meir**, cofundador de la compañía. Meir fundó TravelPerk en 2015 junto con Javier Suárez. La empresa, con sede en Barcelona, es una plataforma de gestión de viajes corporativos que alcanzó el estatus de unicornio en enero de 2022 con una valoración de 1.300 millones de dólares.",
+    "calls": 1,
+    "seconds": 17.2
+   },
+   "TravelPerk, quien es su CEO": {
+    "fact_ids": [
+     "63283920-9035-452c-9d38-c8a106b604d2",
+     "f0a0668d-54f7-42b7-ad24-122161ac1e22"
+    ],
+    "entity_ids": [
+     "276a7aad-f22b-43f4-b755-cc923da7e6f5",
+     "32e27d54-3922-407f-aa07-2747d94b210c",
+     "3efa5440-48c8-4eb3-8358-b826f3cb07c0",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "8e314888-357a-4f24-a5f1-bc579e86942a",
+     "c6d13efd-1ec8-40c9-8175-6949f795b58e",
+     "f246ebb5-2729-54ff-b12a-baf36895ba0c"
+    ],
+    "answer_hash": "b86ab85b37",
+    "answer": "El CEO y cofundador de **TravelPerk** es **Avi Meir**. TravelPerk es una plataforma de gestión de viajes corporativos con sede en Barcelona, España. Bajo el liderazgo de Avi Meir, la compañía ha alcanzado una valoración de miles de millones de dólares y ha recaudado múltiples rondas de financiación de inversores como General Catalyst, Atomico, Blackstone y otros.",
+    "calls": 1,
+    "seconds": 19.5
+   },
+   "Who runs TravelPerk as chief executive?": {
+    "fact_ids": [
+     "58bc3ed4-9920-49f4-b51b-d0a9b27f228d",
+     "8d6615d7-98cd-4701-91b6-4ecf69a520ea"
+    ],
+    "entity_ids": [
+     "c6d13efd-1ec8-40c9-8175-6949f795b58e"
+    ],
+    "answer_hash": "8330995e63",
+    "answer": "**Avi Meir** is the Chief Executive Officer and Co-Founder of TravelPerk.",
+    "calls": 1,
+    "seconds": 9.7
+   }
+  },
+  "canonical": {
+   "¿Quién es el CEO de TravelPerk?": {
+    "query": "TravelPerk.executives.return(name, title)",
+    "rows_hash": "e3522459d8",
+    "rows": [
+     {
+      "name": "Avi Meir",
+      "title": "CEO & Co-Founder"
+     },
+     {
+      "name": "Jean-Christophe Taunay-Bucalo",
+      "title": "President & Chief Operating Officer (COO)"
+     },
+     {
+      "name": "Roy Hefer",
+      "title": "Chief Financial Officer (CFO)"
+     },
+     {
+      "name": "Nikita Miller",
+      "title": "Chief Product Officer (CPO)"
+     },
+     {
+      "name": "Robin Smith",
+      "title": "Chief Technology Officer (CTO)"
+     },
+     {
+      "name": "Yasmine Bratt",
+      "title": "Chief Revenue Officer (CRO)"
+     },
+     {
+      "name": "Sally Sourbron",
+      "title": "Chief People Officer"
+     },
+     {
+      "name": "Ron Levin",
+      "title": "Co-Founder"
+     },
+     {
+      "name": "Javier Suarez",
+      "title": "Co-Founder"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "TravelPerk",
+       "type": "Company"
+      }
+     ],
+     "attribute": "executives",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "TravelPerk, quien es su CEO": {
+    "query": "TravelPerk.executives.return(name, title)",
+    "rows_hash": "e3522459d8",
+    "rows": [
+     {
+      "name": "Avi Meir",
+      "title": "CEO & Co-Founder"
+     },
+     {
+      "name": "Jean-Christophe Taunay-Bucalo",
+      "title": "President & Chief Operating Officer (COO)"
+     },
+     {
+      "name": "Roy Hefer",
+      "title": "Chief Financial Officer (CFO)"
+     },
+     {
+      "name": "Nikita Miller",
+      "title": "Chief Product Officer (CPO)"
+     },
+     {
+      "name": "Robin Smith",
+      "title": "Chief Technology Officer (CTO)"
+     },
+     {
+      "name": "Yasmine Bratt",
+      "title": "Chief Revenue Officer (CRO)"
+     },
+     {
+      "name": "Sally Sourbron",
+      "title": "Chief People Officer"
+     },
+     {
+      "name": "Ron Levin",
+      "title": "Co-Founder"
+     },
+     {
+      "name": "Javier Suarez",
+      "title": "Co-Founder"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "TravelPerk",
+       "type": "Company"
+      }
+     ],
+     "attribute": "executives",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 5.1
+   },
+   "Who runs TravelPerk as chief executive?": {
+    "query": "TravelPerk.executives.return(name, title)",
+    "rows_hash": "e3522459d8",
+    "rows": [
+     {
+      "name": "Avi Meir",
+      "title": "CEO & Co-Founder"
+     },
+     {
+      "name": "Jean-Christophe Taunay-Bucalo",
+      "title": "President & Chief Operating Officer (COO)"
+     },
+     {
+      "name": "Roy Hefer",
+      "title": "Chief Financial Officer (CFO)"
+     },
+     {
+      "name": "Nikita Miller",
+      "title": "Chief Product Officer (CPO)"
+     },
+     {
+      "name": "Robin Smith",
+      "title": "Chief Technology Officer (CTO)"
+     },
+     {
+      "name": "Yasmine Bratt",
+      "title": "Chief Revenue Officer (CRO)"
+     },
+     {
+      "name": "Sally Sourbron",
+      "title": "Chief People Officer"
+     },
+     {
+      "name": "Ron Levin",
+      "title": "Co-Founder"
+     },
+     {
+      "name": "Javier Suarez",
+      "title": "Co-Founder"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [
+      {
+       "name": "TravelPerk",
+       "type": "Company"
+      }
+     ],
+     "attribute": "executives",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": null,
+      "sector": null,
+      "min_funding": null
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   }
+  }
+ },
+ "Lista: tecnología hotelera en España, más de 10M": {
+  "direct": {
+   "¿Qué startups españolas de tecnología hotelera levantaron más de 10 millones?": {
+    "fact_ids": [
+     "0d572b80-c3f7-4840-8d9a-8a6b7ff4808b",
+     "2bb1bd3a-88fe-4514-8556-6cb0ad43e035",
+     "42944091-4668-4620-9cfc-b0ceafe0d449",
+     "57501d29-ffc7-424e-b1af-fa43a729b9c7",
+     "bc3fdab1-3c04-4c81-93aa-68fe9a556a3a",
+     "cacd4c41-706b-4bf6-99e0-624b3a3ad17f",
+     "d3c80b38-4a06-480a-a7a5-e53f3f40f4f9",
+     "d3e12cfa-9207-4d53-952e-c6876ec4d109",
+     "e6899948-70de-4852-900d-250dcce95a1a",
+     "eb923040-bc40-45bd-8b2a-bad4f4c69225"
+    ],
+    "entity_ids": [
+     "08e2b232-2c08-4284-b0e9-fee1e3c4bc02",
+     "3efa5440-48c8-4eb3-8358-b826f3cb07c0",
+     "7687f5f8-2ae7-4c5f-859b-7a929f81eff5",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "8e314888-357a-4f24-a5f1-bc579e86942a",
+     "9d6e8eee-5c24-4262-8e3c-1f8e799e7bd9",
+     "b4b7dc94-e612-5570-ba2a-a734ad803430",
+     "c10b7226-55b9-4994-92b2-6a799a661c96",
+     "c2434d91-5aa3-4f41-b5c2-1274420d2193",
+     "ca5d2790-e046-4873-a5c7-a7294f45332f",
+     "db95edaa-058f-494d-a4f4-5f56bf81afd9",
+     "e122a8b3-d711-53bf-b81a-d843895c5081"
+    ],
+    "answer_hash": "ac7e1737b3",
+    "answer": "## Startups españolas de tecnología hotelera que han levantado más de 10 millones de euros\n\nA continuación se presentan las principales startups españolas enfocadas en tecnología para el sector hotelero/hospitality que han superado los 10 millones de euros en financiación acumulada:\n\n### 1. **TravelPerk** (Barcelona)\n- **Sector:** Gestión de viajes corporativos y gastos.\n- **Financiación destacada",
+    "calls": 1,
+    "seconds": 52.3
+   },
+   "mas de 10 millones levantados startups hoteleras tecnologia españa": {
+    "fact_ids": [
+     "477c708b-f33b-4d51-8d0d-e21fde040c51",
+     "48d78e98-65f0-4cd4-9bd0-14926271395f",
+     "54577ba0-ae56-4ca2-a3db-b9974076905b",
+     "8e4ea376-a9af-4ea0-b0b5-695153b18d05",
+     "9a4030b6-3113-4806-a7b4-bdf4c33b8f52",
+     "9dc8bd00-6a0a-490e-84a1-c61af2e14eae",
+     "ad7e69d5-886e-4228-b287-1b2dbb985d74",
+     "e1e9157b-9857-4609-be7e-876942ba0ebf",
+     "e547a412-0903-4adb-a653-50a41966513c"
+    ],
+    "entity_ids": [
+     "32e27d54-3922-407f-aa07-2747d94b210c",
+     "3efa5440-48c8-4eb3-8358-b826f3cb07c0",
+     "4559931f-2c47-45bc-8b34-bc330cdb42d9",
+     "484f021e-5340-48a5-ba25-5460fccf2d5a",
+     "74ff2e4b-b589-5646-9432-f3b8dc2c2592",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "84bdfef7-da36-4318-ae46-05f98c880e18",
+     "8e314888-357a-4f24-a5f1-bc579e86942a",
+     "b4b7dc94-e612-5570-ba2a-a734ad803430",
+     "cf047495-db66-4e5d-b30f-6c2ddfe23877",
+     "dd476f5e-44ff-4d7c-8a15-ae22c945e7f0",
+     "e122a8b3-d711-53bf-b81a-d843895c5081",
+     "f389d1b6-9fe3-4dc3-8aa7-b4c1cc2cc408"
+    ],
+    "answer_hash": "8a34721d13",
+    "answer": "## Startups de tecnología hotelera y turística en España que han levantado más de 10 millones de euros\n\nEl ecosistema startup español ha mostrado gran dinamismo en el sector de viajes, turismo y tecnología hotelera. A continuación, las principales startups españolas vinculadas a la vertical hotelera/turística que han superado los 10 millones de euros en financiación:\n\n### 1. **TravelPerk (ahora Pe",
+    "calls": 1,
+    "seconds": 51.6
+   },
+   "Which Spanish hotel tech startups have raised more than 10 million?": {
+    "fact_ids": [
+     "0e3691ba-58b6-4f02-b95b-f204714e2a54",
+     "10fd219b-4e40-4b3c-9772-7155d3721ee7",
+     "2a5a95b5-0209-4b21-9df5-e6b5404b411d",
+     "2d33552f-c46a-4e17-8d35-1c45b8a43f2a",
+     "3bfa8bdb-6408-4a49-b77e-b07fa0aa0eb6",
+     "4854f400-3a7b-41b8-b75f-cab2ed8922e5",
+     "56a1951e-0569-4260-8e6f-c8aba7b9f090",
+     "63dee241-3ef9-4f8f-a8d5-75af0c99b77c",
+     "72231ca6-cc6c-40d5-b2ed-21be57834f44",
+     "7acb395f-fbf2-4111-a695-657ceedabc96",
+     "946aceec-5643-4b68-b3b7-84f391b2c582",
+     "9bc2bf84-f5fc-4729-86ad-8144f8053f5a",
+     "a32a53b4-a5bb-4198-a497-ff75cb8eec28",
+     "addac608-4c82-4990-898b-03c24142b5a6",
+     "b61bee81-846c-49c6-82f0-48278fec03e3",
+     "bfbb41d3-1665-4034-9b74-1f2b132bb35d",
+     "ca3b42ec-8617-4f47-97ce-575d232bef5a"
+    ],
+    "entity_ids": [
+     "08e2b232-2c08-4284-b0e9-fee1e3c4bc02",
+     "1610f0ed-2677-4503-8633-115c5a27446c",
+     "2c557cbb-4e37-44db-9f47-5bc327a86320",
+     "4fd9e82c-e5c8-45d0-a7a9-a896f75ab82a",
+     "561be92a-68c3-4c2a-9df5-25e03b7f5132",
+     "741e026e-344c-4f0b-9af1-19945cfd582b",
+     "7687f5f8-2ae7-4c5f-859b-7a929f81eff5",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "9d6e8eee-5c24-4262-8e3c-1f8e799e7bd9",
+     "9e594bbc-0851-404d-8293-3fb8fb7c8288",
+     "a8295032-c675-4b6c-b551-c6d1014f8646",
+     "b186979d-5ba6-4b48-87f9-9ea26753f683",
+     "c934f7e3-6ee3-4983-b0e1-f7827df567f9",
+     "cc2a8b43-9d8d-4a5d-94b2-49832b3e74fb",
+     "cc4b1e7e-a167-472a-b9f4-f833a2c86db0",
+     "cfc32f7f-524f-487b-94a7-3b9be0576277",
+     "db95edaa-058f-494d-a4f4-5f56bf81afd9",
+     "e4dd8a94-8066-4726-8af6-e94e2d63dd47"
+    ],
+    "answer_hash": "0631820cd9",
+    "answer": "## Spanish Hotel Tech Startups That Have Raised More Than €10 Million\n\nHere are the notable Spanish hotel technology startups that have raised more than €10 million in total funding:\n\n### 1. **Amenitiz** (Barcelona)\n- **Founded:** 2017\n- **What it does:** All-in-one hotel management platform for independent hoteliers, combining property management software (PMS), channel manager, and booking engin",
+    "calls": 1,
+    "seconds": 54.7
+   }
+  },
+  "canonical": {
+   "¿Qué startups españolas de tecnología hotelera levantaron más de 10 millones?": {
+    "query": "startups.location=Spain.sector=hotel technology.funding>10M.return(name, funding, sector, location)",
+    "rows_hash": "caaefc80c0",
+    "rows": [
+     {
+      "name": "Amenitiz",
+      "funding": "~€77M total (€6.5M seed, $30M Series A, €38.9M Series B)",
+      "sector": "Hotel management software (PMS, booking engine, channel manager) for independent hotels",
+      "location": "Barcelona, Spain"
+     },
+     {
+      "name": "Room00 Group",
+      "funding": "Up to €400M",
+      "sector": "Urban lifestyle hospitality platform — tech-driven modular hotels and hostels",
+      "location": "Madrid, Spain"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [],
+     "attribute": "company_list",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": "Spain",
+      "sector": "hotel technology",
+      "min_funding": 10000000
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "mas de 10 millones levantados startups hoteleras tecnologia españa": {
+    "query": "startups.location=Spain.sector=hotel technology.funding>10M.return(name, funding, sector, location)",
+    "rows_hash": "caaefc80c0",
+    "rows": [
+     {
+      "name": "Amenitiz",
+      "funding": "~€77M total (€6.5M seed, $30M Series A, €38.9M Series B)",
+      "sector": "Hotel management software (PMS, booking engine, channel manager) for independent hotels",
+      "location": "Barcelona, Spain"
+     },
+     {
+      "name": "Room00 Group",
+      "funding": "Up to €400M",
+      "sector": "Urban lifestyle hospitality platform — tech-driven modular hotels and hostels",
+      "location": "Madrid, Spain"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [],
+     "attribute": "company_list",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": "Spain",
+      "sector": "hotel technology",
+      "min_funding": 10000000
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "Which Spanish hotel tech startups have raised more than 10 million?": {
+    "query": "startups.location=Spain.sector=hotel technology.funding>10M.return(name, funding, sector, location)",
+    "rows_hash": "caaefc80c0",
+    "rows": [
+     {
+      "name": "Amenitiz",
+      "funding": "~€77M total (€6.5M seed, $30M Series A, €38.9M Series B)",
+      "sector": "Hotel management software (PMS, booking engine, channel manager) for independent hotels",
+      "location": "Barcelona, Spain"
+     },
+     {
+      "name": "Room00 Group",
+      "funding": "Up to €400M",
+      "sector": "Urban lifestyle hospitality platform — tech-driven modular hotels and hostels",
+      "location": "Madrid, Spain"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [],
+     "attribute": "company_list",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": "Spain",
+      "sector": "hotel technology",
+      "min_funding": 10000000
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   }
+  }
+ },
+ "Lista: fintech en Finlandia, más de 5M": {
+  "direct": {
+   "¿Qué startups fintech de Finlandia han levantado más de 5 millones?": {
+    "fact_ids": [
+     "13fa35ec-d46b-407d-ace7-8802ec15c9d0",
+     "3ebe65bd-8d27-43e6-9324-29c0d01d95fb",
+     "53e3ba20-78fe-4b83-8d34-f8133b031cfa",
+     "5d87c465-4f9a-4afb-a944-5c5a3eaab28f",
+     "7c22043a-a92a-4acf-a1a7-a1ac60fd1bf8",
+     "8b6483ed-eb46-49d0-be8e-4dcd8137aa53",
+     "8c47760f-849a-4ccb-a87e-4c139696ee3d",
+     "a2146518-0b04-4cdf-a213-eb66c6e51552",
+     "a292452b-0cff-4344-bcb9-0afa5bd1ca87",
+     "ad61b5ec-b8fd-4aee-96b3-a494ff5cc901",
+     "cb6b1505-e942-464d-b639-9546c23d7fa3",
+     "e4a8d125-1aad-450a-8aea-008b45ccfb33"
+    ],
+    "entity_ids": [
+     "0296a764-1899-4000-8017-79758eb6d4d1",
+     "068ea8ca-f7de-4705-a87b-4a7156d63eca",
+     "19b1b045-0d49-42d1-976e-f0c2ef8d24be",
+     "2ade54f2-9648-4034-b6a8-17b29844ab98",
+     "35d690ea-505a-4d72-8621-fa6ba2f2005e",
+     "484f021e-5340-48a5-ba25-5460fccf2d5a",
+     "680000b7-a490-418f-8098-9b1757db2e58",
+     "7b5b51dd-6bc8-42da-8e5c-d7c1f618c2cb",
+     "8f0ff46d-d609-4ce0-b719-85f739b92ca3",
+     "92010fc6-4799-4ae3-824a-1a8adcdc75d8",
+     "92773745-6bb4-5fc4-8aff-2f30a577fb59",
+     "94d44f02-828c-4875-a860-c55cd0a60040",
+     "9cedf654-e3d8-470b-863e-b630b2f584ea",
+     "bfd7869c-0e8c-420b-80a2-e2c84329f461",
+     "e5d05646-7be2-43c9-8bf8-7a6561bca0f3",
+     "e9edb9ed-f109-4434-84ca-c8078a31f74a",
+     "efa32d5e-cb65-4142-bba0-b13965f54142",
+     "f45a9d51-eeef-478b-98a4-eb46ac57d499"
+    ],
+    "answer_hash": "62e2d673c6",
+    "answer": "## Startups fintech de Finlandia que han levantado más de 5 millones de euros\n\nSegún el ranking de Helsinki Fintech Farm de las 20 fintech más financiadas de Finlandia (datos a junio de 2022), y complementado con información más reciente, estas son las principales startups fintech finlandesas que han superado los 5 millones de euros en financiación:\n\n| # | Empresa | Financiación total | Descripció",
+    "calls": 1,
+    "seconds": 49.4
+   },
+   "De Finlandia, fintechs que levantaron mas de 5M": {
+    "fact_ids": [
+     "1c625636-e312-45b1-8ce0-d5b1c2b384dd",
+     "3026b020-ffac-48e4-829b-ebc3d8632f86",
+     "377a4867-a1ad-41e4-9ab2-62254f93c7f4",
+     "46db51fe-f518-47f4-a910-23a83e36d019",
+     "5e0f0135-8c26-46a5-afde-5caf99741fd2",
+     "7ac30abf-aae4-4436-ba2f-5b449991f2d5",
+     "7b495536-b3a6-4107-8655-18a12ba8a941",
+     "8238e644-0c52-46a3-b7a9-a4ebe3254906",
+     "87a09b77-f6c8-4ed2-a66a-97e93f20fdc5",
+     "8d3ead0b-b67f-42d7-85db-844aaf0343bd",
+     "9a3f6267-c292-494b-9d5b-6410a35eba40",
+     "b19bd70b-5b4f-4dc4-96d7-90726548c874",
+     "b4cece88-e0b0-43d8-bedb-e0f3a39f29f6",
+     "dc433d2e-5307-4ea8-bbbe-7f3730e5779a",
+     "e34e4719-69a8-490e-8858-1aeabd57962e"
+    ],
+    "entity_ids": [
+     "0247c487-08b6-4e07-8e92-0969cdfeaa2d",
+     "052545d7-e48e-4216-b65b-a9338a56b980",
+     "0c5000b2-6948-52d5-a4f3-a9a5bf951af3",
+     "13b7d7cc-d2fb-4af1-bedd-5dfc902bd88f",
+     "19362263-e00c-418c-b15c-b6bcbfda9c4f",
+     "19b1b045-0d49-42d1-976e-f0c2ef8d24be",
+     "1db1d9c6-af8b-5482-b1d6-a04beec11285",
+     "35d690ea-505a-4d72-8621-fa6ba2f2005e",
+     "484f021e-5340-48a5-ba25-5460fccf2d5a",
+     "4d285507-4196-4278-8b21-33658fed0801",
+     "680000b7-a490-418f-8098-9b1757db2e58",
+     "7b5b51dd-6bc8-42da-8e5c-d7c1f618c2cb",
+     "85e7467c-25f1-451c-9835-e8c926c7c9ff",
+     "8aa22754-470c-538e-974a-6a847f490017",
+     "8d469fa2-81e3-46ac-a6eb-c1db895b6dca",
+     "8f0ff46d-d609-4ce0-b719-85f739b92ca3",
+     "92773745-6bb4-5fc4-8aff-2f30a577fb59",
+     "9cedf654-e3d8-470b-863e-b630b2f584ea",
+     "aa839d77-b523-4d2c-996c-2b5e71ea9b8c",
+     "b854fd0a-f167-4919-bc62-58d18fc28064",
+     "bfd7869c-0e8c-420b-80a2-e2c84329f461",
+     "c5c2c9ed-935f-46fa-b48f-428e7ea21a28",
+     "d2839ceb-9750-4945-925f-e6c602c304c4",
+     "e516d344-3523-464e-80e1-87ca19ede309",
+     "e5d05646-7be2-43c9-8bf8-7a6561bca0f3",
+     "e9edb9ed-f109-4434-84ca-c8078a31f74a",
+     "efa32d5e-cb65-4142-bba0-b13965f54142"
+    ],
+    "answer_hash": "e7107acf04",
+    "answer": "## Fintechs de Finlandia que han levantado más de 5 millones de euros\n\nEl ecosistema fintech finlandés ha acumulado más de **$2.060 millones** en financiación en los últimos 10 años, con 2026 como el año récord (~$567 M). A continuación, las principales fintechs fundadas o con raíces en Finlandia que han levantado más de 5 millones de euros:\n\n| # | Empresa | Financiación total (aprox.) | Descripci",
+    "calls": 1,
+    "seconds": 61.3
+   },
+   "Finnish fintech startups with more than 5 million raised": {
+    "fact_ids": [
+     "067c0140-63f3-4011-be20-2b59cffbce22",
+     "12543d36-f63e-4a43-8a5a-b5ac0f3c7959",
+     "13f12dc2-ad8e-4594-a188-defbc78b2dc5",
+     "2a3c4a25-2766-4796-b31a-772c3dbaf553",
+     "489634cf-0b49-407c-98aa-79c073e2e9c1",
+     "56ae85ed-a7dc-4732-93fc-308165b6f29b",
+     "ab3478d9-c5a8-4db4-a169-5652dc62106b",
+     "ccfd81f2-f2d3-4b68-bc92-35e2abb9d1a3",
+     "e50eed0b-13d1-4ae3-9cba-4c2644bff0c0",
+     "f936083b-c81f-4396-87a5-5476ef8303b7",
+     "fec79f59-03e4-401b-ba4c-f2aa6302f2ad"
+    ],
+    "entity_ids": [
+     "0296a764-1899-4000-8017-79758eb6d4d1",
+     "35d690ea-505a-4d72-8621-fa6ba2f2005e",
+     "3cb868d6-5b02-43d7-b2b2-e7dbdbb2c6f1",
+     "484f021e-5340-48a5-ba25-5460fccf2d5a",
+     "680000b7-a490-418f-8098-9b1757db2e58",
+     "8b387c9e-a17f-464c-8978-7b3b6520a527",
+     "92010fc6-4799-4ae3-824a-1a8adcdc75d8",
+     "94d44f02-828c-4875-a860-c55cd0a60040",
+     "9cedf654-e3d8-470b-863e-b630b2f584ea",
+     "a4450be0-f224-5299-a69d-5fb6f91f1a02",
+     "a5d94a23-ddb5-4d67-98f1-4073d93aa930",
+     "bfd7869c-0e8c-420b-80a2-e2c84329f461",
+     "c582a6cb-b81c-562c-a9e1-dd284bb0c2cf",
+     "e5d05646-7be2-43c9-8bf8-7a6561bca0f3",
+     "e9edb9ed-f109-4434-84ca-c8078a31f74a"
+    ],
+    "answer_hash": "6432f8fb11",
+    "answer": "## Finnish Fintech Startups That Have Raised More Than €5 Million\n\nFinland is home to a vibrant fintech ecosystem of roughly 200+ companies. According to Helsinki Fintech Farm's rankings and other industry sources, the following Finnish fintech startups/companies have raised well above €5 million in total funding:\n\n### Top Funded Finnish Fintechs\n\n| Company | Total Raised (approx.) | Description |",
+    "calls": 1,
+    "seconds": 0.8
+   }
+  },
+  "canonical": {
+   "¿Qué startups fintech de Finlandia han levantado más de 5 millones?": {
+    "query": "startups.location=Finland.sector=fintech.funding>5M.return(name, funding, sector, location)",
+    "rows_hash": "420bab8648",
+    "rows": [
+     {
+      "name": "AlphaSense",
+      "funding": "~€442M",
+      "sector": "Market intelligence & search platform (fintech)",
+      "location": "Founded in Finland; now HQ in New York"
+     },
+     {
+      "name": "Enfuce",
+      "funding": "~€62M",
+      "sector": "Card issuing & payment processing (Card-as-a-Service)",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "CrediNord",
+      "funding": "~€48M",
+      "sector": "Online business lending for SMEs",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "Multitude",
+      "funding": "~€48M",
+      "sector": "Consumer & business lending, shopping/financing app",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "ePassi",
+      "funding": "~€41.5M",
+      "sector": "Mobile payments for employee benefits",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "Blue Finance",
+      "funding": "~€40M",
+      "sector": "Fintech / lending",
+      "location": "Finland"
+     },
+     {
+      "name": "Streamr",
+      "funding": "~€26M",
+      "sector": "Decentralized data streaming (blockchain/fintech)",
+      "location": "Finland"
+     },
+     {
+      "name": "Tesseract",
+      "funding": "~€21M",
+      "sector": "Fintech",
+      "location": "Finland"
+     },
+     {
+      "name": "Zevoy",
+      "funding": "~€18.8M",
+      "sector": "Expense management & business cards",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "Midaxo",
+      "funding": "~€15.4M",
+      "sector": "M&A process management (fintech)",
+      "location": "Finland"
+     },
+     {
+      "name": "Heeros",
+      "funding": "~€13.7M",
+      "sector": "Financial management software",
+      "location": "Finland"
+     },
+     {
+      "name": "Zervant",
+      "funding": "~€13.7M",
+      "sector": "Invoicing platform",
+      "location": "Finland"
+     },
+     {
+      "name": "AREX",
+      "funding": "~€11.8M",
+      "sector": "Fintech",
+      "location": "Finland"
+     },
+     {
+      "name": "ZirooPay",
+      "funding": "~€11.6M",
+      "sector": "Payment solutions",
+      "location": "Finland"
+     },
+     {
+      "name": "Fellow Bank",
+      "funding": "~€10M",
+      "sector": "Peer-to-peer lending / banking",
+      "location": "Finland"
+     },
+     {
+      "name": "Bonusway",
+      "funding": "~€9.3M",
+      "sector": "Cashback / fintech",
+      "location": "Finland"
+     },
+     {
+      "name": "Basware",
+      "funding": "~€8.2M",
+      "sector": "Enterprise finance / AP automation",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "Invesdor",
+      "funding": "~€6.2M",
+      "sector": "Equity crowdfunding platform",
+      "location": "Finland"
+     },
+     {
+      "name": "Holvi",
+      "funding": "~€5.4M",
+      "sector": "Digital banking for entrepreneurs",
+      "location": "Helsinki, Finland"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [],
+     "attribute": "company_list",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": "Finland",
+      "sector": "fintech",
+      "min_funding": 5000000
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "De Finlandia, fintechs que levantaron mas de 5M": {
+    "query": "startups.location=Finland.sector=fintech.funding>5M.return(name, funding, sector, location)",
+    "rows_hash": "420bab8648",
+    "rows": [
+     {
+      "name": "AlphaSense",
+      "funding": "~€442M",
+      "sector": "Market intelligence & search platform (fintech)",
+      "location": "Founded in Finland; now HQ in New York"
+     },
+     {
+      "name": "Enfuce",
+      "funding": "~€62M",
+      "sector": "Card issuing & payment processing (Card-as-a-Service)",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "CrediNord",
+      "funding": "~€48M",
+      "sector": "Online business lending for SMEs",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "Multitude",
+      "funding": "~€48M",
+      "sector": "Consumer & business lending, shopping/financing app",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "ePassi",
+      "funding": "~€41.5M",
+      "sector": "Mobile payments for employee benefits",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "Blue Finance",
+      "funding": "~€40M",
+      "sector": "Fintech / lending",
+      "location": "Finland"
+     },
+     {
+      "name": "Streamr",
+      "funding": "~€26M",
+      "sector": "Decentralized data streaming (blockchain/fintech)",
+      "location": "Finland"
+     },
+     {
+      "name": "Tesseract",
+      "funding": "~€21M",
+      "sector": "Fintech",
+      "location": "Finland"
+     },
+     {
+      "name": "Zevoy",
+      "funding": "~€18.8M",
+      "sector": "Expense management & business cards",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "Midaxo",
+      "funding": "~€15.4M",
+      "sector": "M&A process management (fintech)",
+      "location": "Finland"
+     },
+     {
+      "name": "Heeros",
+      "funding": "~€13.7M",
+      "sector": "Financial management software",
+      "location": "Finland"
+     },
+     {
+      "name": "Zervant",
+      "funding": "~€13.7M",
+      "sector": "Invoicing platform",
+      "location": "Finland"
+     },
+     {
+      "name": "AREX",
+      "funding": "~€11.8M",
+      "sector": "Fintech",
+      "location": "Finland"
+     },
+     {
+      "name": "ZirooPay",
+      "funding": "~€11.6M",
+      "sector": "Payment solutions",
+      "location": "Finland"
+     },
+     {
+      "name": "Fellow Bank",
+      "funding": "~€10M",
+      "sector": "Peer-to-peer lending / banking",
+      "location": "Finland"
+     },
+     {
+      "name": "Bonusway",
+      "funding": "~€9.3M",
+      "sector": "Cashback / fintech",
+      "location": "Finland"
+     },
+     {
+      "name": "Basware",
+      "funding": "~€8.2M",
+      "sector": "Enterprise finance / AP automation",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "Invesdor",
+      "funding": "~€6.2M",
+      "sector": "Equity crowdfunding platform",
+      "location": "Finland"
+     },
+     {
+      "name": "Holvi",
+      "funding": "~€5.4M",
+      "sector": "Digital banking for entrepreneurs",
+      "location": "Helsinki, Finland"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [],
+     "attribute": "company_list",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": "Finland",
+      "sector": "fintech",
+      "min_funding": 5000000
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "Finnish fintech startups with more than 5 million raised": {
+    "query": "startups.location=Finland.sector=fintech.funding>5M.return(name, funding, sector, location)",
+    "rows_hash": "420bab8648",
+    "rows": [
+     {
+      "name": "AlphaSense",
+      "funding": "~€442M",
+      "sector": "Market intelligence & search platform (fintech)",
+      "location": "Founded in Finland; now HQ in New York"
+     },
+     {
+      "name": "Enfuce",
+      "funding": "~€62M",
+      "sector": "Card issuing & payment processing (Card-as-a-Service)",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "CrediNord",
+      "funding": "~€48M",
+      "sector": "Online business lending for SMEs",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "Multitude",
+      "funding": "~€48M",
+      "sector": "Consumer & business lending, shopping/financing app",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "ePassi",
+      "funding": "~€41.5M",
+      "sector": "Mobile payments for employee benefits",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "Blue Finance",
+      "funding": "~€40M",
+      "sector": "Fintech / lending",
+      "location": "Finland"
+     },
+     {
+      "name": "Streamr",
+      "funding": "~€26M",
+      "sector": "Decentralized data streaming (blockchain/fintech)",
+      "location": "Finland"
+     },
+     {
+      "name": "Tesseract",
+      "funding": "~€21M",
+      "sector": "Fintech",
+      "location": "Finland"
+     },
+     {
+      "name": "Zevoy",
+      "funding": "~€18.8M",
+      "sector": "Expense management & business cards",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "Midaxo",
+      "funding": "~€15.4M",
+      "sector": "M&A process management (fintech)",
+      "location": "Finland"
+     },
+     {
+      "name": "Heeros",
+      "funding": "~€13.7M",
+      "sector": "Financial management software",
+      "location": "Finland"
+     },
+     {
+      "name": "Zervant",
+      "funding": "~€13.7M",
+      "sector": "Invoicing platform",
+      "location": "Finland"
+     },
+     {
+      "name": "AREX",
+      "funding": "~€11.8M",
+      "sector": "Fintech",
+      "location": "Finland"
+     },
+     {
+      "name": "ZirooPay",
+      "funding": "~€11.6M",
+      "sector": "Payment solutions",
+      "location": "Finland"
+     },
+     {
+      "name": "Fellow Bank",
+      "funding": "~€10M",
+      "sector": "Peer-to-peer lending / banking",
+      "location": "Finland"
+     },
+     {
+      "name": "Bonusway",
+      "funding": "~€9.3M",
+      "sector": "Cashback / fintech",
+      "location": "Finland"
+     },
+     {
+      "name": "Basware",
+      "funding": "~€8.2M",
+      "sector": "Enterprise finance / AP automation",
+      "location": "Helsinki, Finland"
+     },
+     {
+      "name": "Invesdor",
+      "funding": "~€6.2M",
+      "sector": "Equity crowdfunding platform",
+      "location": "Finland"
+     },
+     {
+      "name": "Holvi",
+      "funding": "~€5.4M",
+      "sector": "Digital banking for entrepreneurs",
+      "location": "Helsinki, Finland"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [],
+     "attribute": "company_list",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": "Finland",
+      "sector": "fintech",
+      "min_funding": 5000000
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   }
+  }
+ },
+ "Lista: climate tech en Alemania, más de 20M": {
+  "direct": {
+   "Startups de climate tech en Alemania con más de 20 millones de financiación": {
+    "fact_ids": [
+     "06a46cc8-4003-4bb3-ab3b-596b286be6d8",
+     "0bec134d-da3e-462b-a0aa-db87494e979d",
+     "1e6d2e10-967f-4ecc-ac41-6c3755f93f9a",
+     "1f14cc19-c9a6-4745-850c-faba6ad7e16c",
+     "252ca7a0-465f-4f51-8df6-fde4825413f2",
+     "2544b893-2ee0-4011-997c-1a9139be3ea2",
+     "34d105b1-bc2b-4d8e-8368-f75a4214a9e5",
+     "5a41fd1c-39f3-4d77-b58d-5c81319d6863",
+     "64e87622-d650-4660-9aff-3b39a67ce316",
+     "677b81dc-84b3-4f5f-a25c-dfd9f23832ae",
+     "6868346f-3496-46f9-b8bb-f60e04c30e42",
+     "78df6f61-c6b1-4618-b7bc-81a6c68568c0",
+     "7b4d6ded-e6ba-44e1-8e3e-5e9755464725",
+     "99a14a8c-7e60-401b-8a15-1a38573adf39",
+     "9cab0ae3-71f0-43e7-b97c-788447f23a39",
+     "a1fee786-71a8-45d5-81ab-e68f49ca035e",
+     "cc81e20a-5e0b-434e-b5d9-db442da144ef",
+     "e086ab47-bf42-4a0d-bd7d-6e25a879d4fa",
+     "eaf792d8-8796-4c34-bb00-05c777f05f3e"
+    ],
+    "entity_ids": [
+     "0a4399ac-2593-4667-9a05-3f23a96e640d",
+     "2bb932a5-0a6c-46ac-85e0-87380d179c87",
+     "5f2b94fc-081c-46eb-aca9-a6a2fdec4066",
+     "5f622714-8a84-46e6-ade5-b358ae49ee93",
+     "61901653-115d-4cc4-a4e4-04d8c5009f1e",
+     "66b5a34a-0f62-53fe-bdd7-efe7c9204aa5",
+     "6759c47f-c379-4e86-99c6-2d1db497d541",
+     "698be9b0-d5c5-51cd-a78d-77952b845f99",
+     "6c15ccdf-cac5-4878-99cc-974113d48286",
+     "734e6ad0-fc37-5912-8014-35036b6df01a",
+     "7b57549e-01f6-447b-ad5a-8e1303079470",
+     "7cd984e9-3068-4374-9f3f-52a08cee8028",
+     "7ed91721-6694-4ea1-a4c9-741002d54234",
+     "9ff9cc58-7b0a-42e8-92a3-338ac5fb95d3",
+     "a542ddbf-495f-41e3-832d-ee126f344df9",
+     "bc7decd3-9e9c-49e9-b6b7-a6c9161a65fc",
+     "c3490a8d-8ecf-4640-9ed8-bcc17a902480",
+     "cd04dee9-1d1d-44ec-bca8-c91068a0f540",
+     "d134d2f7-7f0f-4d0c-8a67-412271b1f9ad",
+     "e1fdbc12-77fe-5ede-8c42-1addb25ee018",
+     "eb2b1072-7411-47fe-a7de-0ccf84e73f0d",
+     "fe47ec6d-e526-52c7-9435-dc33eca41eb0"
+    ],
+    "answer_hash": "ef973eaf5e",
+    "answer": "## Startups de Climate Tech en Alemania con más de 20 millones de financiación\n\nA continuación se presentan las principales startups alemanas de tecnología climática (climate tech) que han recaudado más de $20 millones en financiación total, ordenadas por volumen de fondos captados:\n\n| Startup | Ciudad | Sector | Financiación total (aprox.) | Etapa |\n|---|---|---|---|---|\n| **Enpal** | Berlín | En",
+    "calls": 1,
+    "seconds": 49.8
+   },
+   "En Alemania, ¿qué startups climáticas superan los 20 millones levantados?": {
+    "fact_ids": [
+     "08398d14-4300-42b4-9095-81914af38411",
+     "13a50a9c-32e9-43ed-86b2-bde08d21d47d",
+     "3aecd636-89ff-40f8-be1d-fad7ed2ef5a9",
+     "3fc41edd-6ea0-4997-b6af-fe1e3813b090",
+     "59b1db5b-ac0d-4ed0-b38b-9510f83dc178",
+     "6b06df9e-90ff-410e-8803-edba0d7cdf18",
+     "7de6c25c-7e79-44f7-aabf-142e4b092eec",
+     "7df87df1-2d83-4bcd-a4f8-31b817ba6750",
+     "c9125c11-97ca-48de-bc72-8f9636298491",
+     "dbcfca0f-fc95-4fa6-a41b-565ffc0e3a83",
+     "de5e5bed-d26c-47b5-82e0-9af714489c65",
+     "e539b527-b781-4a50-b789-8d1f9a30ced4",
+     "edc6a4d6-be49-4c21-ab1a-f35571af4a48",
+     "fbcac35b-bb04-46e4-b302-8bc04195ff05"
+    ],
+    "entity_ids": [
+     "0a4399ac-2593-4667-9a05-3f23a96e640d",
+     "214be231-4cff-4462-ab73-c7f3457c3739",
+     "2bb932a5-0a6c-46ac-85e0-87380d179c87",
+     "35702331-ff55-4124-b26f-fe70c12afa0a",
+     "698be9b0-d5c5-51cd-a78d-77952b845f99",
+     "6c15ccdf-cac5-4878-99cc-974113d48286",
+     "6e433cbb-b629-4795-b232-51f6c2fa0872",
+     "74bcd431-ea6c-47bc-9b99-486386be2266",
+     "7b57549e-01f6-447b-ad5a-8e1303079470",
+     "7cd984e9-3068-4374-9f3f-52a08cee8028",
+     "80ffd228-d2ec-4002-a64e-578acd56a25d",
+     "a8bd4cd5-14ac-5fb0-8a55-29d1fde8a979",
+     "a99a4cff-4b95-4269-95c4-1bf5ab310e1b",
+     "bc7decd3-9e9c-49e9-b6b7-a6c9161a65fc",
+     "eb2b1072-7411-47fe-a7de-0ccf84e73f0d",
+     "fe47ec6d-e526-52c7-9435-dc33eca41eb0"
+    ],
+    "answer_hash": "79534c474d",
+    "answer": "## Startups climáticas en Alemania con más de 20 millones de euros levantados\n\nA continuación se presentan las principales startups climáticas (climate tech / cleantech) con sede en Alemania que han superado ampliamente los 20 millones de euros en financiación total acumulada, según datos de 2026:\n\n| Startup | Ciudad | Sector | Financiación total aprox. | Etapa |\n|---|---|---|---|---|\n| **Enpal** ",
+    "calls": 1,
+    "seconds": 57.1
+   },
+   "Which German climate tech startups have raised over 20 million?": {
+    "fact_ids": [
+     "0ba5e4ee-abd7-4bbe-8a0e-c55d9c7fa84e",
+     "239c8a32-251e-4ee6-a4e5-a6ee0e91c0ac",
+     "27e78ecd-cd02-419e-bbed-5075a6aba94e",
+     "46fb8071-3284-497e-a367-de2afafa68b0",
+     "484fc130-3a60-4b81-868e-dd1c3ca238aa",
+     "52d70314-3224-4300-b574-14fc09b88ad3",
+     "5cd01edf-14ec-463e-a4e2-fd414540dff0",
+     "851d9a59-c18a-4a79-aec3-13273cce727d",
+     "872e7ad2-06c7-4f1e-82a5-ffbfe183f9e4",
+     "c6f0c7f5-be7d-45d4-b9d8-4657fce8d8a6",
+     "d50420e6-6fa2-496b-99a7-7e2c028cf038",
+     "e63b391a-2e73-4429-ae85-4765d63d95d9"
+    ],
+    "entity_ids": [
+     "0a4399ac-2593-4667-9a05-3f23a96e640d",
+     "19362263-e00c-418c-b15c-b6bcbfda9c4f",
+     "214be231-4cff-4462-ab73-c7f3457c3739",
+     "2bb932a5-0a6c-46ac-85e0-87380d179c87",
+     "3762f363-0e23-57b9-890b-60c028e81bb2",
+     "53a3eeb4-47de-45d9-945a-659ffeec7c25",
+     "54f0743a-f79b-4bce-bb72-c97c79efee2b",
+     "6759c47f-c379-4e86-99c6-2d1db497d541",
+     "698be9b0-d5c5-51cd-a78d-77952b845f99",
+     "6c15ccdf-cac5-4878-99cc-974113d48286",
+     "77cd3ac1-c72f-4ba8-bc62-57d9e3b65125",
+     "7b57549e-01f6-447b-ad5a-8e1303079470",
+     "7cd984e9-3068-4374-9f3f-52a08cee8028",
+     "7ed91721-6694-4ea1-a4c9-741002d54234",
+     "82e0c2ff-acd6-4770-9ea4-d683e2050dfd",
+     "a542ddbf-495f-41e3-832d-ee126f344df9",
+     "bc7decd3-9e9c-49e9-b6b7-a6c9161a65fc",
+     "d3b7a2b7-1458-4db6-9d72-1bc4495276f5",
+     "eb2b1072-7411-47fe-a7de-0ccf84e73f0d",
+     "fbbbcc96-98c2-5649-b45e-46a84b938c46",
+     "fbdde325-b242-49fe-b945-6cdae32d9e7e"
+    ],
+    "answer_hash": "4ec865f6a3",
+    "answer": "## German Climate Tech Startups That Have Raised Over €/$ 20 Million\n\nGermany is one of Europe's leading hubs for climate tech, with over 220 funded climate tech startups tracked and a combined funding total of roughly $6.9 billion among the top 60 alone. Here are notable German climate tech startups that have raised well above the $20 million mark:\n\n### Mega-Funded (>$500M total raised)\n- **Enpal",
+    "calls": 1,
+    "seconds": 49.0
+   }
+  },
+  "canonical": {
+   "Startups de climate tech en Alemania con más de 20 millones de financiación": {
+    "query": "startups.location=Germany.sector=climate tech.funding>20M.return(name, funding, sector, location)",
+    "rows_hash": "bf8a27fb03",
+    "rows": [
+     {
+      "name": "Enpal",
+      "funding": "~€3.2B (incl. debt)",
+      "sector": "Solar energy, battery storage, heat pumps",
+      "location": "Berlin"
+     },
+     {
+      "name": "1KOMMA5°",
+      "funding": "~€823M+",
+      "sector": "Solar, energy storage, EV charging, home electrification",
+      "location": "Hamburg"
+     },
+     {
+      "name": "Sunfire",
+      "funding": "Series E stage; $25M+ revenue",
+      "sector": "Green hydrogen (industrial electrolyzers)",
+      "location": "Dresden"
+     },
+     {
+      "name": "Flix (FlixBus)",
+      "funding": "~€886M",
+      "sector": "Sustainable mobility",
+      "location": "Munich"
+     },
+     {
+      "name": "IONITY",
+      "funding": "~€770M",
+      "sector": "EV charging infrastructure",
+      "location": "Munich"
+     },
+     {
+      "name": "Forto",
+      "funding": "~€616M",
+      "sector": "Digital green logistics",
+      "location": "Berlin"
+     },
+     {
+      "name": "TIER Mobility",
+      "funding": "~€560M (acquired)",
+      "sector": "Micromobility / e-scooters",
+      "location": "Berlin"
+     },
+     {
+      "name": "Choco",
+      "funding": "~€339M",
+      "sector": "Digital food supply chain (waste reduction)",
+      "location": "Berlin"
+     },
+     {
+      "name": "Focused Energy",
+      "funding": "~€327M",
+      "sector": "Laser fusion energy",
+      "location": "Darmstadt"
+     },
+     {
+      "name": "Thermondo",
+      "funding": "Series C stage",
+      "sector": "Clean technology (heating systems)",
+      "location": "Berlin"
+     },
+     {
+      "name": "ENVIRIA",
+      "funding": "~€225M",
+      "sector": "Commercial & industrial solar",
+      "location": "Frankfurt"
+     },
+     {
+      "name": "Proxima Fusion",
+      "funding": "Series A stage",
+      "sector": "Fusion energy",
+      "location": "Munich"
+     },
+     {
+      "name": "H2 MOBILITY",
+      "funding": "~€131M",
+      "sector": "Hydrogen refueling infrastructure",
+      "location": "Berlin"
+     },
+     {
+      "name": "Sono Motors",
+      "funding": "~€119M",
+      "sector": "Solar-integrated electric vehicles",
+      "location": "Munich"
+     },
+     {
+      "name": "Formo",
+      "funding": "~€109M",
+      "sector": "Food biotech (sustainable dairy alternatives)",
+      "location": "Berlin"
+     },
+     {
+      "name": "Kraftblock",
+      "funding": "€20M (Series B)",
+      "sector": "Thermal energy storage for industrial decarbonization",
+      "location": "Sulzbach (Saarland)"
+     },
+     {
+      "name": "Hy2gen",
+      "funding": "Series B stage",
+      "sector": "Green hydrogen / clean technology",
+      "location": "Wiesbaden"
+     },
+     {
+      "name": "C1 Green Chemicals",
+      "funding": "Series A stage",
+      "sector": "Green chemicals",
+      "location": "Berlin"
+     },
+     {
+      "name": "Vaeridion",
+      "funding": "$34M (Series A)",
+      "sector": "Electric aviation",
+      "location": "Munich"
+     },
+     {
+      "name": "DeepDrive",
+      "funding": "Series B stage",
+      "sector": "Electric vehicle drivetrain technology",
+      "location": "Munich"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [],
+     "attribute": "company_list",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": "Germany",
+      "sector": "climate tech",
+      "min_funding": 20000000
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "En Alemania, ¿qué startups climáticas superan los 20 millones levantados?": {
+    "query": "startups.location=Germany.sector=climate tech.funding>20M.return(name, funding, sector, location)",
+    "rows_hash": "bf8a27fb03",
+    "rows": [
+     {
+      "name": "Enpal",
+      "funding": "~€3.2B (incl. debt)",
+      "sector": "Solar energy, battery storage, heat pumps",
+      "location": "Berlin"
+     },
+     {
+      "name": "1KOMMA5°",
+      "funding": "~€823M+",
+      "sector": "Solar, energy storage, EV charging, home electrification",
+      "location": "Hamburg"
+     },
+     {
+      "name": "Sunfire",
+      "funding": "Series E stage; $25M+ revenue",
+      "sector": "Green hydrogen (industrial electrolyzers)",
+      "location": "Dresden"
+     },
+     {
+      "name": "Flix (FlixBus)",
+      "funding": "~€886M",
+      "sector": "Sustainable mobility",
+      "location": "Munich"
+     },
+     {
+      "name": "IONITY",
+      "funding": "~€770M",
+      "sector": "EV charging infrastructure",
+      "location": "Munich"
+     },
+     {
+      "name": "Forto",
+      "funding": "~€616M",
+      "sector": "Digital green logistics",
+      "location": "Berlin"
+     },
+     {
+      "name": "TIER Mobility",
+      "funding": "~€560M (acquired)",
+      "sector": "Micromobility / e-scooters",
+      "location": "Berlin"
+     },
+     {
+      "name": "Choco",
+      "funding": "~€339M",
+      "sector": "Digital food supply chain (waste reduction)",
+      "location": "Berlin"
+     },
+     {
+      "name": "Focused Energy",
+      "funding": "~€327M",
+      "sector": "Laser fusion energy",
+      "location": "Darmstadt"
+     },
+     {
+      "name": "Thermondo",
+      "funding": "Series C stage",
+      "sector": "Clean technology (heating systems)",
+      "location": "Berlin"
+     },
+     {
+      "name": "ENVIRIA",
+      "funding": "~€225M",
+      "sector": "Commercial & industrial solar",
+      "location": "Frankfurt"
+     },
+     {
+      "name": "Proxima Fusion",
+      "funding": "Series A stage",
+      "sector": "Fusion energy",
+      "location": "Munich"
+     },
+     {
+      "name": "H2 MOBILITY",
+      "funding": "~€131M",
+      "sector": "Hydrogen refueling infrastructure",
+      "location": "Berlin"
+     },
+     {
+      "name": "Sono Motors",
+      "funding": "~€119M",
+      "sector": "Solar-integrated electric vehicles",
+      "location": "Munich"
+     },
+     {
+      "name": "Formo",
+      "funding": "~€109M",
+      "sector": "Food biotech (sustainable dairy alternatives)",
+      "location": "Berlin"
+     },
+     {
+      "name": "Kraftblock",
+      "funding": "€20M (Series B)",
+      "sector": "Thermal energy storage for industrial decarbonization",
+      "location": "Sulzbach (Saarland)"
+     },
+     {
+      "name": "Hy2gen",
+      "funding": "Series B stage",
+      "sector": "Green hydrogen / clean technology",
+      "location": "Wiesbaden"
+     },
+     {
+      "name": "C1 Green Chemicals",
+      "funding": "Series A stage",
+      "sector": "Green chemicals",
+      "location": "Berlin"
+     },
+     {
+      "name": "Vaeridion",
+      "funding": "$34M (Series A)",
+      "sector": "Electric aviation",
+      "location": "Munich"
+     },
+     {
+      "name": "DeepDrive",
+      "funding": "Series B stage",
+      "sector": "Electric vehicle drivetrain technology",
+      "location": "Munich"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [],
+     "attribute": "company_list",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": "Germany",
+      "sector": "climate tech",
+      "min_funding": 20000000
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   },
+   "Which German climate tech startups have raised over 20 million?": {
+    "query": "startups.location=Germany.sector=climate tech.funding>20M.return(name, funding, sector, location)",
+    "rows_hash": "bf8a27fb03",
+    "rows": [
+     {
+      "name": "Enpal",
+      "funding": "~€3.2B (incl. debt)",
+      "sector": "Solar energy, battery storage, heat pumps",
+      "location": "Berlin"
+     },
+     {
+      "name": "1KOMMA5°",
+      "funding": "~€823M+",
+      "sector": "Solar, energy storage, EV charging, home electrification",
+      "location": "Hamburg"
+     },
+     {
+      "name": "Sunfire",
+      "funding": "Series E stage; $25M+ revenue",
+      "sector": "Green hydrogen (industrial electrolyzers)",
+      "location": "Dresden"
+     },
+     {
+      "name": "Flix (FlixBus)",
+      "funding": "~€886M",
+      "sector": "Sustainable mobility",
+      "location": "Munich"
+     },
+     {
+      "name": "IONITY",
+      "funding": "~€770M",
+      "sector": "EV charging infrastructure",
+      "location": "Munich"
+     },
+     {
+      "name": "Forto",
+      "funding": "~€616M",
+      "sector": "Digital green logistics",
+      "location": "Berlin"
+     },
+     {
+      "name": "TIER Mobility",
+      "funding": "~€560M (acquired)",
+      "sector": "Micromobility / e-scooters",
+      "location": "Berlin"
+     },
+     {
+      "name": "Choco",
+      "funding": "~€339M",
+      "sector": "Digital food supply chain (waste reduction)",
+      "location": "Berlin"
+     },
+     {
+      "name": "Focused Energy",
+      "funding": "~€327M",
+      "sector": "Laser fusion energy",
+      "location": "Darmstadt"
+     },
+     {
+      "name": "Thermondo",
+      "funding": "Series C stage",
+      "sector": "Clean technology (heating systems)",
+      "location": "Berlin"
+     },
+     {
+      "name": "ENVIRIA",
+      "funding": "~€225M",
+      "sector": "Commercial & industrial solar",
+      "location": "Frankfurt"
+     },
+     {
+      "name": "Proxima Fusion",
+      "funding": "Series A stage",
+      "sector": "Fusion energy",
+      "location": "Munich"
+     },
+     {
+      "name": "H2 MOBILITY",
+      "funding": "~€131M",
+      "sector": "Hydrogen refueling infrastructure",
+      "location": "Berlin"
+     },
+     {
+      "name": "Sono Motors",
+      "funding": "~€119M",
+      "sector": "Solar-integrated electric vehicles",
+      "location": "Munich"
+     },
+     {
+      "name": "Formo",
+      "funding": "~€109M",
+      "sector": "Food biotech (sustainable dairy alternatives)",
+      "location": "Berlin"
+     },
+     {
+      "name": "Kraftblock",
+      "funding": "€20M (Series B)",
+      "sector": "Thermal energy storage for industrial decarbonization",
+      "location": "Sulzbach (Saarland)"
+     },
+     {
+      "name": "Hy2gen",
+      "funding": "Series B stage",
+      "sector": "Green hydrogen / clean technology",
+      "location": "Wiesbaden"
+     },
+     {
+      "name": "C1 Green Chemicals",
+      "funding": "Series A stage",
+      "sector": "Green chemicals",
+      "location": "Berlin"
+     },
+     {
+      "name": "Vaeridion",
+      "funding": "$34M (Series A)",
+      "sector": "Electric aviation",
+      "location": "Munich"
+     },
+     {
+      "name": "DeepDrive",
+      "funding": "Series B stage",
+      "sector": "Electric vehicle drivetrain technology",
+      "location": "Munich"
+     }
+    ],
+    "cross_check": null,
+    "structured_error": null,
+    "intent": {
+     "entities": [],
+     "attribute": "company_list",
+     "filters": {
+      "round_label": null,
+      "year": null,
+      "location": "Germany",
+      "sector": "climate tech",
+      "min_funding": 20000000
+     }
+    },
+    "calls": 0,
+    "cache_hit": true,
+    "seconds": 0.0
+   }
+  }
+ }
+}
