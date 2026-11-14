@@ -6,6 +6,7 @@ __pycache__/
 .venv/
 node_modules/
 backend/cache/
+backend/data/
 .expo/
 dist/
 web-build/

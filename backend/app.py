@@ -11,10 +11,12 @@ from fastapi.responses import FileResponse
 from verifier.config import settings
 from verifier.llm import make_llm
 from verifier.pipeline import verify_pdf
+from chat.routes import router as chat_router
 
 ROOT = Path(__file__).parent
 MAX_PDF_BYTES = 20 * 1024 * 1024
 app = FastAPI(title="Deck Verifier")
+app.include_router(chat_router)
 jobs: dict[str, dict] = {}
 tasks: dict[str, asyncio.Task] = {}
 
