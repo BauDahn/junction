@@ -9,3 +9,5 @@ backend/cache/
 .expo/
 dist/
 web-build/
+canonizador/cache/
+canonizador/.cache/

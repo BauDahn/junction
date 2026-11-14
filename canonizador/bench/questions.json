@@ -1,0 +1,11 @@
+[
+ {"group": "Ronda concreta (Serie B de Amenitiz)", "questions": ["¿Cuánto levantó Amenitiz en su Serie B y quién lideró la ronda?", "quien lidero y de cuanto fue la serie b de amenitiz", "How much did Amenitiz raise in its Series B and who led the round?"]},
+ {"group": "Fundadores (Glovo)", "questions": ["¿Quiénes fundaron Glovo?", "Glovo: quienes son sus fundadores", "Who are the founders of Glovo?"]},
+ {"group": "Adquisiciones (Mews)", "questions": ["¿Qué empresas ha comprado Mews?", "adquisiciones hechas por Mews", "Which companies has Mews acquired?"]},
+ {"group": "Financiación total (Factorial)", "questions": ["¿Cuánta financiación total ha levantado Factorial?", "Factorial, financiacion total levantada hasta hoy", "How much funding has Factorial raised in total?"]},
+ {"group": "Inversores (Wolt)", "questions": ["¿Quiénes son los inversores de Wolt?", "Wolt: inversores que han puesto dinero", "Who has invested in Wolt?"]},
+ {"group": "Ejecutivos (TravelPerk)", "questions": ["¿Quién es el CEO de TravelPerk?", "TravelPerk, quien es su CEO", "Who runs TravelPerk as chief executive?"]},
+ {"group": "Lista: tecnología hotelera en España, más de 10M", "questions": ["¿Qué startups españolas de tecnología hotelera levantaron más de 10 millones?", "mas de 10 millones levantados startups hoteleras tecnologia españa", "Which Spanish hotel tech startups have raised more than 10 million?"]},
+ {"group": "Lista: fintech en Finlandia, más de 5M", "questions": ["¿Qué startups fintech de Finlandia han levantado más de 5 millones?", "De Finlandia, fintechs que levantaron mas de 5M", "Finnish fintech startups with more than 5 million raised"]},
+ {"group": "Lista: climate tech en Alemania, más de 20M", "questions": ["Startups de climate tech en Alemania con más de 20 millones de financiación", "En Alemania, ¿qué startups climáticas superan los 20 millones levantados?", "Which German climate tech startups have raised over 20 million?"]}
+]
