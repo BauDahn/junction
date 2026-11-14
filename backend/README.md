@@ -8,7 +8,10 @@ API en FastAPI con SQLite. Contrato con la app en [`docs/API.md`](../docs/API.md
 | `chat/` | Sesiones, mensajes de texto y audio (`transcribe.py`, Whisper local), perfil de la startup (`profile.py`), recomendaciones en segundo plano (`recommend.py`), persistencia (`store.py`, SQLite en `data/chat.db`) | fabricio |
 | `cala_core/` | Router de mensajes, ejecución de consultas a Cala con canonizador y respaldos, formato de bloques, verificación de afirmaciones del usuario (en curso, ver `docs/PLAN-CALA-CENTRO.md`) | bau |
 | `journal/` | Journal diario (ediciones ecosistema y founders) a partir de consultas a Cala (en curso) | bau |
-| `verifier/` | Verificador de decks: extrae afirmaciones del PDF, las contrasta con Cala y descarta fuentes inventadas. También define los proveedores de LLM (`llm.py`) | bau |
+| `verifier/` | Módulos compartidos del chat: proveedores de LLM (`llm.py`), configuración y cliente de Cala. El verificador de decks que vive ahí quedó **fuera del producto** (14/11) | bau |
+| `api/` *(nuevo)* | Feed, detalle de una entidad y puntaje de afinidad para Cala Match | fabricio |
+| `graph/` *(nuevo)* | Subgrafo local sobre Cala: nodos y aristas con fuente, BFS, caché en Valkey | bau (diseño) |
+| `context/` *(nuevo)* | Ingesta de contexto: PDF y notas de voz, extracción con Gemini, actualización del perfil | gabriel |
 
 ## Correr
 

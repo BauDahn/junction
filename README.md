@@ -1,55 +1,95 @@
-# Junction 2026 · Cala por voz
+# Cala Match
 
-**Un copiloto para founders e inversores construido sobre [Cala](https://cala.ai).** Le hablás (o escribís) y convierte lo que decís en consultas a Cala: muestra los datos tal cual, como tablas con fuentes, contrasta los datos que vos afirmás y arma un journal diario del ecosistema con lo que encuentra en Cala.
+**A two-sided funding marketplace built on [Cala](https://cala.ai)'s knowledge graph.** Startups find the investors that fit them; investors find the startups worth a call. Every card, score and answer comes from Cala and shows its source.
 
-Hecho en Junction 2026 (Espoo, 13–15 de noviembre de 2026) para el reto de Cala.
+Built at Junction 2026 (Espoo, 13–15 November 2026) for the Cala challenge. Slush starts right after, so it has to be usable the next day.
 
-## Qué hace
+## What it does
 
-| Función | Cómo |
+One app, two modes. A switch at the top changes everything: feed, chatbot suggestions and context prompts.
+
+| Mode | Who | The feed shows |
+|---|---|---|
+| **Raising** | Startup looking for funding | Investors, ranked by affinity |
+| **Investing** | Investor looking for startups | Startups, ranked by affinity |
+
+| Tab | What you get |
 |---|---|
-| **Preguntar por voz** | "¿Quién lideró la Serie B de Amenitiz?" → consulta canónica a Cala → tabla con monto, líder, inversores y fuentes |
-| **Contrastar lo que decís** | "Mews levantó 50 millones" → se busca en Cala → confirmado, contradicho o sin datos, con la evidencia |
-| **Perfil y gustos** | "Somos Stayflow, software para hoteles en Barcelona; nos interesan las fintech nórdicas" → se guarda para personalizar |
-| **Journal diario** | Edición del ecosistema y edición personalizada, armadas solo con consultas a Cala |
-| **Recomendaciones** | Inversores, competidores y clientes potenciales, cada uno con su fuente |
+| **Feed** | A grid of cards, one per investor or startup, each with an **affinity score** (0–100) and a one-line "why it matches". Tap a card for the full profile. |
+| **Detail** | Everything Cala knows: funding rounds with lead investors, portfolio, people, key figures. Every fact carries its source and date. |
+| **Chat** | Ask anything by text or voice ("Who led Amenitiz's Series B?"). Answers are tables of Cala data with sources, never invented numbers. |
+| **Context** | Teach the app about you: upload a pitch deck (PDF), record a voice note or write a note. The app extracts sector, stage, region and ticket size, and the matches improve. |
+| **Profile** | Mode, saved matches, settings. |
 
-**Lo que lo hace distinto:** descubrimos que Cala responde distinto a la misma pregunta según cómo se escriba (acentos, idioma, orden) y construimos un **canonizador** que convierte cualquier redacción en la misma consulta. Preguntando directo, por MCP o con la guía oficial de Cala, como mucho 1 de 9 preguntas fue consistente; con el canonizador, 9 de 9. Ver [docs/BENCHMARK-CANONIZADOR.md](docs/BENCHMARK-CANONIZADOR.md) y [docs/INFORME-ERROR-CALA.md](docs/INFORME-ERROR-CALA.md).
+The whole interface is in English. The design prototype is in [`docs/design/stitch/`](docs/design/stitch/).
 
-## Cómo funciona
+## What makes it different
+
+**1. The canonizer.** Cala answers differently to the same question depending on how it is written (accents, language, word order). We built a canonizer that turns any phrasing into one canonical query. Asking directly, through MCP or with Cala's official guide, at most 1 of 9 questions was consistent; with the canonizer, 9 of 9. See [docs/BENCHMARK-CANONIZADOR.md](docs/BENCHMARK-CANONIZADOR.md) and [docs/INFORME-ERROR-CALA.md](docs/INFORME-ERROR-CALA.md).
+
+**2. A local graph on top of Cala.** Cala is a graph of entities and relationships. We load the neighbourhood of each user into a local subgraph, so exploring it is instant and Cala is only called at the edges. Measured on 14 November with Amenitiz as the seed (185 nodes, 246 edges):
+
+| | Result |
+|---|---|
+| Loading from Cala (19 calls) | about 14–18 s of real work; the entity endpoints answer in about 1 s per call |
+| Rate limit | the 10th call in a row got an HTTP 429; the entity endpoints tolerate roughly 1–2 calls per second |
+| Full BFS over the local subgraph | 0.13 ms |
+| Shortest path, seed to farthest node | 0.13 ms |
+| BFS over a synthetic 100,000-node graph | 337 ms |
+
+**3. A shared cache on Aiven Valkey.** What one user (or one machine) asks Cala is instant for everyone else, and it protects the rate limit. The plan is to cache nodes and edges, not just raw answers, so one shared graph grows with use.
+
+**4. Nothing invented.** The language model only interprets the request. It never writes a figure or a name that does not come from Cala, and every value is shown with its source.
+
+## Architecture
 
 ```
-voz / texto ──► transcripción (Whisper) ──► router ──┬─ consulta ──► canonizador ──► Cala ──► tabla con fuentes
-                                                     ├─ afirmación ─► canonizador ──► Cala ──► veredicto + evidencia
-                                                     ├─ perfil ─────► perfil y gustos ──► journal personalizado
-                                                     └─ charla ─────► respuesta corta
+ Expo app (web + iOS + Android)             Feed · Detail · Chat · Context · Profile
+        │  REST (docs/API.md)
+ FastAPI backend ───── Gemini: router, intent, audio, PDF context, judge
+        │
+ Canonizer ─────────── Aiven Valkey: shared cache (raw answers, graph)
+        │
+ Cala API: entities, knowledge/query, knowledge/search
 ```
 
-Si la consulta canónica no trae datos, se prueban las otras herramientas de Cala (entidades y búsqueda) antes de decir que no hay nada. El modelo de lenguaje solo interpreta el pedido: **nunca escribe cifras ni nombres que no vengan de Cala**. Diseño completo en [docs/PLAN-CALA-CENTRO.md](docs/PLAN-CALA-CENTRO.md).
+Status: chat, router, canonizer, cache, journal and the Expo app are in `main`. The dual-mode feed, affinity score, context uploads and the local graph are the current work (see [CLAUDE.md](CLAUDE.md#workstreams)).
 
-## Estructura del repo
+## Team
 
-| Carpeta | Qué hay |
+| Machine | Person | Focus |
+|---|---|---|
+| `bau` | Bau | Orchestration, architecture (local graph, affinity score), pitch and documentation |
+| `fabricio` | Fabricio | Backend API, optimizer (rate limit, cache) and the Aiven integration |
+| `gabriel` | Gabriel | Context ingestion (PDF and voice), n8n automations and extra tools |
+| `adrian` | Adrian | Design and the app: the Stitch prototype turned into the Expo app |
+
+## Repo layout
+
+| Folder | What is in it |
 |---|---|
-| `app/` | App web y móvil (Expo + React Native + TypeScript): chat con audio, perfil, journal |
-| `backend/` | API (FastAPI + SQLite). `chat/`: sesiones, mensajes, audio, perfil, recomendaciones. `cala_core/`: router y consultas a Cala. `journal/`: journal diario. `verifier/`: módulos compartidos (LLM, configuración, cliente de Cala) y el verificador de decks, que quedó fuera del producto. Ver [backend/README.md](backend/README.md) |
-| `canonizador/` | Canonizador de consultas a Cala, con sus benchmarks. Ver [canonizador/README.md](canonizador/README.md) |
-| `docs/` | Plan, contrato de la API, guías de Cala, benchmarks e informe del error (índice en [CLAUDE.md](CLAUDE.md#documentos)) |
+| `app/` | Expo app (React Native + TypeScript) for web, iOS and Android |
+| `backend/` | FastAPI API. `chat/`: sessions, messages, audio, profile. `cala_core/`: router and Cala queries. `journal/`: daily journal. `verifier/`: shared LLM and config modules (the deck verifier is out of the product). See [backend/README.md](backend/README.md) |
+| `canonizador/` | The query canonizer, the cache layers and the benchmarks. See [canonizador/README.md](canonizador/README.md) |
+| `n8n/` | n8n flows against the API |
+| `docs/` | API contract, Cala guides, benchmarks, error report and design (index in [CLAUDE.md](CLAUDE.md#documentos)) |
 
-## Correr
-
-Requisitos: Python 3.11+ con [uv](https://docs.astral.sh/uv/), Node 20+, y una clave de Cala.
+## Run it
 
 ```bash
-# claves (nunca se commitean)
-cp backend/.env.example backend/.env      # completar CALA_API_KEY y, si hay, NVIDIA_API_KEY
-
-# backend → http://localhost:8000
+# Backend
 cd backend && uv sync && uv run uvicorn app:app --port 8000
-uv run pytest                             # tests
+uv run pytest
 
-# app → tecla w para la versión web
-cd app && npm install && npx expo start   # en el celular (Expo Go): EXPO_PUBLIC_API_URL=http://<IP del PC>:8000
+# App (web: press w; in Expo Go set EXPO_PUBLIC_API_URL to the PC's IP)
+cd app && npm install && npx expo start
 ```
 
-Sin `NVIDIA_API_KEY`, el backend usa Codex como modelo (`LLM_PROVIDER=codex`). La app tiene un modo simulado si el backend no responde.
+Keys (`CALA_API_KEY`, `GEMINI_API_KEY`, `VALKEY_URL`) go only in `backend/.env` (template: `backend/.env.example`). They are never committed.
+
+## Challenges
+
+- **Cala** (main): real need, end-to-end execution, originality, Cala at the core.
+- **Google Gemini**: the product's AI (router, intent, audio, PDF context).
+- **Aiven**: shared Valkey cache for Cala queries and the local graph.
+- **OpenAI Codex**: the code was written with Codex; evidence in [docs/CODEX.md](docs/CODEX.md) and [docs/PROCESO.md](docs/PROCESO.md).
