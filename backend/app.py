@@ -16,10 +16,12 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from verifier.config import settings
 from verifier.llm import make_llm
 from verifier.pipeline import verify_pdf
+from chat.routes import router as chat_router
 
 ROOT = Path(__file__).parent
 MAX_PDF_BYTES = 20 * 1024 * 1024
 app = FastAPI(title="Deck Verifier")
+app.include_router(chat_router)
 ERROR_CODES = {
     400: "bad_request",
     404: "not_found",
