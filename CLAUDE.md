@@ -2,20 +2,21 @@
 
 Hackathon Junction 2026, Espoo (Finlandia), del 13 al 15 de noviembre de 2026. Somos **dos personas, cada una con su máquina, su Claude (Pro) y su Codex**, trabajando en paralelo sobre este repo. Lo leen los Claude de ambas máquinas (central, orquestador, subagentes) y Codex (este archivo es también `AGENTS.md`). Respondé en español.
 
-## Producto
-App **web y móvil** (una sola base de código con Expo) con un **chat** al que el founder le habla (texto o **audio**):
-1. el audio se **transcribe**;
-2. el backend arma y actualiza el **perfil de su startup** (sector, etapa, ciudad, competidores, qué busca);
-3. responde al momento usando la **caché de Cala**;
-4. en **segundo plano** busca en Cala recomendaciones (inversores, competidores que acaban de levantar, clientes potenciales) y avisa en el chat cuando están listas;
-5. puede **verificar su pitch deck**: cada afirmación contra Cala, con fuentes (ya implementado en `backend/verifier`).
+## Producto (enfoque desde el 14/11: Cala en el centro)
+**No es un chatbot: es una forma de usar Cala desde la voz.** Plan completo en `docs/PLAN-CALA-CENTRO.md`.
+1. El usuario habla o escribe en la app (web y móvil, Expo). El audio se **transcribe** (Whisper local).
+2. Un **router** divide el mensaje en partes y clasifica cada una: **consulta** (se busca en Cala), **afirmación** del usuario (se contrasta con Cala), **perfil/gustos** (se guarda) o charla.
+3. Las consultas van por el **canonizador** (misma intención → misma consulta) y, si no hay datos, prueban las otras herramientas de Cala (entidades, búsqueda). Nunca "no hay información" sin haber probado todo.
+4. Lo que se muestra son **datos de Cala tal cual**, como tablas con fuentes (`docs/API.md`, bloques). El modelo nunca escribe cifras ni nombres que no vengan de Cala.
+5. **Journal diario** en la app: edición genérica del ecosistema y edición personalizada para founders, armadas solo con consultas a Cala.
+6. Además: **verificador de pitch decks** (cada afirmación del PDF contra Cala) y recomendaciones de inversores, competidores y clientes.
 
 Cala es el núcleo (no tocamos cómo funciona: mostramos para qué sirve). Todo dato de Cala se muestra con su fuente.
 
 ## Retos
 - **Principal: Cala** (25% cada uno: necesidad real, ejecución end-to-end, originalidad, Cala como núcleo). Slush empieza justo después: usable al día siguiente.
 - **NVIDIA Nemotron** (secundario): Nemotron 3.5 Super VL como modelo central. Entrega: texto con el modelo, qué hace, por qué importa y **cómo mejoramos sus respuestas** (el filtro anti-alucinación de URLs y las métricas cuentan). Mientras no haya clave, `LLM_PROVIDER=codex`.
-- **OpenAI Codex** (secundario): construimos con Codex; evidencia con `cx log` en cada máquina y `docs/PROCESO.md`.
+- **OpenAI Codex** (secundario): construimos con Codex; evidencia en `docs/CODEX.md` (registro de tareas exportado de `cx log` de cada máquina) y `docs/PROCESO.md`.
 - Candidatos sin decidir: Context.dev, Aiven, CRACI. Descartado: bot de WhatsApp/Telegram con n8n (se reemplaza por el chat de la app).
 
 ## Equipo y coordinación
@@ -26,8 +27,10 @@ Cala es el núcleo (no tocamos cómo funciona: mostramos para qué sirve). Todo 
 ### Dueños de cada área (para no pisarse)
 | Área | Dueño | Notas |
 |---|---|---|
-| `backend/` | máquina `bau` | FastAPI + verificador + chat/audio/perfil/recomendaciones |
-| `app/` | la otra máquina | Expo (web + iOS + Android), TypeScript |
+| `backend/cala_core/`, `backend/journal/` | máquina `bau` | Router, ejecución contra Cala, formato de bloques, verificación de afirmaciones y journal |
+| `backend/verifier/`, `canonizador/` | máquina `bau` | Verificador de decks; canonizador de consultas y benchmarks |
+| `backend/chat/`, `backend/app.py` | máquina `fabricio` | Sesiones, mensajes, audio, perfil, recomendaciones; conecta `cala_core` al chat |
+| `app/` | máquina `fabricio` | Expo (web + iOS + Android), TypeScript |
 | `docs/API.md` | compartido | contrato backend ↔ app; cambios fuera de *(borrador)* en un PR propio aprobado por el otro |
 | resto de `docs/` | cualquiera | `PROCESO.md`: una línea por hito |
 
@@ -53,23 +56,36 @@ Si hace falta tocar el área del otro, se pide por `equipo avisar` o se hace en 
 
 ## Reglas técnicas
 - **Secretos**: `CALA_API_KEY`, `NVIDIA_API_KEY` solo en `backend/.env` (ignorado por git; plantilla en `backend/.env.example`). Nunca leerlos, imprimirlos, loguearlos ni ponerlos en prompts o commits.
-- **Cala**: `POST /v1/knowledge/search` (lenguaje natural → respuesta con fuentes) y `/v1/knowledge/query` (filas). **~16 s por llamada**: siempre en paralelo, con caché en disco (`backend/cache/`, ignorada) y pocas llamadas por pantalla. Detalle en `docs/CALA-API.md`.
+- **Cala**: el código nuevo consulta Cala **a través del canonizador** (`canonizador/`), nunca mandando el texto del usuario directo: el texto libre da respuestas distintas para la misma pregunta (`docs/BENCHMARK-CANONIZADOR.md`). Endpoints: `knowledge/query` (filas), entidades (datos con fuentes y `is_lead`), `knowledge/search` (respuesta con fuentes, último recurso). **16–60 s por llamada** y HTTP 429 tras ~7 llamadas seguidas: caché en disco (`backend/cache/`, ignorada), pocas llamadas a la vez y reintentos con espera. Detalle en `docs/CALA-CAMPOS.md` y `docs/CALA-API.md`.
 - **LLM**: `LLM_PROVIDER` = `nvidia` | `codex` | `claude` (`backend/verifier/llm.py`). NVIDIA: API compatible con OpenAI; la URL sale de `NVIDIA_BASE_URL`. El endpoint de Nemotron que nos dio NVIDIA está en Verda (`https://containers.datacrunch.io/nemotron-3-5-super-vl-b300/v1`, modelo `nemotron-3.5-super-vl`), pero al 14/11 a las 12:00 acepta la clave y nunca responde; una clave de Verda propia da "no such container deployment" (el contenedor es del proyecto de NVIDIA). Plan B: clave gratis de build.nvidia.com (`https://integrate.api.nvidia.com/v1`). Mientras tanto, `LLM_PROVIDER=codex`.
 - **Transcripción**: `TRANSCRIPTION_PROVIDER` = `whisper` (por defecto: faster-whisper local, modelo `WHISPER_MODEL`, por defecto `small`) | `nvidia` (sin probar) | `none`. Ver `backend/chat/transcribe.py`.
 - No crear repos ni desplegar sin aprobación del usuario. Antes de dar algo por terminado, correr la app o los tests y decir qué se verificó.
 
 ## Documentos
-- `docs/API.md`: contrato backend ↔ app.
-- `docs/SPEC-verificador.md`: diseño del verificador. `docs/CALA-API.md`: qué permite Cala. `docs/IDEAS-CALA.md`: ideas evaluadas. `docs/PROCESO.md`: diario.
+| Documento | Qué tiene |
+|---|---|
+| `docs/PLAN-CALA-CENTRO.md` | El enfoque actual: router, consultas, bloques, journal y reparto |
+| `docs/API.md` | Contrato backend ↔ app |
+| `docs/CALA-CAMPOS.md` | Guía oficial de campos de Cala (entidades, rondas, `is_lead`, Slush 2026) |
+| `docs/CALA-SKILL.md` | Guía oficial para que un LLM use Cala (lenguaje de consultas) |
+| `docs/CALA-API.md` | Primer resumen de la API de Cala |
+| `docs/SPEC-canonizador.md` | Diseño del canonizador de consultas |
+| `docs/BENCHMARK-CANONIZADOR.md` | Benchmark: 5 formas de preguntarle a Cala (0–1 de 9 consistentes contra 9 de 9) |
+| `docs/INFORME-ERROR-CALA.md` | El error de consistencia de Cala, evidencia y recomendaciones para Cala |
+| `docs/SPEC-verificador.md` | Diseño del verificador de decks |
+| `docs/IDEAS-CALA.md` | Ideas evaluadas al elegir el proyecto |
+| `docs/CODEX.md` | Registro de lo que construyó Codex (reto de Codex) |
+| `docs/PROCESO.md` | Diario de decisiones |
 
-## Estado (14/11, mediodía)
-- En `main`: verificador de decks, canonizador + benchmarks (`docs/BENCHMARK-CANONIZADOR.md`, `docs/INFORME-ERROR-CALA.md`), app Expo (#6, #7, #8) y chat completo del backend: sesiones, texto, audio y recomendaciones (#3, #4, #5).
-- Equipo: `bau` (orquestador, Bau), `fabricio` (miembro). Gabriel también está en el equipo (sin máquina registrada todavía).
+## Estado (14/11, tarde)
+- En `main`: verificador de decks, canonizador + benchmarks, app Expo (#6, #7, #8) y chat del backend: sesiones, texto, audio y recomendaciones (#3, #4, #5).
+- En curso: enfoque "Cala en el centro" (`docs/PLAN-CALA-CENTRO.md`): router y bloques (bau), journal (bau), conexión al chat y app (fabricio).
+- Equipo: `bau` (orquestador), `fabricio` (miembro). Gabriel está en el equipo, por ahora en otra tarea.
 
 ## Pendientes
-- [ ] Nemotron: que NVIDIA levante el endpoint de Verda, o pasar a build.nvidia.com. Sin eso no entramos al reto de NVIDIA.
+- [ ] Enfoque Cala en el centro: tareas A–F de `docs/PLAN-CALA-CENTRO.md`.
+- [ ] Nemotron: que Verda/NVIDIA levante el endpoint, o pasar a build.nvidia.com con una clave `nvapi-` propia. Sin eso no entramos al reto de NVIDIA.
 - [ ] Prueba de punta a punta de la app contra el backend en vivo (web y Expo Go).
-- [ ] Recomendaciones y verificador: usar el canonizador para las consultas a Cala (hoy van en lenguaje natural).
 - [ ] Preguntas al stand de Cala (límite de uso, costo, latencia, lead/follow, Slush 2026).
 - [ ] Confirmar hora límite de entrega y formularios de cada reto secundario.
 - [ ] Pitch y video de demo.
