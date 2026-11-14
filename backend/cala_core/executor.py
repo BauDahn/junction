@@ -86,6 +86,14 @@ def _table_from_entity(data, call):
             "columns": ["campo", "valor", "fuente", "fecha", "source_rank"], "rows": rows, "sources": sources}
 
 
+async def _safe(call, default):
+    """Un paso de respaldo que falla (422, 429, red) no rompe el chat: se pasa al siguiente."""
+    try:
+        return await call
+    except Exception:
+        return default
+
+
 async def execute(text, *, cala=None, llm=None, cache_dir=None):
     result = await answer(text, llm=llm, client=cala, cache_dir=cache_dir)
     data = result.get("result") or {}
@@ -117,19 +125,19 @@ async def execute(text, *, cala=None, llm=None, cache_dir=None):
         entity_type = "COMPANY"
         entities = intent.get("entities") or []
         if entities and isinstance(entities[0], dict): entity_type = entities[0].get("type") or entity_type
-        found = await client.entities(subject, entity_type)
+        found = await _safe(client.entities(subject, entity_type), [])
         candidates = found if isinstance(found, list) else found.get("entities", []) if isinstance(found, dict) else []
         if candidates:
             entity = next((x for x in candidates if str(x.get("name", "")).casefold() == subject.casefold()), candidates[0])
             entity_id = entity.get("id")
             if entity_id:
                 tried.append(_call("entity", f"introspection:{entity_id}"))
-                intro = await client.introspection(entity_id)
+                intro = await _safe(client.introspection(entity_id), {})
                 props = intro.get("properties", [])
                 rels = intro.get("relationships", {})
                 requested_rels = {d: {name: {"limit": 100} for name in names} for d, names in rels.items() if names}
                 tried.append(_call("entity", f"retrieve:{entity_id} properties={props} relationships={requested_rels}"))
-                retrieved = await client.retrieve(entity_id, properties=props, relationships=requested_rels)
+                retrieved = await _safe(client.retrieve(entity_id, properties=props, relationships=requested_rels), {})
                 closest = _table_from_entity(retrieved, tried[-1])
                 if closest:
                     closest["title"] = title
@@ -138,7 +146,7 @@ async def execute(text, *, cala=None, llm=None, cache_dir=None):
     search_query = f"Find {attribute} for {subject}. Return only sourced Cala data."
     tried.append(_call("knowledge_search", search_query))
     if client is not None:
-        searched = await client.search(search_query)
+        searched = await _safe(client.search(search_query), {})
         markdown = searched.get("answer") or searched.get("markdown") or searched.get("content") or "" if isinstance(searched, dict) else ""
         if markdown:
             return _normalize_block_sources({"type": "cala_answer", "title": title, "call": tried[-1], "markdown": markdown,

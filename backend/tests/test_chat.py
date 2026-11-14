@@ -112,3 +112,16 @@ def test_executor_accepts_entity_list_result(monkeypatch):
     monkeypatch.setattr(executor, "answer", fake_answer)
     block = asyncio.run(executor.execute("¿Cuánto levantó Mews?"))
     assert block["type"] == "cala_table" and block["rows"][0][:2] == ["total_funding", "300M"]
+
+
+def test_executor_falls_back_to_not_found_when_cala_errors(monkeypatch):
+    import asyncio
+    from cala_core import executor
+    async def fake_answer(text, **kw):
+        return {"intent": {}, "result": {}}
+    class BrokenCala:
+        async def entities(self, *a, **k): raise RuntimeError("422")
+        async def search(self, *a, **k): raise RuntimeError("429")
+    monkeypatch.setattr(executor, "answer", fake_answer)
+    block = asyncio.run(executor.execute("¿Esto es verdad?", cala=BrokenCala()))
+    assert block["type"] == "not_found" and len(block["tried"]) == 3

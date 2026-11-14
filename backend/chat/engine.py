@@ -3,6 +3,7 @@ from cala_core import handle_message as cala_handle_message
 from verifier.config import settings
 from . import store
 from .focus import focus_table
+from .followup import self_contained
 from .profile import empty_profile, merge
 
 SCHEMA = {"type": "object", "properties": {"reply": {"type": "string"}, "used_cards": {"type":"array", "items":{"type":"integer"}}, "profile_patch": {"type": "object", "properties": {
@@ -32,11 +33,12 @@ async def handle_text(session_id, text, llm, transcript=None, cala=None, context
     pending_notice = bool(rec and rec["status"] == "ready" and not rec["notified"])
     # cala_core usa el cliente del canonizador (knowledge_query); el CalaClient del verificador no sirve aquí.
     core_cala = cala if hasattr(cala, "knowledge_query") else None
-    result = await cala_handle_message(text, profile, llm, cala=core_cala, cache_dir=getattr(settings, "cache_dir", None))
+    question = await self_contained(text, store.list_messages(session_id), llm)
+    result = await cala_handle_message(question, profile, llm, cala=core_cala, cache_dir=getattr(settings, "cache_dir", None))
     blocks = result.get("blocks", [])
     for block in blocks:
         if isinstance(block, dict) and block.get("type") == "cala_table":
-            await focus_table(text, block, llm)
+            await focus_table(question, block, llm)
     patch = result.get("profile_patch", {})
     updated, changed = merge(profile, patch)
     user_msg = {"id": uuid.uuid4().hex, "session_id": session_id, "role": "user", "text": text, "transcript": transcript, "sources": [], "cards": [], "created_at": store.now_iso()}

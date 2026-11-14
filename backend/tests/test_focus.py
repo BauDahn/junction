@@ -28,3 +28,17 @@ def test_small_tables_skip_the_model():
     llm = PickLLM([0])
     block = asyncio.run(focus_table("x", table(2), llm))
     assert llm.calls == 0 and block["focus_rows"] == [0, 1]
+
+
+def test_followup_without_history_skips_the_model():
+    from chat.followup import self_contained
+    llm = PickLLM([])
+    assert asyncio.run(self_contained("¿Esto es verdad?", [], llm)) == "¿Esto es verdad?" and llm.calls == 0
+
+
+def test_followup_uses_rewrite():
+    from chat.followup import self_contained
+    class Rewrite:
+        async def complete_json(self, s, u, schema): return {"text": "¿Mews ha levantado $710–717 million?"}
+    history = [{"role": "user", "text": "¿Cuánto levantó Mews?"}, {"role": "assistant", "text": "Mews · $710–717 million"}]
+    assert asyncio.run(self_contained("¿Esto es verdad?", history, Rewrite())).startswith("¿Mews")
