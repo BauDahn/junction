@@ -23,6 +23,7 @@ import {
   type MobileFile,
 } from '../src/api';
 import CardView from '../src/components/CardView';
+import BlockView from '../src/components/BlockView';
 
 type ChatMessage = Message & {
   pending?: boolean;
@@ -199,6 +200,11 @@ export default function ChatScreen() {
               <Text style={s.source}>↗ {source.name}</Text>
             </Pressable>
           ))}
+          {item.role === 'assistant'
+            ? item.blocks?.map((block, index) => (
+                <BlockView key={`${block.type}-${index}`} block={block} />
+              ))
+            : null}
           {item.cards?.map((card, index) => (
             <CardView key={`${card.title}-${index}`} card={card} />
           ))}
