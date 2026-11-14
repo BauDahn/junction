@@ -188,6 +188,73 @@
     "cache_hit": true,
     "seconds": 3.4
    }
+  },
+  "nl_query": {
+   "¿Cuánto levantó Amenitiz en su Serie B y quién lideró la ronda?": {
+    "rows_hash": "4bab16cef0",
+    "rows": [
+     {
+      "company": "Amenitiz",
+      "round": "Series B",
+      "amount": "€38.9 million",
+      "amount_usd": "~45 million dollars",
+      "date": "November 2025",
+      "lead_investor": "Kfund (through Leadwind)"
+     }
+    ],
+    "names": [
+     "Amenitiz"
+    ],
+    "entity_ids": [
+     "2c557cbb-4e37-44db-9f47-5bc327a86320",
+     "c10b7226-55b9-4994-92b2-6a799a661c96",
+     "db95edaa-058f-494d-a4f4-5f56bf81afd9"
+    ],
+    "calls": 1,
+    "seconds": 12.5
+   },
+   "quien lidero y de cuanto fue la serie b de amenitiz": {
+    "rows_hash": "68a65b18e4",
+    "rows": [
+     {
+      "name": "Amenitiz",
+      "leader": "Kfund (Leadwind)",
+      "amount": "€38.9 million"
+     }
+    ],
+    "names": [
+     "Amenitiz"
+    ],
+    "entity_ids": [
+     "c10b7226-55b9-4994-92b2-6a799a661c96",
+     "db95edaa-058f-494d-a4f4-5f56bf81afd9"
+    ],
+    "calls": 1,
+    "seconds": 30.1
+   },
+   "How much did Amenitiz raise in its Series B and who led the round?": {
+    "rows_hash": "d94a9597d8",
+    "rows": [
+     {
+      "name": "Amenitiz",
+      "series": "B",
+      "amount": "38.9 million",
+      "currency": "EUR",
+      "year": 2025,
+      "lead_investor": "Kfund (through Leadwind)"
+     }
+    ],
+    "names": [
+     "Amenitiz"
+    ],
+    "entity_ids": [
+     "2c557cbb-4e37-44db-9f47-5bc327a86320",
+     "c10b7226-55b9-4994-92b2-6a799a661c96",
+     "db95edaa-058f-494d-a4f4-5f56bf81afd9"
+    ],
+    "calls": 1,
+    "seconds": 17.0
+   }
   }
  },
  "Fundadores (Glovo)": {
@@ -355,6 +422,94 @@
     "calls": 0,
     "cache_hit": true,
     "seconds": 0.0
+   }
+  },
+  "nl_query": {
+   "¿Quiénes fundaron Glovo?": {
+    "rows_hash": "86b701ae84",
+    "rows": [
+     {
+      "name": "Óscar Pierre",
+      "role": "CEO and cofounder",
+      "nationality": null,
+      "education": "Universitat Politècnica de Catalunya; Georgia Tech (USA)",
+      "previous_employer": "Airbus (aerodynamic engineer)"
+     },
+     {
+      "name": "Sacha Michaud",
+      "role": "Cofounder",
+      "nationality": "Canadian/British",
+      "education": null,
+      "previous_employer": "Latin Red (Yahoo portal); Betfair"
+     }
+    ],
+    "names": [
+     "Sacha Michaud",
+     "Óscar Pierre"
+    ],
+    "entity_ids": [
+     "022c1505-3e75-460c-8788-04e1c58ce336",
+     "181db6c2-316c-4b15-ad34-e0b5d5fc8a03",
+     "3b89b33d-7f9b-48cf-81ea-8ded0de0c860",
+     "52625ae6-9fb2-418e-ac3c-2d0e968dbfa0",
+     "b7e22939-a5ca-44af-8e80-fe5b80950b6b",
+     "db2a9bff-cfc8-43e8-883c-8685d571b3bd",
+     "db3c1f2b-dc8c-4c1b-bb92-d8b9420a4faf"
+    ],
+    "calls": 1,
+    "seconds": 18.8
+   },
+   "Glovo: quienes son sus fundadores": {
+    "rows_hash": "cfcfbcf543",
+    "rows": [
+     {
+      "name": "Oscar Pierre",
+      "role": "cofounder and CEO"
+     },
+     {
+      "name": "Sacha Michaud",
+      "role": "cofounder"
+     },
+     {
+      "name": "Gerard Olivé",
+      "role": "cofounder"
+     }
+    ],
+    "names": [
+     "Gerard Olivé",
+     "Oscar Pierre",
+     "Sacha Michaud"
+    ],
+    "entity_ids": [
+     "52625ae6-9fb2-418e-ac3c-2d0e968dbfa0",
+     "95e1e774-7b2f-44e7-8e8a-a20fa6b80ab2",
+     "b7e22939-a5ca-44af-8e80-fe5b80950b6b"
+    ],
+    "calls": 1,
+    "seconds": 21.5
+   },
+   "Who are the founders of Glovo?": {
+    "rows_hash": "9458f3d1c6",
+    "rows": [
+     {
+      "name": "Óscar Pierre",
+      "role": "Co-founder and CEO"
+     },
+     {
+      "name": "Sacha Michaud",
+      "role": "Co-founder"
+     }
+    ],
+    "names": [
+     "Sacha Michaud",
+     "Óscar Pierre"
+    ],
+    "entity_ids": [
+     "52625ae6-9fb2-418e-ac3c-2d0e968dbfa0",
+     "b7e22939-a5ca-44af-8e80-fe5b80950b6b"
+    ],
+    "calls": 1,
+    "seconds": 15.5
    }
   }
  },
@@ -754,6 +909,320 @@
     "cache_hit": true,
     "seconds": 0.0
    }
+  },
+  "nl_query": {
+   "¿Qué empresas ha comprado Mews?": {
+    "rows_hash": "8eab7d825b",
+    "rows": [
+     {
+      "empresa": "Planet Winner",
+      "año": 2019,
+      "descripcion": "Tecnología hotelera"
+     },
+     {
+      "empresa": "Base7Booking",
+      "año": 2020,
+      "descripcion": "Sistema de gestión hotelera (PMS)"
+     },
+     {
+      "empresa": "Hotel Perfect",
+      "año": 2021,
+      "descripcion": "Sistema de gestión hotelera (PMS)"
+     },
+     {
+      "empresa": "Cenium",
+      "año": 2022,
+      "descripcion": "Tecnología hotelera"
+     },
+     {
+      "empresa": "Bizzon",
+      "año": 2022,
+      "descripcion": "Tecnología hotelera"
+     },
+     {
+      "empresa": "Hotello",
+      "año": 2023,
+      "descripcion": "PMS en la nube con sede en Montreal, Canadá"
+     },
+     {
+      "empresa": "Nomi",
+      "año": 2023,
+      "descripcion": "Startup de Nashville especializada en personalización de experiencias de huéspedes con IA"
+     },
+     {
+      "empresa": "Frontdesk Anywhere",
+      "año": "Enero 2024",
+      "descripcion": "PMS en la nube con sede en San Francisco"
+     },
+     {
+      "empresa": "HS/3 Hotelsoftware",
+      "año": "Mayo 2024",
+      "descripcion": "Software hotelero"
+     },
+     {
+      "empresa": "Quotelo",
+      "año": "Noviembre 2024",
+      "descripcion": "Software francés de reservas MICE y grupos, fundado en 2021"
+     },
+     {
+      "empresa": "Atomize",
+      "año": "Noviembre 2024",
+      "descripcion": "Proveedor de software de revenue management (RMS) con sede en Gotemburgo, Suecia"
+     },
+     {
+      "empresa": "Clarity Hospitality Software Solutions",
+      "año": "Enero 2025",
+      "descripcion": "Empresa fundada en Nueva Zelanda, especializada en gestión de propiedades y eventos (expansión en APAC y Reino Unido)"
+     },
+     {
+      "empresa": "Flexkeeping",
+      "año": "Septiembre 2025",
+      "descripcion": "Plataforma de automatización de operaciones hoteleras y housekeeping"
+     },
+     {
+      "empresa": "DataChat",
+      "año": "Octubre 2025",
+      "descripcion": "Empresa estadounidense de analítica con IA conversacional y razonamiento automatizado de datos"
+     }
+    ],
+    "names": [
+     ""
+    ],
+    "entity_ids": [
+     "0850fd43-4707-4d40-b50e-068984fc3019",
+     "27422d0d-d68a-5707-934b-61c5906d8061",
+     "45268f56-905f-4cbe-9729-0ad0bbff87fa",
+     "763bd3ad-e18f-4284-a5b3-76d48c8855b9",
+     "92a05950-81ab-5fb4-aa0e-e24e097405cd",
+     "a024c56e-470f-4b7d-b207-9a7dcf181148",
+     "acb7262b-d660-5d94-b05e-8c2bcd517304",
+     "d7c979fb-82ba-4ad6-aca5-0df7712a81fe",
+     "e96d0b39-1ca2-4680-9fa0-e4890cb2415a",
+     "ede937ad-0e87-47b7-b828-04f29c9f6181"
+    ],
+    "calls": 1,
+    "seconds": 36.6
+   },
+   "adquisiciones hechas por Mews": {
+    "rows_hash": "83897b913e",
+    "rows": [
+     {
+      "acquisition_number": 1,
+      "acquired_company": "Planet Winner",
+      "date": "2019",
+      "description": "Proveedor de software hotelero (Bélgica)"
+     },
+     {
+      "acquisition_number": 2,
+      "acquired_company": "Base7Booking",
+      "date": "2020",
+      "description": "Sistema de gestión hotelera en la nube"
+     },
+     {
+      "acquisition_number": 3,
+      "acquired_company": "Hotel Perfect",
+      "date": "2021",
+      "description": "Sistema de gestión de propiedades (PMS)"
+     },
+     {
+      "acquisition_number": 4,
+      "acquired_company": "Cenium",
+      "date": "2022",
+      "description": "Proveedor de PMS hotelero"
+     },
+     {
+      "acquisition_number": 5,
+      "acquired_company": "Bizzon",
+      "date": "2022",
+      "description": "Tecnología para hostelería"
+     },
+     {
+      "acquisition_number": 6,
+      "acquired_company": "Hotello",
+      "date": "Abril 2023",
+      "description": "PMS en la nube con sede en Montreal, Canadá — reforzó la presencia de Mews en Norteamérica"
+     },
+     {
+      "acquisition_number": 7,
+      "acquired_company": "Nomi",
+      "date": "2023",
+      "description": "Plataforma de insights de huéspedes impulsada por IA"
+     },
+     {
+      "acquisition_number": 8,
+      "acquired_company": "Frontdesk Anywhere",
+      "date": "Enero 2024",
+      "description": "PMS en la nube con sede en San Francisco — tercera adquisición en Norteamérica en menos de un año"
+     },
+     {
+      "acquisition_number": 9,
+      "acquired_company": "HS/3 Hotelsoftware",
+      "date": "Mayo 2024",
+      "description": "PMS on-premises con sede en Alemania — fortaleció la presencia de Mews en la región DACH (Alemania, Austria y Suiza)"
+     },
+     {
+      "acquisition_number": 10,
+      "acquired_company": "Quotelo",
+      "date": "Noviembre 2024",
+      "description": "Software francés de reservas MICE y grupos, fundado en 2021"
+     },
+     {
+      "acquisition_number": 11,
+      "acquired_company": "Atomize",
+      "date": "Noviembre 2024",
+      "description": "Software de revenue management (RMS) con sede en Gotemburgo, Suecia — integró capacidades de precios dinámicos en tiempo real"
+     },
+     {
+      "acquisition_number": 12,
+      "acquired_company": "Clarity Hospitality Software Solutions",
+      "date": "Enero 2025",
+      "description": "Proveedor de PMS fundado en Nueva Zelanda — expandió la presencia de Mews en APAC y Reino Unido"
+     },
+     {
+      "acquisition_number": 13,
+      "acquired_company": "Flexkeeping",
+      "date": "Septiembre 2025",
+      "description": "Plataforma de automatización de operaciones y housekeeping hotelero"
+     },
+     {
+      "acquisition_number": 14,
+      "acquired_company": "DataChat",
+      "date": "Octubre 2025",
+      "description": "Plataforma de analítica de datos basada en IA (EE. UU.) — integró capacidades de IA conversacional y agentes autónomos en la plataforma Mews"
+     }
+    ],
+    "names": [
+     ""
+    ],
+    "entity_ids": [
+     "0850fd43-4707-4d40-b50e-068984fc3019",
+     "27422d0d-d68a-5707-934b-61c5906d8061",
+     "28d34819-96e8-4b59-bc1f-b17c22863d5d",
+     "30324bba-1827-47ae-b406-e3bde220e5d0",
+     "3a1def7a-b794-4c6b-8eb4-d1d197858075",
+     "45268f56-905f-4cbe-9729-0ad0bbff87fa",
+     "61901653-115d-4cc4-a4e4-04d8c5009f1e",
+     "763bd3ad-e18f-4284-a5b3-76d48c8855b9",
+     "92a05950-81ab-5fb4-aa0e-e24e097405cd",
+     "9a76882e-8c21-4893-9cb8-6dd4c6742ee1",
+     "a024c56e-470f-4b7d-b207-9a7dcf181148",
+     "d7c979fb-82ba-4ad6-aca5-0df7712a81fe",
+     "e96d0b39-1ca2-4680-9fa0-e4890cb2415a",
+     "ede937ad-0e87-47b7-b828-04f29c9f6181"
+    ],
+    "calls": 1,
+    "seconds": 42.3
+   },
+   "Which companies has Mews acquired?": {
+    "rows_hash": "4d97c2fd48",
+    "rows": [
+     {
+      "company": "Planet Winner",
+      "year": 2019,
+      "description": "Belgium-based property management software provider"
+     },
+     {
+      "company": "Base7Booking",
+      "year": 2020,
+      "description": "European cloud-based PMS, acquired from Trivago"
+     },
+     {
+      "company": "Hotel Perfect",
+      "year": 2021,
+      "description": "UK-based PMS with a strong customer portfolio"
+     },
+     {
+      "company": "Cenium",
+      "year": 2022,
+      "description": "Norwegian hospitality technology company, owned by Nordic Choice Hotels"
+     },
+     {
+      "company": "Bizzon",
+      "year": 2022,
+      "description": "Cloud-native electronic point-of-sale (ePOS) software provider for hospitality"
+     },
+     {
+      "company": "Hotello",
+      "year": 2023,
+      "description": "Montreal-based cloud PMS for hotel properties"
+     },
+     {
+      "company": "Nomi",
+      "year": 2023,
+      "description": "Nashville-based AI-powered guest personalization and recommendation startup"
+     },
+     {
+      "company": "Frontdesk Anywhere",
+      "year": 2024,
+      "description": "San Francisco-based cloud hotel management software (founded 2009)"
+     },
+     {
+      "company": "HS/3 Hotelsoftware",
+      "year": 2024,
+      "description": "Hotel software provider"
+     },
+     {
+      "company": "Quotelo",
+      "year": 2024,
+      "description": "French MICE and group booking software (founded 2021)"
+     },
+     {
+      "company": "Atomize",
+      "year": 2024,
+      "description": "Gothenburg-based revenue management software (RMS) provider"
+     },
+     {
+      "company": "Clarity Hospitality Software Solutions",
+      "year": 2025,
+      "description": "New Zealand-founded property and event management software, expanding Mews' APAC and UK presence"
+     },
+     {
+      "company": "Flexkeeping",
+      "year": 2025,
+      "description": "Hotel operations and housekeeping automation platform"
+     },
+     {
+      "company": "Data Chat",
+      "year": 2025,
+      "description": "AI-based data analytics and decision-making platform (founded 2017, based in Madison)"
+     }
+    ],
+    "names": [
+     "Atomize",
+     "Base7Booking",
+     "Bizzon",
+     "Cenium",
+     "Clarity Hospitality Software Solutions",
+     "Data Chat",
+     "Flexkeeping",
+     "Frontdesk Anywhere",
+     "HS/3 Hotelsoftware",
+     "Hotel Perfect",
+     "Hotello",
+     "Nomi",
+     "Planet Winner",
+     "Quotelo"
+    ],
+    "entity_ids": [
+     "27422d0d-d68a-5707-934b-61c5906d8061",
+     "28104468-c1b3-43be-a62d-e751b9c26cb4",
+     "3991d008-04da-40fd-83dc-b742d890a2b8",
+     "3a1def7a-b794-4c6b-8eb4-d1d197858075",
+     "4498f7f8-fecf-4e62-9d76-0246d41791c4",
+     "6644a332-ad6f-4280-b7a0-c89487a7f921",
+     "6b6f3214-49f8-5658-a642-e7fd35d23c5e",
+     "842388ab-13fc-438c-91f0-bb245b78a5d2",
+     "92a05950-81ab-5fb4-aa0e-e24e097405cd",
+     "9a76882e-8c21-4893-9cb8-6dd4c6742ee1",
+     "a024c56e-470f-4b7d-b207-9a7dcf181148",
+     "acb7262b-d660-5d94-b05e-8c2bcd517304",
+     "d2b682af-68c7-43a9-bd7b-4447e49d37d3",
+     "e96d0b39-1ca2-4680-9fa0-e4890cb2415a",
+     "ede937ad-0e87-47b7-b828-04f29c9f6181"
+    ],
+    "calls": 1,
+    "seconds": 34.8
+   }
   }
  },
  "Financiación total (Factorial)": {
@@ -942,6 +1411,60 @@
     "calls": 0,
     "cache_hit": true,
     "seconds": 0.0
+   }
+  },
+  "nl_query": {
+   "¿Cuánta financiación total ha levantado Factorial?": {
+    "rows_hash": "4e58e4e4a3",
+    "rows": [
+     {
+      "name": "Factorial",
+      "total_funding": "$420 million"
+     }
+    ],
+    "names": [
+     "Factorial"
+    ],
+    "entity_ids": [
+     "d108a1a5-d9cc-42f8-87f4-3872b111c5a5"
+    ],
+    "calls": 1,
+    "seconds": 30.7
+   },
+   "Factorial, financiacion total levantada hasta hoy": {
+    "rows_hash": "7ec234d4fd",
+    "rows": [
+     {
+      "name": "Factorial",
+      "total_funding_usd": "$572 million",
+      "total_funding_eur": "€523 million"
+     }
+    ],
+    "names": [
+     "Factorial"
+    ],
+    "entity_ids": [
+     "d108a1a5-d9cc-42f8-87f4-3872b111c5a5"
+    ],
+    "calls": 1,
+    "seconds": 32.0
+   },
+   "How much funding has Factorial raised in total?": {
+    "rows_hash": "f15df395b5",
+    "rows": [
+     {
+      "name": "Factorial",
+      "total_funding": "€523 million (roughly $570M+)"
+     }
+    ],
+    "names": [
+     "Factorial"
+    ],
+    "entity_ids": [
+     "afca0430-09dd-4f80-b601-600908cb63b1"
+    ],
+    "calls": 1,
+    "seconds": 32.3
    }
   }
  },
@@ -1338,6 +1861,306 @@
     "cache_hit": true,
     "seconds": 0.0
    }
+  },
+  "nl_query": {
+   "¿Quiénes son los inversores de Wolt?": {
+    "rows_hash": "04a5f6ad6c",
+    "rows": [
+     {
+      "investor": "ICONIQ Capital / ICONIQ Growth"
+     },
+     {
+      "investor": "83North"
+     },
+     {
+      "investor": "EQT Ventures"
+     },
+     {
+      "investor": "EQT Growth"
+     },
+     {
+      "investor": "Highland Europe"
+     },
+     {
+      "investor": "Goldman Sachs Growth Equity"
+     },
+     {
+      "investor": "Tiger Global"
+     },
+     {
+      "investor": "KKR"
+     },
+     {
+      "investor": "Coatue Management"
+     },
+     {
+      "investor": "DST Global"
+     },
+     {
+      "investor": "Prosus"
+     },
+     {
+      "investor": "Vintage Investment Partners"
+     },
+     {
+      "investor": "Atomico"
+     },
+     {
+      "investor": "Lukasz Gadowski"
+     },
+     {
+      "investor": "Lifeline Ventures"
+     },
+     {
+      "investor": "First Fellow Partners"
+     },
+     {
+      "investor": "Inventure"
+     },
+     {
+      "investor": "Risto Siilasmaa"
+     },
+     {
+      "investor": "Ilkka Paananen"
+     },
+     {
+      "investor": "Accel Partners"
+     },
+     {
+      "investor": "Partech"
+     },
+     {
+      "investor": "Fujitsu"
+     },
+     {
+      "investor": "Tenity"
+     }
+    ],
+    "names": [
+     ""
+    ],
+    "entity_ids": [
+     "17ffd618-a879-4bb3-99dd-af07d6b45f75",
+     "2c43483a-8d36-4ae6-9887-e4746dd5dccb",
+     "2c6b772b-e4c5-5fda-8374-312bcd251db3",
+     "3a2558c8-10f6-409c-95c0-857ebe600751",
+     "476a73ac-afa2-4713-9f73-188bc7ec0b95",
+     "5430a2a1-f98d-48bc-8667-66b363c78321",
+     "6972de2f-f4c4-4ff5-9d2a-7dae9b6de8d2",
+     "6d9385f7-9c5b-435d-932f-0a2da6371df5",
+     "7ce1d675-ad79-461a-863f-b0a1a85aebf1",
+     "7ea2b8c6-baf3-448a-accd-2b5ee0857d49",
+     "8a7be56b-e583-5f57-b080-ce4d8bddb34d",
+     "9145d2e5-bf37-420d-9e45-e657587f0b90",
+     "a15341c8-487b-441a-92f1-c9bff0f4a77b",
+     "aaf70e43-861a-4a36-85e6-0343c4b4bccd",
+     "af1c7427-b685-4e0c-b03a-7efb074bc3ff",
+     "c8a8e4e0-9bab-4a88-8c6a-702676c7e812",
+     "d4640009-5578-485e-9f77-3ab64881cddd",
+     "d6cf13e1-92ff-4567-bd72-30316f2498e5",
+     "e3d5b106-930a-4cbc-85d6-efa2e804f946",
+     "f1b042cd-4221-4252-a1a0-07ff8c546cb3",
+     "f389d1b6-9fe3-4dc3-8aa7-b4c1cc2cc408",
+     "fd3ba350-0e55-40b5-96e3-013994777fdc"
+    ],
+    "calls": 1,
+    "seconds": 42.8
+   },
+   "Wolt: inversores que han puesto dinero": {
+    "rows_hash": "848976d67f",
+    "rows": [
+     {
+      "name": "ICONIQ Capital / ICONIQ Growth",
+      "type": "lead"
+     },
+     {
+      "name": "EQT Ventures",
+      "type": "lead"
+     },
+     {
+      "name": "83North",
+      "type": "lead"
+     },
+     {
+      "name": "Goldman Sachs (Growth Equity)",
+      "type": "lead"
+     },
+     {
+      "name": "Lukasz Gadowski",
+      "type": "lead"
+     },
+     {
+      "name": "Highland Europe",
+      "type": "other"
+     },
+     {
+      "name": "Coatue Management",
+      "type": "other"
+     },
+     {
+      "name": "DST Global",
+      "type": "other"
+     },
+     {
+      "name": "EQT Growth",
+      "type": "other"
+     },
+     {
+      "name": "KKR",
+      "type": "other"
+     },
+     {
+      "name": "Tiger Global",
+      "type": "other"
+     },
+     {
+      "name": "Prosus",
+      "type": "other"
+     },
+     {
+      "name": "Lifeline Ventures",
+      "type": "other"
+     },
+     {
+      "name": "Inventure",
+      "type": "other"
+     },
+     {
+      "name": "Vintage Investment Partners",
+      "type": "other"
+     },
+     {
+      "name": "Atomico",
+      "type": "other"
+     },
+     {
+      "name": "DoorDash",
+      "type": "other"
+     },
+     {
+      "name": "Alfabeat",
+      "type": "other"
+     }
+    ],
+    "names": [
+     "83North",
+     "Alfabeat",
+     "Atomico",
+     "Coatue Management",
+     "DST Global",
+     "DoorDash",
+     "EQT Growth",
+     "EQT Ventures",
+     "Goldman Sachs (Growth Equity)",
+     "Highland Europe",
+     "ICONIQ Capital / ICONIQ Growth",
+     "Inventure",
+     "KKR",
+     "Lifeline Ventures",
+     "Lukasz Gadowski",
+     "Prosus",
+     "Tiger Global",
+     "Vintage Investment Partners"
+    ],
+    "entity_ids": [
+     "0ea158b7-ab05-4d2a-b0af-4970f672ca9e",
+     "17ffd618-a879-4bb3-99dd-af07d6b45f75",
+     "254fb3b3-9fd8-482f-a21e-5643514da7e4",
+     "2c43483a-8d36-4ae6-9887-e4746dd5dccb",
+     "2c6b772b-e4c5-5fda-8374-312bcd251db3",
+     "3a2558c8-10f6-409c-95c0-857ebe600751",
+     "476a73ac-afa2-4713-9f73-188bc7ec0b95",
+     "6972de2f-f4c4-4ff5-9d2a-7dae9b6de8d2",
+     "7ce1d675-ad79-461a-863f-b0a1a85aebf1",
+     "a15341c8-487b-441a-92f1-c9bff0f4a77b",
+     "b8b961c3-60f7-4630-af4c-b52002f222ab",
+     "c5846e9e-7cf8-4886-bb0a-34ecc24bfe0c",
+     "d4640009-5578-485e-9f77-3ab64881cddd",
+     "dea0f32c-bbbe-4471-8ca9-6a0b2b1cfea1",
+     "e3d5b106-930a-4cbc-85d6-efa2e804f946",
+     "f389d1b6-9fe3-4dc3-8aa7-b4c1cc2cc408",
+     "fd3ba350-0e55-40b5-96e3-013994777fdc"
+    ],
+    "calls": 1,
+    "seconds": 30.7
+   },
+   "Who has invested in Wolt?": {
+    "rows_hash": "ed51e64bd1",
+    "rows": [
+     {
+      "investor": "ICONIQ Capital / ICONIQ Growth"
+     },
+     {
+      "investor": "EQT Ventures"
+     },
+     {
+      "investor": "83North"
+     },
+     {
+      "investor": "Goldman Sachs"
+     },
+     {
+      "investor": "Lukasz Gadowski"
+     },
+     {
+      "investor": "Highland Europe"
+     },
+     {
+      "investor": "Atomico"
+     },
+     {
+      "investor": "Coatue"
+     },
+     {
+      "investor": "DST Global"
+     },
+     {
+      "investor": "EQT Growth"
+     },
+     {
+      "investor": "KKR"
+     },
+     {
+      "investor": "Tiger Global"
+     },
+     {
+      "investor": "Prosus"
+     },
+     {
+      "investor": "Lifeline Ventures"
+     },
+     {
+      "investor": "Inventure"
+     },
+     {
+      "investor": "Vintage Investment Partners"
+     }
+    ],
+    "names": [
+     ""
+    ],
+    "entity_ids": [
+     "17ffd618-a879-4bb3-99dd-af07d6b45f75",
+     "2c43483a-8d36-4ae6-9887-e4746dd5dccb",
+     "2c6b772b-e4c5-5fda-8374-312bcd251db3",
+     "3a2558c8-10f6-409c-95c0-857ebe600751",
+     "476a73ac-afa2-4713-9f73-188bc7ec0b95",
+     "5086a57c-5b9a-4878-a225-f150d30f8ff2",
+     "6972de2f-f4c4-4ff5-9d2a-7dae9b6de8d2",
+     "7ce1d675-ad79-461a-863f-b0a1a85aebf1",
+     "9389170b-144d-4b10-b01a-813862fcc9bd",
+     "a15341c8-487b-441a-92f1-c9bff0f4a77b",
+     "b8b961c3-60f7-4630-af4c-b52002f222ab",
+     "c5846e9e-7cf8-4886-bb0a-34ecc24bfe0c",
+     "d6cf13e1-92ff-4567-bd72-30316f2498e5",
+     "dea0f32c-bbbe-4471-8ca9-6a0b2b1cfea1",
+     "e3d5b106-930a-4cbc-85d6-efa2e804f946",
+     "f389d1b6-9fe3-4dc3-8aa7-b4c1cc2cc408",
+     "fd3ba350-0e55-40b5-96e3-013994777fdc"
+    ],
+    "calls": 1,
+    "seconds": 28.4
+   }
   }
  },
  "Ejecutivos (TravelPerk)": {
@@ -1582,6 +2405,61 @@
     "cache_hit": true,
     "seconds": 0.0
    }
+  },
+  "nl_query": {
+   "¿Quién es el CEO de TravelPerk?": {
+    "rows_hash": "5368565a6e",
+    "rows": [
+     {
+      "company": "TravelPerk",
+      "ceo": "Avi Meir"
+     }
+    ],
+    "names": [
+     "TravelPerk"
+    ],
+    "entity_ids": [
+     "8e314888-357a-4f24-a5f1-bc579e86942a",
+     "c6d13efd-1ec8-40c9-8175-6949f795b58e"
+    ],
+    "calls": 1,
+    "seconds": 19.4
+   },
+   "TravelPerk, quien es su CEO": {
+    "rows_hash": "d168ba04d0",
+    "rows": [
+     {
+      "name": "TravelPerk",
+      "ceo": "Avi Meir"
+     }
+    ],
+    "names": [
+     "TravelPerk"
+    ],
+    "entity_ids": [
+     "8e314888-357a-4f24-a5f1-bc579e86942a",
+     "c6d13efd-1ec8-40c9-8175-6949f795b58e"
+    ],
+    "calls": 1,
+    "seconds": 18.4
+   },
+   "Who runs TravelPerk as chief executive?": {
+    "rows_hash": "3e78ebe305",
+    "rows": [
+     {
+      "name": "Avi Meir",
+      "title": "Chief Executive Officer"
+     }
+    ],
+    "names": [
+     "Avi Meir"
+    ],
+    "entity_ids": [
+     "c6d13efd-1ec8-40c9-8175-6949f795b58e"
+    ],
+    "calls": 1,
+    "seconds": 17.4
+   }
   }
  },
  "Lista: tecnología hotelera en España, más de 10M": {
@@ -1798,6 +2676,152 @@
     "calls": 0,
     "cache_hit": true,
     "seconds": 0.0
+   }
+  },
+  "nl_query": {
+   "¿Qué startups españolas de tecnología hotelera levantaron más de 10 millones?": {
+    "rows_hash": "5ac7e31edd",
+    "rows": [
+     {
+      "name": "TravelPerk",
+      "city": "Barcelona",
+      "founded_year": 2015,
+      "total_funding": ">100M€"
+     },
+     {
+      "name": "Civitatis",
+      "city": "Madrid",
+      "founded_year": null,
+      "total_funding": ">100M€"
+     },
+     {
+      "name": "Amenitiz",
+      "city": "Barcelona",
+      "founded_year": null,
+      "total_funding": "30M$"
+     }
+    ],
+    "names": [
+     "Amenitiz",
+     "Civitatis",
+     "TravelPerk"
+    ],
+    "entity_ids": [
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "8e314888-357a-4f24-a5f1-bc579e86942a",
+     "ca5d2790-e046-4873-a5c7-a7294f45332f",
+     "db95edaa-058f-494d-a4f4-5f56bf81afd9",
+     "e122a8b3-d711-53bf-b81a-d843895c5081"
+    ],
+    "calls": 1,
+    "seconds": 44.3
+   },
+   "mas de 10 millones levantados startups hoteleras tecnologia españa": {
+    "rows_hash": "faa68259f5",
+    "rows": [
+     {
+      "name": "TravelPerk",
+      "city": "Barcelona",
+      "sector": "Plataforma de gestión de viajes corporativos (reservas de hoteles, vuelos, trenes, etc.)",
+      "total_funding": "400 million dollars",
+      "currency": "USD"
+     },
+     {
+      "name": "Amenitiz",
+      "city": "Barcelona",
+      "sector": "Plataforma todo-en-uno de gestión para hoteles independientes (PMS, channel manager, motor de reservas, pagos)",
+      "total_funding": "75 million euros",
+      "currency": "EUR"
+     },
+     {
+      "name": "Civitatis",
+      "city": "Madrid",
+      "sector": "Plataforma de reserva de tours, actividades y experiencias turísticas",
+      "total_funding": "46.7 million euros",
+      "currency": "EUR"
+     },
+     {
+      "name": "HBX Group / Hotelbeds",
+      "city": "Palma de Mallorca",
+      "sector": "Distribución hotelera mayorista y tecnología de viajes (B2B)",
+      "total_funding": "860 million euros",
+      "currency": "EUR"
+     },
+     {
+      "name": "Hotelverse",
+      "city": "Islas Baleares",
+      "sector": "Gemelos digitales y experiencia inmersiva para la reserva hotelera directa",
+      "total_funding": "10 million euros",
+      "currency": "EUR"
+     }
+    ],
+    "names": [
+     "Amenitiz",
+     "Civitatis",
+     "HBX Group / Hotelbeds",
+     "Hotelverse",
+     "TravelPerk"
+    ],
+    "entity_ids": [
+     "08e2b232-2c08-4284-b0e9-fee1e3c4bc02",
+     "1d0a39e3-140a-4286-b8ce-1c90979ef42e",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "8e314888-357a-4f24-a5f1-bc579e86942a",
+     "b4b7dc94-e612-5570-ba2a-a734ad803430",
+     "ca5d2790-e046-4873-a5c7-a7294f45332f",
+     "db95edaa-058f-494d-a4f4-5f56bf81afd9"
+    ],
+    "calls": 1,
+    "seconds": 65.4
+   },
+   "Which Spanish hotel tech startups have raised more than 10 million?": {
+    "rows_hash": "4831896df0",
+    "rows": [
+     {
+      "name": "TravelPerk",
+      "city": "Barcelona",
+      "focus": "Corporate travel management and booking platform",
+      "total_raised": "~$409 million",
+      "founded_year": 2015
+     },
+     {
+      "name": "Amenitiz",
+      "city": "Barcelona",
+      "focus": "All-in-one hotel management system (PMS, channel manager, booking engine) for independent hoteliers",
+      "total_raised": "Over €72 million",
+      "founded_year": 2017
+     },
+     {
+      "name": "Lodgify",
+      "city": "Barcelona",
+      "focus": "Vacation rental software (website builder, booking management, channel manager) for property managers and hosts",
+      "total_raised": "~$36.4 million",
+      "founded_year": 2012
+     },
+     {
+      "name": "BEONx",
+      "city": "Salamanca",
+      "focus": "Hotel revenue management and profit optimization platform",
+      "total_raised": "~$10.4 million",
+      "founded_year": null
+     }
+    ],
+    "names": [
+     "Amenitiz",
+     "BEONx",
+     "Lodgify",
+     "TravelPerk"
+    ],
+    "entity_ids": [
+     "0804911d-7269-4d24-af73-0acbcd79bb8a",
+     "1610f0ed-2677-4503-8633-115c5a27446c",
+     "7d7e89cd-567d-554c-9a67-7a4a0c9915ab",
+     "8e314888-357a-4f24-a5f1-bc579e86942a",
+     "d0da6bd2-5a93-5ffe-9103-28c8ee959858",
+     "db95edaa-058f-494d-a4f4-5f56bf81afd9"
+    ],
+    "calls": 1,
+    "seconds": 52.0
    }
   }
  },
@@ -2340,6 +3364,290 @@
     "calls": 0,
     "cache_hit": true,
     "seconds": 0.0
+   }
+  },
+  "nl_query": {
+   "¿Qué startups fintech de Finlandia han levantado más de 5 millones?": {
+    "rows_hash": "2ab6c2f3bd",
+    "rows": [
+     {
+      "empresa": "AlphaSense",
+      "financiacion_acumulada": "€442,3 M",
+      "descripcion": "Plataforma de inteligencia de mercado y búsqueda, fundada en Finlandia (hoy con sede en EE. UU.). Primer unicornio fintech finlandés (valoración de $1.700 M en 2022)."
+     },
+     {
+      "empresa": "Enfuce",
+      "financiacion_acumulada": "€62,0 M",
+      "descripcion": "Emisión de tarjetas y procesamiento de pagos (Card-as-a-Service). Serie C de €45 M liderada por Vitruvian Partners; inversores incluyen Tencent, Visa y Maki.vc."
+     },
+     {
+      "empresa": "CrediNord",
+      "financiacion_acumulada": "€48,4 M",
+      "descripcion": "Plataforma de préstamos online para pymes y microempresas."
+     },
+     {
+      "empresa": "Multitude (antes Ferratum)",
+      "financiacion_acumulada": "€48,0 M",
+      "descripcion": "Préstamos al consumo y empresas, banca digital. Fundada en Finlandia en 2005, cotiza en Fráncfort."
+     },
+     {
+      "empresa": "ePassi",
+      "financiacion_acumulada": "€41,5 M",
+      "descripcion": "Plataforma de pagos móviles para beneficios de empleados."
+     },
+     {
+      "empresa": "Blue Finance",
+      "financiacion_acumulada": "€40,0 M",
+      "descripcion": "Préstamos al consumo y financiación corporativa."
+     },
+     {
+      "empresa": "Bonusway",
+      "financiacion_acumulada": "€9,3 M",
+      "descripcion": "Programas de fidelización y recompensas en e-commerce."
+     },
+     {
+      "empresa": "Basware",
+      "financiacion_acumulada": "€8,2 M",
+      "descripcion": "Software de automatización de finanzas y compras."
+     },
+     {
+      "empresa": "Invesdor",
+      "financiacion_acumulada": "€6,2 M",
+      "descripcion": "Plataforma de crowdfunding de inversión."
+     },
+     {
+      "empresa": "Holvi",
+      "financiacion_acumulada": "€5,4 M",
+      "descripcion": "Cuenta bancaria online, facturación y herramientas de contabilidad para pymes y autónomos (adquirida por BBVA)."
+     },
+     {
+      "empresa": "Aibidia",
+      "financiacion_acumulada": "$28 M",
+      "descripcion": "Fintech de fiscalidad que levantó $28 M en Serie B (2025) para su expansión en EE. UU."
+     }
+    ],
+    "names": [
+     ""
+    ],
+    "entity_ids": [
+     "2ade54f2-9648-4034-b6a8-17b29844ab98",
+     "2e990364-f6ad-4355-b3bf-91b1d133e0b9",
+     "3387d72a-34ad-458a-85a4-7a3bf624ee05",
+     "35d690ea-505a-4d72-8621-fa6ba2f2005e",
+     "484f021e-5340-48a5-ba25-5460fccf2d5a",
+     "680000b7-a490-418f-8098-9b1757db2e58",
+     "7b5b51dd-6bc8-42da-8e5c-d7c1f618c2cb",
+     "8d469fa2-81e3-46ac-a6eb-c1db895b6dca",
+     "8f0ff46d-d609-4ce0-b719-85f739b92ca3",
+     "bfd7869c-0e8c-420b-80a2-e2c84329f461",
+     "e5d05646-7be2-43c9-8bf8-7a6561bca0f3",
+     "e9edb9ed-f109-4434-84ca-c8078a31f74a",
+     "efa32d5e-cb65-4142-bba0-b13965f54142",
+     "fe47ec6d-e526-52c7-9435-dc33eca41eb0"
+    ],
+    "calls": 1,
+    "seconds": 52.3
+   },
+   "De Finlandia, fintechs que levantaron mas de 5M": {
+    "rows_hash": "40076ea99a",
+    "rows": [
+     {
+      "name": "AlphaSense",
+      "funding_total": "€442,3M",
+      "description": "Plataforma de inteligencia de mercado e investigación, fundada en Finlandia (hoy con sede en EE.UU.)"
+     },
+     {
+      "name": "Enfuce",
+      "funding_total": "€62,0M+",
+      "description": "Emisión de tarjetas y procesamiento de pagos (Card-as-a-Service). Series C liderada por Vitruvian Partners"
+     },
+     {
+      "name": "CrediNord",
+      "funding_total": "€48,4M",
+      "description": "Plataforma de préstamos online para pymes y microempresas"
+     },
+     {
+      "name": "Multitude",
+      "funding_total": "€48,0M",
+      "description": "Préstamos al consumo y empresas, app de financiación y compras"
+     },
+     {
+      "name": "ePassi",
+      "funding_total": "€41,5M",
+      "description": "Pagos móviles y beneficios para empleados"
+     },
+     {
+      "name": "Blue Finance",
+      "funding_total": "€40,0M",
+      "description": "Plataforma de préstamos digitales al consumo y financiación corporativa"
+     },
+     {
+      "name": "Streamr",
+      "funding_total": "€26,0M",
+      "description": "Plataforma blockchain descentralizada para datos en tiempo real"
+     },
+     {
+      "name": "Tesseract",
+      "funding_total": "€21,0M",
+      "description": "Innovador en activos digitales regulados, brokerage institucional"
+     },
+     {
+      "name": "Zevoy",
+      "funding_total": "€18,8M",
+      "description": "Gestión de gastos y tarjetas corporativas"
+     },
+     {
+      "name": "AREX",
+      "funding_total": "~€14M",
+      "description": "Financiación a corto plazo para pymes (factoring)"
+     },
+     {
+      "name": "ZirooPay (IroFit)",
+      "funding_total": "€11,6M",
+      "description": "Soluciones de punto de venta móvil (mercado nigeriano, fundada en Finlandia)"
+     },
+     {
+      "name": "Fellow Bank",
+      "funding_total": "€10,0M",
+      "description": "Banca digital (antes Fellow Finance, plataforma P2P lending)"
+     },
+     {
+      "name": "Silo AI",
+      "funding_total": "€10,0M",
+      "description": "Laboratorio privado de IA más grande de los Nórdicos, con soluciones para finanzas"
+     },
+     {
+      "name": "Bonusway",
+      "funding_total": "€9,3M",
+      "description": "Programas de fidelización y cashback en ecommerce"
+     },
+     {
+      "name": "Basware",
+      "funding_total": "€8,2M",
+      "description": "Software de automatización de finanzas y procurement"
+     },
+     {
+      "name": "Midaxo",
+      "funding_total": "€7,0M+",
+      "description": "Software cloud para gestión de M&A"
+     },
+     {
+      "name": "Invesdor",
+      "funding_total": "€6,2M",
+      "description": "Plataforma de crowdfunding de equity"
+     },
+     {
+      "name": "Holvi",
+      "funding_total": "€5,4M",
+      "description": "Cuenta bancaria para autónomos y pymes, herramientas de facturación (adquirida por BBVA)"
+     },
+     {
+      "name": "Aibidia",
+      "funding_total": "~$28M (Series B)",
+      "description": "Plataforma de IA para precios de transferencia y fiscalidad"
+     }
+    ],
+    "names": [
+     "AREX",
+     "Aibidia",
+     "AlphaSense",
+     "Basware",
+     "Blue Finance",
+     "Bonusway",
+     "CrediNord",
+     "Enfuce",
+     "Fellow Bank",
+     "Holvi",
+     "Invesdor",
+     "Midaxo",
+     "Multitude",
+     "Silo AI",
+     "Streamr",
+     "Tesseract",
+     "Zevoy",
+     "ZirooPay (IroFit)",
+     "ePassi"
+    ],
+    "entity_ids": [
+     "052545d7-e48e-4216-b65b-a9338a56b980",
+     "07a7a3de-5519-48f5-8538-6589a4c6a9e0",
+     "2ade54f2-9648-4034-b6a8-17b29844ab98",
+     "2e990364-f6ad-4355-b3bf-91b1d133e0b9",
+     "3387d72a-34ad-458a-85a4-7a3bf624ee05",
+     "436c777b-2517-45da-a84f-cfb901e6a057",
+     "484f021e-5340-48a5-ba25-5460fccf2d5a",
+     "5e8a37ff-e818-4f38-b4d0-5af844c9b918",
+     "680000b7-a490-418f-8098-9b1757db2e58",
+     "7b5b51dd-6bc8-42da-8e5c-d7c1f618c2cb",
+     "89d1b860-046e-4498-acbf-052545371fd9",
+     "8d469fa2-81e3-46ac-a6eb-c1db895b6dca",
+     "9cedf654-e3d8-470b-863e-b630b2f584ea",
+     "bfd7869c-0e8c-420b-80a2-e2c84329f461",
+     "cb245dba-b311-4e1c-9eda-984a9b6e7684",
+     "d2839ceb-9750-4945-925f-e6c602c304c4",
+     "e5d05646-7be2-43c9-8bf8-7a6561bca0f3",
+     "e9edb9ed-f109-4434-84ca-c8078a31f74a"
+    ],
+    "calls": 1,
+    "seconds": 51.7
+   },
+   "Finnish fintech startups with more than 5 million raised": {
+    "rows_hash": "444964201e",
+    "rows": [
+     {
+      "Company": "AlphaSense",
+      "Total Raised (approx.)": "€442.3M",
+      "Description": "Market intelligence and search platform, founded in Finland (now HQ'd in New York)"
+     },
+     {
+      "Company": "Enfuce",
+      "Total Raised (approx.)": "€62M+",
+      "Description": "Cloud-based card issuing and payment processing (Card-as-a-Service); investors include Vitruvian Partners, Tencent, Visa, and Maki.vc"
+     },
+     {
+      "Company": "CrediNord",
+      "Total Raised (approx.)": "€48.4M",
+      "Description": "Online business lending platform for SMEs and micro-enterprises"
+     },
+     {
+      "Company": "Multitude (formerly Ferratum)",
+      "Total Raised (approx.)": "€48M",
+      "Description": "Consumer and business digital lending and online banking; listed on Frankfurt Stock Exchange; 2025 revenue of €257M"
+     },
+     {
+      "Company": "ePassi",
+      "Total Raised (approx.)": "€41.5M",
+      "Description": "Mobile payments platform for employee benefits"
+     },
+     {
+      "Company": "Blue Finance",
+      "Total Raised (approx.)": "€40M",
+      "Description": "Consumer lending fintech"
+     },
+     {
+      "Company": "Holvi",
+      "Total Raised (approx.)": "€5.4M+",
+      "Description": "Online business banking for small businesses (acquired by BBVA in 2016)"
+     }
+    ],
+    "names": [
+     ""
+    ],
+    "entity_ids": [
+     "068ea8ca-f7de-4705-a87b-4a7156d63eca",
+     "35d690ea-505a-4d72-8621-fa6ba2f2005e",
+     "484f021e-5340-48a5-ba25-5460fccf2d5a",
+     "680000b7-a490-418f-8098-9b1757db2e58",
+     "8b387c9e-a17f-464c-8978-7b3b6520a527",
+     "8d469fa2-81e3-46ac-a6eb-c1db895b6dca",
+     "8f0ff46d-d609-4ce0-b719-85f739b92ca3",
+     "9cedf654-e3d8-470b-863e-b630b2f584ea",
+     "e5d05646-7be2-43c9-8bf8-7a6561bca0f3",
+     "e9edb9ed-f109-4434-84ca-c8078a31f74a",
+     "efa32d5e-cb65-4142-bba0-b13965f54142"
+    ],
+    "calls": 1,
+    "seconds": 47.1
    }
   }
  },
@@ -2906,6 +4214,357 @@
     "calls": 0,
     "cache_hit": true,
     "seconds": 0.0
+   }
+  },
+  "nl_query": {
+   "Startups de climate tech en Alemania con más de 20 millones de financiación": {
+    "rows_hash": "3973f84d1c",
+    "rows": [
+     {
+      "name": "1KOMMA5°",
+      "location": "Hamburgo",
+      "description": "Plataforma digital de soluciones energéticas climáticamente positivas (solar, almacenamiento, carga EV)",
+      "total_funding": "~$823 M"
+     },
+     {
+      "name": "Flix",
+      "location": "Múnich",
+      "description": "Movilidad inteligente y sostenible (autobuses y trenes de larga distancia)",
+      "total_funding": "~$886 M"
+     },
+     {
+      "name": "IONITY",
+      "location": "Múnich",
+      "description": "Infraestructura de carga rápida para vehículos eléctricos en autopistas europeas",
+      "total_funding": "~$770 M"
+     },
+     {
+      "name": "Enpal",
+      "location": "Berlín",
+      "description": "Soluciones integradas de energía renovable para hogares (paneles solares, baterías, bombas de calor)",
+      "total_funding": "~$754 M"
+     },
+     {
+      "name": "Sunfire",
+      "location": "Dresde",
+      "description": "Electrolizadores industriales para producción de hidrógeno verde y e-fuels",
+      "total_funding": " >$25 M ingresos; financiación significativa (Series E)"
+     },
+     {
+      "name": "Forto",
+      "location": "Berlín",
+      "description": "Logística digital y sostenible",
+      "total_funding": "~$616 M"
+     },
+     {
+      "name": "TIER",
+      "location": "Berlín",
+      "description": "Servicios de micromovilidad accesible y sostenible",
+      "total_funding": "~$560 M"
+     },
+     {
+      "name": "Focused Energy",
+      "location": "Darmstadt",
+      "description": "Fusión nuclear con tecnología láser alemana",
+      "total_funding": "~$327 M"
+     },
+     {
+      "name": "Hy2gen",
+      "location": "Wiesbaden",
+      "description": "Producción de hidrógeno renovable y combustibles Power-to-X",
+      "total_funding": "~$272 M"
+     },
+     {
+      "name": "ENVIRIA",
+      "location": "Fráncfort",
+      "description": "Soluciones de energía solar industrial y comercial para empresas",
+      "total_funding": "~$225 M"
+     },
+     {
+      "name": "Sonnen",
+      "location": "Wildpoldsried",
+      "description": "Soluciones inteligentes de almacenamiento de energía",
+      "total_funding": "~$163 M"
+     },
+     {
+      "name": "H2 MOBILITY",
+      "location": "Berlín",
+      "description": "Infraestructura de repostaje de hidrógeno",
+      "total_funding": "~$131 M"
+     },
+     {
+      "name": "Sono Motors",
+      "location": "Múnich",
+      "description": "Desarrollo de vehículos eléctricos con células solares integradas",
+      "total_funding": "~$119 M"
+     },
+     {
+      "name": "Formo",
+      "location": "Berlín",
+      "description": "Biotecnología alimentaria para productos lácteos sostenibles de nueva generación",
+      "total_funding": "~$109 M"
+     },
+     {
+      "name": "Thermondo",
+      "location": "Berlín",
+      "description": "Tecnología limpia para instalación de sistemas de calefacción sostenible",
+      "total_funding": "Series C"
+     },
+     {
+      "name": "Proxima Fusion",
+      "location": "Múnich",
+      "description": "Energía de fusión",
+      "total_funding": "Series A"
+     },
+     {
+      "name": "Cylib",
+      "location": "Aquisgrán",
+      "description": "Reciclaje de baterías",
+      "total_funding": "Series A"
+     },
+     {
+      "name": "Ineratec",
+      "location": "Karlsruhe",
+      "description": "Producción de e-keroseno sostenible a partir de CO₂ e hidrógeno verde",
+      "total_funding": "Series B"
+     }
+    ],
+    "names": [
+     "1KOMMA5°",
+     "Cylib",
+     "ENVIRIA",
+     "Enpal",
+     "Flix",
+     "Focused Energy",
+     "Formo",
+     "Forto",
+     "H2 MOBILITY",
+     "Hy2gen",
+     "IONITY",
+     "Ineratec",
+     "Proxima Fusion",
+     "Sonnen",
+     "Sono Motors",
+     "Sunfire",
+     "TIER",
+     "Thermondo"
+    ],
+    "entity_ids": [
+     "0a4399ac-2593-4667-9a05-3f23a96e640d",
+     "0d28c74a-f420-499e-a2f0-4c4260fac4ce",
+     "214be231-4cff-4462-ab73-c7f3457c3739",
+     "2bb932a5-0a6c-46ac-85e0-87380d179c87",
+     "5dce84b5-bdb2-470f-8410-3a6994ac2c2a",
+     "5f2b94fc-081c-46eb-aca9-a6a2fdec4066",
+     "5f622714-8a84-46e6-ade5-b358ae49ee93",
+     "66b5a34a-0f62-53fe-bdd7-efe7c9204aa5",
+     "698be9b0-d5c5-51cd-a78d-77952b845f99",
+     "6c15ccdf-cac5-4878-99cc-974113d48286",
+     "734e6ad0-fc37-5912-8014-35036b6df01a",
+     "7b57549e-01f6-447b-ad5a-8e1303079470",
+     "7cd984e9-3068-4374-9f3f-52a08cee8028",
+     "7ed91721-6694-4ea1-a4c9-741002d54234",
+     "9ff9cc58-7b0a-42e8-92a3-338ac5fb95d3",
+     "bc7decd3-9e9c-49e9-b6b7-a6c9161a65fc",
+     "cd04dee9-1d1d-44ec-bca8-c91068a0f540",
+     "d6866d6c-c907-4eb5-93fd-3818b784730e",
+     "e0692a1e-33f1-58b3-a5fc-0b86d96a0987",
+     "e1fdbc12-77fe-5ede-8c42-1addb25ee018",
+     "eb2b1072-7411-47fe-a7de-0ccf84e73f0d",
+     "fd92ebe0-cd8a-4e59-80d7-68c79d6dc9d4",
+     "fe47ec6d-e526-52c7-9435-dc33eca41eb0"
+    ],
+    "calls": 1,
+    "seconds": 46.1
+   },
+   "En Alemania, ¿qué startups climáticas superan los 20 millones levantados?": {
+    "rows_hash": "c1fe0aa65f",
+    "rows": [
+     {
+      "name": "Enpal",
+      "city": "Berlín",
+      "sector": "Solar residencial, almacenamiento, bombas de calor",
+      "total_funding": "~$3.200 M (equity + deuda)"
+     },
+     {
+      "name": "1KOMMA5°",
+      "city": "Hamburgo",
+      "sector": "Solar, almacenamiento, gestión energética",
+      "total_funding": "~$823 M"
+     },
+     {
+      "name": "Cloover",
+      "city": "Berlín",
+      "sector": "Climate fintech",
+      "total_funding": "~€1.040 M (equity + deuda)"
+     },
+     {
+      "name": "Sunfire",
+      "city": "Dortmund",
+      "sector": "Hidrógeno verde, electrólisis",
+      "total_funding": "Varios cientos de M$"
+     },
+     {
+      "name": "IONITY",
+      "city": "Múnich",
+      "sector": "Infraestructura de carga EV",
+      "total_funding": "~$770 M"
+     },
+     {
+      "name": "Flix (FlixBus/FlixTrain)",
+      "city": "Múnich",
+      "sector": "Movilidad sostenible",
+      "total_funding": "~$886 M"
+     },
+     {
+      "name": "Forto",
+      "city": "Berlín",
+      "sector": "Logística digital sostenible",
+      "total_funding": "~$616 M"
+     },
+     {
+      "name": "INERATEC",
+      "city": "Karlsruhe",
+      "sector": "E-fuels, combustibles sintéticos",
+      "total_funding": "~$148 M"
+     },
+     {
+      "name": "TIER Mobility",
+      "city": "Berlín",
+      "sector": "Micromovilidad",
+      "total_funding": "Varios cientos de M$"
+     },
+     {
+      "name": "Thermondo",
+      "city": "Berlín",
+      "sector": "Bombas de calor, calefacción",
+      "total_funding": "~€50 M+"
+     },
+     {
+      "name": "ENVIRIA",
+      "city": "Fráncfort",
+      "sector": "Solar comercial e industrial",
+      "total_funding": "~$225 M"
+     }
+    ],
+    "names": [
+     "1KOMMA5°",
+     "Cloover",
+     "ENVIRIA",
+     "Enpal",
+     "Flix (FlixBus/FlixTrain)",
+     "Forto",
+     "INERATEC",
+     "IONITY",
+     "Sunfire",
+     "TIER Mobility",
+     "Thermondo"
+    ],
+    "entity_ids": [
+     "0a4399ac-2593-4667-9a05-3f23a96e640d",
+     "214be231-4cff-4462-ab73-c7f3457c3739",
+     "2bb932a5-0a6c-46ac-85e0-87380d179c87",
+     "3101542d-79bd-50b2-8230-a0f104c6d36a",
+     "53a3eeb4-47de-45d9-945a-659ffeec7c25",
+     "698be9b0-d5c5-51cd-a78d-77952b845f99",
+     "6c15ccdf-cac5-4878-99cc-974113d48286",
+     "7cd984e9-3068-4374-9f3f-52a08cee8028",
+     "a8bd4cd5-14ac-5fb0-8a55-29d1fde8a979",
+     "bc7decd3-9e9c-49e9-b6b7-a6c9161a65fc",
+     "bca9b785-fbdd-4d4b-9d75-0ccf3f849fda",
+     "d6866d6c-c907-4eb5-93fd-3818b784730e",
+     "e0692a1e-33f1-58b3-a5fc-0b86d96a0987",
+     "fe47ec6d-e526-52c7-9435-dc33eca41eb0"
+    ],
+    "calls": 1,
+    "seconds": 51.4
+   },
+   "Which German climate tech startups have raised over 20 million?": {
+    "rows_hash": "ee7b5093d4",
+    "rows": [
+     {
+      "startup": "Enpal",
+      "hq": "Berlin",
+      "focus": "Solar-as-a-service, battery storage, heat pumps, EV charging",
+      "notable_funding": "~€3.2B total funding (incl. debt); €110M equity round led by TPG Rise Climate; €215M equity round with Softbank, HV Capital, others"
+     },
+     {
+      "startup": "1KOMMA5°",
+      "hq": "Hamburg",
+      "focus": "Integrated solar, storage, heat pumps, energy management (Heartbeat AI)",
+      "notable_funding": "~€823M total; €430M round in 2023 (equity + debt); €70M round increasing valuation by 35%"
+     },
+     {
+      "startup": "Thermondo",
+      "hq": "Berlin",
+      "focus": "Digital heating installation & heat pump provider",
+      "notable_funding": "€50M+ raised; Series C stage"
+     },
+     {
+      "startup": "Reverion",
+      "hq": "Eresing (Munich area)",
+      "focus": "Reversible solid-oxide fuel-cell power plants",
+      "notable_funding": "$175M Series B (Sep 2026) led by Kembara, with Allianz, KfW Capital; earlier €56M round"
+     },
+     {
+      "startup": "INERATEC",
+      "hq": "Karlsruhe",
+      "focus": "Synthetic e-fuels (Power-to-X)",
+      "notable_funding": "~$148M total; $128M Series B (2024)"
+     },
+     {
+      "startup": "Sunfire",
+      "hq": "Dresden",
+      "focus": "Green hydrogen electrolysis",
+      "notable_funding": "Unicorn-status; significant venture and growth funding"
+     },
+     {
+      "startup": "Zolar",
+      "hq": "Berlin",
+      "focus": "Residential solar platform",
+      "notable_funding": "€100M raised (2024) for financing solutions for solar customers"
+     },
+     {
+      "startup": "Lilium",
+      "hq": "Munich",
+      "focus": "Electric vertical take-off and landing (eVTOL) aircraft",
+      "notable_funding": "Raised hundreds of millions (went public via SPAC; filed for insolvency in 2024 but restructured)"
+     },
+     {
+      "startup": "Volocopter",
+      "hq": "Bruchsal",
+      "focus": "Urban air mobility (eVTOL)",
+      "notable_funding": "Raised over €600M total across multiple rounds"
+     }
+    ],
+    "names": [
+     ""
+    ],
+    "entity_ids": [
+     "19150b80-e268-4a1a-b363-b9794a3e39c4",
+     "4a1a9bfc-c5da-54c1-8cd6-0b3862cd2d32",
+     "5558f20f-c811-5a00-86d8-c5f4e57332b9",
+     "5ccbd880-8995-4f38-962c-72d777e323dc",
+     "664e0b44-7175-4eb5-a2fb-679ae215babd",
+     "66e08267-e130-558c-b9ec-a07808558412",
+     "698be9b0-d5c5-51cd-a78d-77952b845f99",
+     "6c15ccdf-cac5-4878-99cc-974113d48286",
+     "757ed99d-fde0-4f2f-9361-f6e65df32ba1",
+     "77d6dd5e-7ed0-40e9-a696-caa5d5f3505e",
+     "7b57549e-01f6-447b-ad5a-8e1303079470",
+     "7d8cc859-2f01-41d0-bd8e-b2e5257bf7bf",
+     "7fdf954c-99c9-4622-9eb4-c9e4024e9599",
+     "820d398c-3cba-4678-ae65-f4b8d7983d96",
+     "8774eb35-b3d0-4d71-8135-a4fe1187a3b6",
+     "b272143f-6853-4c7a-a990-66be091fceb4",
+     "bc7decd3-9e9c-49e9-b6b7-a6c9161a65fc",
+     "c1f28df9-08cc-520f-bd86-2221993975a3",
+     "d6866d6c-c907-4eb5-93fd-3818b784730e",
+     "e0692a1e-33f1-58b3-a5fc-0b86d96a0987",
+     "fbbbcc96-98c2-5649-b45e-46a84b938c46"
+    ],
+    "calls": 1,
+    "seconds": 47.8
    }
   }
  }

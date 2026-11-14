@@ -37,6 +37,21 @@ async def run():
                     g["direct"][q] = {"error": str(exc)[:300]}
                 OUT.write_text(json.dumps(results, ensure_ascii=False, indent=1))
                 print("direct   ", q[:60], g["direct"][q].get("seconds", "ERR"), file=sys.stderr, flush=True)
+            g.setdefault("nl_query", {})
+            if q not in g["nl_query"]:
+                # Lenguaje natural tal cual a knowledge/query (sin guía, sin plantilla).
+                before, t = cala.calls, time.monotonic()
+                try:
+                    r = await cala.knowledge_query(q)
+                    rows = r.get("results") or []
+                    g["nl_query"][q] = {"rows_hash": h(rows), "rows": rows,
+                                        "names": sorted({str(x.get("name") or x.get("company") or "") for x in rows if isinstance(x, dict)}),
+                                        "entity_ids": sorted(e["id"] for e in r.get("entities") or []),
+                                        "calls": cala.calls - before, "seconds": round(time.monotonic() - t, 1)}
+                except Exception as exc:
+                    g["nl_query"][q] = {"error": str(exc)[:300]}
+                OUT.write_text(json.dumps(results, ensure_ascii=False, indent=1))
+                print("nl_query ", q[:60], g["nl_query"][q].get("seconds", "ERR"), file=sys.stderr, flush=True)
             if q not in g["canonical"]:
                 t = time.monotonic()
                 try:
