@@ -1,0 +1,503 @@
+{
+  "name": "Junction - Verificador de pitch deck",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "junction-verify-deck",
+        "responseMode": "lastNode",
+        "options": {
+          "binaryData": true
+        }
+      },
+      "id": "webhook-verificar-deck",
+      "name": "Webhook verificar deck",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const x=$json.body??$json; return [{json:{...x,baseUrl:$env.JUNCTION_API_URL||'http://localhost:8000'}}];"
+      },
+      "id": "preparar-job",
+      "name": "Preparar job",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "sample",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "sample",
+      "name": "¿Sample?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.baseUrl+\"/api/verify-sample\" }}",
+        "options": {
+          "timeout": 120000,
+          "retry": {
+            "maxTries": 5,
+            "waitBetweenTries": 3000
+          },
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "crear-job-sample",
+      "name": "Crear job sample",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.baseUrl+\"/api/verify\" }}",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "file"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000,
+          "retry": {
+            "maxTries": 5,
+            "waitBetweenTries": 3000
+          },
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "crear-job-pdf",
+      "name": "Crear job PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body=$json.body??$json; if(Number($json.statusCode??0)>=400 || !body.job_id) return [{json:{...body,status:'error',statusCode:$json.statusCode,error:body.error||body.message||'No se pudo crear el job'}}]; const state=$getWorkflowStaticData('global'); state[$execution.id+':deck']=1; const prev=$('Preparar job').first().json; return [{json:{...prev,...body,job_id:body.job_id,attempt:0,statusCode:$json.statusCode}}];"
+      },
+      "id": "guardar-job",
+      "name": "Guardar job",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "seconds"
+      },
+      "id": "esperar-3s",
+      "name": "Esperar 3s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $(\"Guardar job\").first().json.baseUrl+\"/api/jobs/\"+$(\"Guardar job\").first().json.job_id }}",
+        "options": {
+          "timeout": 120000,
+          "retry": {
+            "maxTries": 6,
+            "waitBetweenTries": 5000
+          },
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "consultar-job",
+      "name": "Consultar job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ [\"queued\",\"extracting\",\"checking\",\"judging\"].includes($json.status) && Number($json.attempt ?? 0)<60 && !(Number($json.statusCode ?? 0) >= 400) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "sigue-procesando",
+      "name": "¿Sigue procesando?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body=$json.body??$json; const state=$getWorkflowStaticData('global'); const key=$execution.id+':deck'; const attempt=(state[key]??0)+1; state[key]=attempt; return [{json:{...body,statusCode:$json.statusCode,attempt}}];"
+      },
+      "id": "incrementar-polling",
+      "name": "Incrementar polling",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status === \"error\" || Number($json.statusCode ?? 0) >= 400 || (Number($json.attempt ?? 0) >= 60 && $json.status !== \"done\") }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "error",
+      "name": "¿Error?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body=$json.body??$json; const state=$getWorkflowStaticData('global'); delete state[$execution.id+':deck']; const timedOut=Number($json.attempt??0)>=60 && body.status!=='error'; return [{json:{status:body.status||'error',statusCode:$json.statusCode,error:body.error||body.message||(timedOut?'Se agotaron los 60 intentos de polling':'Job en estado error'),details:body}}];"
+      },
+      "id": "reporte-error",
+      "name": "Reporte error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body=$json.body??$json; if($json.statusCode>=400) return [{json:{status:'error',statusCode:$json.statusCode,error:body.error||body.message||'Error consultando job',details:body}}]; const r=body.report||{}; const claims=(r.claims||[]).filter(c=>['contradicted','partially_confirmed'].includes(c.verdict)); const md=[`# Verificación: ${r.startup_name||'Deck'}`,`- Proveedor: ${r.provider||'\\u2014'} (${r.model||'\\u2014'})`,`- Trust score: ${r.trust_score??'\\u2014'}`,`- Resumen: ${JSON.stringify(r.summary||{})}`,'## Afirmaciones a revisar',...claims.map(c=>`### ${c.verdict}: ${c.quote||''}\\n\\n${c.explanation||''}\\n\\nEvidencia: ${JSON.stringify(c.evidence||'')}\\n\\nFuentes: ${JSON.stringify(c.sources||[])}\\n\\nPregunta Cala: ${c.cala_question||''}`)].join('\\n\\n'); const state=$getWorkflowStaticData('global'); delete state[$execution.id+':deck']; return [{json:{status:body.status,startup_name:r.startup_name,provider:r.provider,model:r.model,trust_score:r.trust_score,summary:r.summary,claims,markdown:md,alert:(Number(r.trust_score)<70||claims.some(c=>c.verdict==='contradicted'))}}];"
+      },
+      "id": "armar-reporte-markdown",
+      "name": "Generar reporte Markdown",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body=$json.body??$json; const state=$getWorkflowStaticData('global'); return [{json:{...body,statusCode:$json.statusCode,attempt:state[$execution.id+':deck']??1}}];"
+      },
+      "id": "normalizar-respuesta-job",
+      "name": "Normalizar respuesta job",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1430,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ !!$json.job_id && Number($json.statusCode ?? 0) < 400 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "job-creado",
+      "name": "¿Job creado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1010,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook verificar deck": {
+      "main": [
+        [
+          {
+            "node": "Preparar job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar job": {
+      "main": [
+        [
+          {
+            "node": "¿Sample?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Sample?": {
+      "main": [
+        [
+          {
+            "node": "Crear job sample",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear job PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear job sample": {
+      "main": [
+        [
+          {
+            "node": "Guardar job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear job PDF": {
+      "main": [
+        [
+          {
+            "node": "Guardar job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar job": {
+      "main": [
+        [
+          {
+            "node": "¿Job creado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar 3s": {
+      "main": [
+        [
+          {
+            "node": "Consultar job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar job": {
+      "main": [
+        [
+          {
+            "node": "Normalizar respuesta job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Sigue procesando?": {
+      "main": [
+        [
+          {
+            "node": "Incrementar polling",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Incrementar polling": {
+      "main": [
+        [
+          {
+            "node": "Esperar 3s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Error?": {
+      "main": [
+        [
+          {
+            "node": "Reporte error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generar reporte Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar respuesta job": {
+      "main": [
+        [
+          {
+            "node": "¿Sigue procesando?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Job creado?": {
+      "main": [
+        [
+          {
+            "node": "Esperar 3s",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reporte error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {}
+}

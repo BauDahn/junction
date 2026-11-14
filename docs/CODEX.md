@@ -29,6 +29,19 @@ Lo que salió de estas tareas: el verificador de decks completo (backend, CLI, A
 
 *(Pendiente: Fabricio agrega su registro de `cx log`. Su trabajo incluye la app Expo, el chat del backend, el audio con Whisper y las recomendaciones.)*
 
+## Máquina `gabriel`
+
+> Flujos de n8n (`n8n/`), validación estructural con `n8n-mcp` y documentación de los pipelines (Issue #47).
+
+**4 tareas · 12 min de Codex · 5,177,047 tokens de entrada (96% en caché) · 115,061 tokens de salida.**
+
+| Fecha | Rol | Modelo | Tarea (resumen) | Resultado | Min |
+|---|---|---|---|---|---|
+| 14/11 16:34 | backend | gpt-6-luna | Lee docs/API.md, docs/PLAN-CALA-CENTRO.md y CLAUDE.md (solo las secciones necesarias). Implementa el | LISTO: creados los 3 workflows y la documentación de Issue #47. | 2.5 |
+| 14/11 16:39 | backend | gpt-6-luna | (seguir) Please fix all 4 defects in the three workflow JSON files under n8n/ (n8n/journal_diario_wo | LISTO: corregidos los cuatro defectos en los workflows; todos los nodos Code pasan parseo de JavaScr | 7.5 |
+| 14/11 16:49 | backend | gpt-6-luna | (seguir) Aplica exactamente estos 3 reemplazos UTF-8 precisos en los archivos de `n8n/` usando Pytho | LISTO: aplicados los tres reemplazos UTF-8 solicitados. | 0.4 |
+| 14/11 16:51 | backend | gpt-6-luna | (seguir) Durante la validación final de `n8n/*.json` detectamos 4 detalles funcionales puntuales por | LISTO: aplicados los cuatro ajustes solicitados. | 1.6 |
+
 ## Cómo regenerar
 
 Cada máquina tiene su registro en `~/agentes/estado/codex.jsonl` (`cx log` lo resume).

@@ -1,0 +1,300 @@
+{
+  "name": "Junction - Consulta Cala por voz o texto",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "junction-cala-query",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-consulta-cala",
+      "name": "Webhook consulta Cala",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const x=$json.body??$json; return [{json:{...x,baseUrl:$env.JUNCTION_API_URL||'http://localhost:8000'}}];"
+      },
+      "id": "normalizar-consulta",
+      "name": "Normalizar consulta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ !!$json.session_id && $json.session_id.trim().length > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "hay-session_id",
+      "name": "¿Hay session_id?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.baseUrl+\"/api/sessions\" }}",
+        "options": {
+          "timeout": 120000,
+          "retry": {
+            "maxTries": 5,
+            "waitBetweenTries": 2500
+          },
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "crear-sesion",
+      "name": "Crear sesión",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev=$('Normalizar consulta').first().json; const body=$json.body??$json; if($json.statusCode>=400) return [{json:{error:body.error||body.message||'Error creando sesión',statusCode:$json.statusCode,details:body}}]; return [{json:{...prev,session_id:body.session_id||prev.session_id}}];"
+      },
+      "id": "fijar-session_id",
+      "name": "Fijar session_id",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.baseUrl+\"/api/sessions/\"+$json.session_id+\"/messages\" }}",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "context",
+              "value": "={{ $json.context||{} }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000,
+          "retry": {
+            "maxTries": 6,
+            "waitBetweenTries": 3000
+          },
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "enviar-a-backend",
+      "name": "Enviar a backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body=$json.body??$json; if($json.statusCode>=400) return [{json:{statusCode:$json.statusCode,error:body.error||body.message||'Error consultando Cala',details:body,text:'Error al consultar el backend',blocks:[],sources:[],call:[]}}]; const r=body.reply||body; const blocks=r.blocks||[]; const formatted=blocks.map(b=>{if(b.type==='cala_table')return {...b,display_rows:(b.focus_rows?.length?b.focus_rows.map(i=>b.rows?.[i]):b.rows),display_answer:b.answer||null}; return b;}); return [{json:{text:r.text||'',blocks:formatted,sources:r.sources||formatted.flatMap(b=>b.sources||[]),call:formatted.flatMap(b=>b.call?[b.call]:[])}}];"
+      },
+      "id": "formatear-bloques",
+      "name": "Formatear bloques",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Number($json.statusCode ?? 0) >= 400 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "error-al-crear-sesion",
+      "name": "¿Error al crear sesión?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{json:{statusCode:$json.statusCode,error:$json.error||'Error creando sesión',details:$json.details||{},text:'Error al crear sesión',blocks:[],sources:[],call:[]}}];"
+      },
+      "id": "devolver-error-sesion",
+      "name": "Devolver error de sesión",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        260
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook consulta Cala": {
+      "main": [
+        [
+          {
+            "node": "Normalizar consulta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar consulta": {
+      "main": [
+        [
+          {
+            "node": "¿Hay session_id?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay session_id?": {
+      "main": [
+        [
+          {
+            "node": "Fijar session_id",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear sesión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear sesión": {
+      "main": [
+        [
+          {
+            "node": "Fijar session_id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fijar session_id": {
+      "main": [
+        [
+          {
+            "node": "¿Error al crear sesión?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar a backend": {
+      "main": [
+        [
+          {
+            "node": "Formatear bloques",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Error al crear sesión?": {
+      "main": [
+        [
+          {
+            "node": "Devolver error de sesión",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar a backend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {}
+}

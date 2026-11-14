@@ -1,0 +1,729 @@
+{
+  "name": "Junction - Journal diario y pregunta desde ítem",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-diario",
+      "name": "Schedule diario",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "junction-journal",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-manual",
+      "name": "Webhook manual",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b=$json.body??$json; return [{json:{...b,baseUrl:$env.JUNCTION_API_URL||'http://localhost:8000',date:b.date||new Date().toISOString().slice(0,10),edition:b.edition||'ecosistema',attempt:0}}];"
+      },
+      "id": "normalizar-entrada",
+      "name": "Normalizar entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ !!$json.question && !!$json.journal_item_id }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "preguntar-desde-item",
+      "name": "¿Preguntar desde ítem?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        430,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ !!$json.session_id && $json.session_id.trim().length > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "hay-session_id",
+      "name": "¿Hay session_id?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        650,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.baseUrl + \"/api/sessions\" }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "crear-sesion",
+      "name": "Crear sesión",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        860,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev=$('Normalizar entrada').first().json; const body=$json.body??$json; if($json.statusCode>=400) return [{json:{...prev,statusCode:$json.statusCode,error:body.error||body.message||'No se pudo crear sesión',details:body}}]; const sid=body.session_id||prev.session_id; return [{json:{...prev,session_id:sid}}];"
+      },
+      "id": "preparar-mensaje",
+      "name": "Preparar mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.baseUrl + \"/api/sessions/\" + $json.session_id + \"/messages\" }}",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.question }}"
+            },
+            {
+              "name": "context",
+              "value": "={{ {journal_item_id:$json.journal_item_id} }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000,
+          "retry": {
+            "maxTries": 5,
+            "waitBetweenTries": 2000
+          },
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "enviar-pregunta",
+      "name": "Enviar pregunta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body=$json.body??$json; if($json.statusCode>=400) return [{json:{statusCode:$json.statusCode,error:body.error||body.message||'Error enviando pregunta',details:body,text:'Error al consultar el backend',blocks:[],sources:[],call:[]}}]; const r=body.reply||body; return [{json:{text:r.text||'',blocks:r.blocks||[],sources:r.sources||[],call:(r.blocks||[]).map(b=>b.call).filter(Boolean)}}];"
+      },
+      "id": "formatear-respuesta-chat",
+      "name": "Formatear respuesta chat",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1530,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const x=$json.body??$json; const state=$getWorkflowStaticData('global'); state[$execution.id+':journal']=1; const founders=x.edition==='founders'&&x.session_id; const base=founders?`/api/sessions/${x.session_id}/journal`:'/api/journal/ecosistema'; const regen=base+'/regenerate'; return [{json:{...x,journalUrl:x.baseUrl+base+'?date='+encodeURIComponent(x.date),regenUrl:x.baseUrl+regen,attempt:0}}];"
+      },
+      "id": "preparar-journal",
+      "name": "Preparar journal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        650,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.regenUrl }}",
+        "options": {
+          "timeout": 120000,
+          "retry": {
+            "maxTries": 5,
+            "waitBetweenTries": 3000
+          },
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "regenerar-journal",
+      "name": "Regenerar journal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        870,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Number($json.statusCode ?? 0) >= 400 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "404-explicito",
+      "name": "404 explícito",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body=$json.body??$json; const state=$getWorkflowStaticData('global'); delete state[$execution.id+':journal']; const missing=$json.statusCode===404; return [{json:{status:missing?'unavailable':'error',statusCode:$json.statusCode,error:body.error||body.message||(missing?'Journal aún no integrado':'Error backend'),message:missing?'Los endpoints /api/journal/* responden 404 hasta que Issue #31 se integre.':'Error HTTP del backend',details:body}}];"
+      },
+      "id": "respuesta-issue-31-pendiente",
+      "name": "Respuesta Issue 31 pendiente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1290,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "esperar-2s",
+      "name": "Esperar 2s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1290,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $(\"Preparar journal\").first().json.journalUrl }}",
+        "options": {
+          "timeout": 120000,
+          "retry": {
+            "maxTries": 6,
+            "waitBetweenTries": 5000
+          },
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "get-journal",
+      "name": "GET journal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1500,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Number($json.statusCode ?? 0) >= 400 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "404-al-consultar",
+      "name": "¿404 al consultar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1710,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body=$json.body??$json; const state=$getWorkflowStaticData('global'); delete state[$execution.id+':journal']; const missing=$json.statusCode===404; return [{json:{status:missing?'unavailable':'error',statusCode:$json.statusCode,error:body.error||body.message||(missing?'Journal aún no integrado':'Error backend'),message:missing?'/api/journal/* aún responde 404 hasta el merge de Issue #31.':'Error HTTP del backend',details:body}}];"
+      },
+      "id": "404-lectura-explicito",
+      "name": "404 lectura explícito",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status === \"generating\" && Number($json.attempt??0) < 30 && !($json.statusCode>=400) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "generando-y-bajo-limite",
+      "name": "¿Generando y bajo límite?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body=$json.body??$json; const state=$getWorkflowStaticData('global'); const key=$execution.id+':journal'; const attempt=(state[key]??0)+1; state[key]=attempt; return [{json:{...body,statusCode:$json.statusCode,attempt}}];"
+      },
+      "id": "incrementar-intento",
+      "name": "Incrementar intento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2130,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const j=$json.body??$json; if($json.statusCode>=400) return [{json:{status:'error',statusCode:$json.statusCode,error:j.error||j.message||'Error consultando Journal',details:j}}]; if(j.status==='generating'){const state=$getWorkflowStaticData('global'); delete state[$execution.id+':journal']; return [{json:{status:'timeout',statusCode:$json.statusCode,error:'Se agotaron los 30 intentos de polling generando el journal',edition:j.edition,date:j.date,sections:[],items:[],is_new:[],cala_tables:[],blocks:[]}}];} const sections=j.sections||[]; const items=sections.flatMap(s=>(s.items||[]).map(i=>({section:s.title,description:s.description,id:i.id,is_new:i.is_new,block:i.block}))); const blocks=items.map(i=>i.block); const state=$getWorkflowStaticData('global'); delete state[$execution.id+':journal']; return [{json:{edition:j.edition,date:j.date,status:j.status,sections,items,is_new:items.filter(i=>i.is_new),cala_tables:blocks.filter(b=>b?.type==='cala_table').map(b=>({title:b.title,columns:b.columns,rows:b.rows,focus_rows:b.focus_rows,answer:b.answer,sources:b.sources,call:b.call})),blocks}}];"
+      },
+      "id": "formatear-journal",
+      "name": "Formatear journal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2130,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body=$json.body??$json; const state=$getWorkflowStaticData('global'); const attempt=state[$execution.id+':journal']??1; return [{json:{...body,statusCode:$json.statusCode,attempt}}];"
+      },
+      "id": "normalizar-respuesta-journal",
+      "name": "Normalizar respuesta journal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1700,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Number($json.statusCode ?? 0) >= 400 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "error-al-crear-sesion",
+      "name": "¿Error al crear sesión?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{json:{status:'error',statusCode:$json.statusCode,error:$json.error||'Error creando sesión',details:$json.details||{}}}];"
+      },
+      "id": "devolver-error-sesion",
+      "name": "Devolver error de sesión",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1390,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook manual": {
+      "main": [
+        [
+          {
+            "node": "Normalizar entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule diario": {
+      "main": [
+        [
+          {
+            "node": "Normalizar entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar entrada": {
+      "main": [
+        [
+          {
+            "node": "¿Preguntar desde ítem?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Preguntar desde ítem?": {
+      "main": [
+        [
+          {
+            "node": "¿Hay session_id?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar journal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay session_id?": {
+      "main": [
+        [
+          {
+            "node": "Preparar mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear sesión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear sesión": {
+      "main": [
+        [
+          {
+            "node": "Preparar mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar mensaje": {
+      "main": [
+        [
+          {
+            "node": "¿Error al crear sesión?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar pregunta": {
+      "main": [
+        [
+          {
+            "node": "Formatear respuesta chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar journal": {
+      "main": [
+        [
+          {
+            "node": "Regenerar journal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Regenerar journal": {
+      "main": [
+        [
+          {
+            "node": "404 explícito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "404 explícito": {
+      "main": [
+        [
+          {
+            "node": "Respuesta Issue 31 pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Esperar 2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar 2s": {
+      "main": [
+        [
+          {
+            "node": "GET journal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET journal": {
+      "main": [
+        [
+          {
+            "node": "Normalizar respuesta journal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿404 al consultar?": {
+      "main": [
+        [
+          {
+            "node": "404 lectura explícito",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Generando y bajo límite?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Generando y bajo límite?": {
+      "main": [
+        [
+          {
+            "node": "Incrementar intento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Formatear journal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Incrementar intento": {
+      "main": [
+        [
+          {
+            "node": "Esperar 2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar respuesta journal": {
+      "main": [
+        [
+          {
+            "node": "¿404 al consultar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Error al crear sesión?": {
+      "main": [
+        [
+          {
+            "node": "Devolver error de sesión",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar pregunta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {}
+}
