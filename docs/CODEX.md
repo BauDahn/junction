@@ -90,8 +90,47 @@ Each correction was a short task with the failing input attached. The nine follo
 ## 5. Other machines
 
 - **`gabriel`:** 4 tasks, 12 min, 5,177,047 input tokens (96% cached), 115,061 output, model `gpt-6-luna`. They built the three n8n workflows (#47), validated with `n8n-mcp`, and the context module (#66).
-- **`fabricio`:** in progress. Tasks seen on 14 Nov: Cala client optimizer, Gemini audio, feed API (parts 1 of 2), journal and chat integration, design system, router fixes, Valkey connection. *Pending: export of the full log.*
+- **`fabricio`:** see the table below.
 - **`adrian`:** *pending.*
+
+### `fabricio` machine (from `cx log`)
+
+30 tasks in 21 conversations, 26 finished (`LISTO`), 4 ended blocked or without a result; 8 were follow-up corrections (`seguir`). Codex time: **107 min** (14/11 10:58 to 14/11 22:05, local time). Tokens: **34.9 M input** (**96% from cache**), **371 k output**, 80 k reasoning. Model `gpt-6-luna`.
+
+Built here: the Cala client optimizer and rate-limit measurement (#63), audio with Gemini (#50), the affinity feed and entity detail API (#65), the graph store in Valkey (#64), the rate limit shared through Valkey (#85), plus the earlier journal, chat and router work.
+
+| Date | Role | Model | Task (summary) | Result | Min |
+|---|---|---|---|---|---|
+| 14/11 10:58 | frontend | gpt-6-luna | Crea el proyecto app/ (Expo + TypeScript + Expo Router) en una carpeta nueva app/. Requisitos: (1) cliente tip… | LISTO: creada la app Expo con TypeScript, Expo Router, cliente tipado y pantalla de salud. | 2.2 |
+| 14/11 11:06 | frontend | gpt-6-luna | Issue #8 en app/ (Expo Router + TypeScript, ya existe; cliente en app/src/api/index.ts). No toques backend/ ni… | LISTO: implementadas las pestañas Deck, Chat, Perfil y Estado; cliente API, verificación d… | 3.6 |
+| 14/11 11:12 | frontend | gpt-6-luna | Issue #7 en app/ (Expo Router + TS; cliente en app/src/api/index.ts; ya hay pestañas y una pestaña Chat placeh… | LISTO: Implementé el chat de texto y audio, la sesión compartida y el modo mock. | 3.4 |
+| 14/11 11:48 | backend | gpt-6-luna | Issue #3 en backend/ (FastAPI, uv). Lee docs/API.md (sección 'Chat con audio' y 'Perfil'), backend/app.py y ba… | LISTO: Implementé el chat con persistencia SQLite, perfil, rutas y pruebas. | 1.8 |
+| 14/11 11:51 | backend | gpt-6-luna | Issue #4 en backend/ (FastAPI, uv). Lee backend/chat/ (engine.py, routes.py, store.py) y docs/API.md 'Chat con… | LISTO: transcripción configurable, audio multipart y pruebas implementados. | 2.6 |
+| 14/11 12:06 | backend | gpt-6-luna | Issue #5 en backend/. Lee docs/API.md (Chat y 'Perfil y recomendaciones'), backend/chat/*.py, backend/verifier… | LISTO: recomendaciones en segundo plano, persistencia SQLite y avisos con cards y fuentes. | 2.4 |
+| 14/11 12:09 | backend | gpt-6-luna | (seguir) Faltan cosas: (1) tests del flujo en backend/tests/test_recommend.py: un mensaje que actualiza el per… | LISTO: dependencia de Cala sobrescribible, errores inesperados guardados como `error` y `u… | 2.3 |
+| 14/11 13:56 | frontend | gpt-6-luna | Issue #33 del repo (rama actual fabricio/33-bloques-chat). Lee docs/API.md (sección Bloques, tipos Source y Ca… | LISTO: Implementé los tipos, el renderizado de bloques en el chat, el estilo compartido de… | 2.1 |
+| 14/11 13:59 | frontend | gpt-6-luna | (seguir) Nueva tarea, issue #34 (ya estás en la rama fabricio/34-journal, que parte de lo anterior ya commitea… | LISTO: Añadí el journal para Ecosistema y Para ti, con contenido simulado, regeneración y… | 2.0 |
+| 14/11 14:09 | backend | gpt-6-luna | Issue #32 (rama actual fabricio/32-chat-cala-core). Lee docs/API.md (Bloques, Chat con audio, Perfil), docs/PL… | LISTO: chat conectado a `cala_core`, bloques persistidos y perfil ampliado con rol e inter… | 2.2 |
+| 14/11 16:02 | frontend | gpt-6-luna | Adopta el sistema de diseño de app/src/theme.tsx y app/src/ui/ (ya aplicado en app/app/estado.tsx y app/app/pe… | LISTO: Adopté el tema en las tabs y pantallas, usé `SourceTable` y `VerdictBadge`, y quité… | 3.3 |
+| 14/11 16:35 | backend | gpt-6-luna | Issue #56. Lee backend/cala_core/router.py, backend/cala_core/__init__.py (handle_message, _profile_patch, _me… | LISTO: fusioné los parches de perfil, reforcé el prompt y añadí caché del router por texto… | 5.4 |
+| 14/11 16:35 | backend | gpt-6-luna | Issue #54. Lee canonizador/canonizador/cache.py, canonizador/README.md (sección Valkey), el script cache_sync… | LISTO: Valkey usa timeout configurable de conexión (8 s) y lectura (3 s), reutiliza un cli… | 8.7 |
+| 14/11 21:20 | backend | gpt-6-luna | Issue #63: optimizador del cliente de Cala (léelo: gh issue view 63). Trabaja solo en canonizador/ (canonizado… | LISTO: Optimizador del cliente Cala implementado; no hice llamadas reales a la API. | 5.2 |
+| 14/11 21:25 | backend | gpt-6-luna | Issue #50 (backend): audio con Gemini — transcripción literal + intención limpia en UNA llamada. Trabaja solo… | BLOQUEADO: codex no devolvió mensaje final. | 3.2 |
+| 14/11 21:27 | backend | gpt-6-luna | Tarea (issue #65, parte 1 de 2): crear el paquete nuevo `backend/api/` con el puntaje de afinidad y el perfila… | LISTO: paquete de afinidad y perfilado implementado; la suite completa pasa. | 3.9 |
+| 14/11 21:28 | backend | gpt-6-luna | Issue #50 (backend): audio con Gemini — transcripción literal + intención limpia en UNA llamada. Trabaja solo… | LISTO: Implementé la transcripción con Gemini en una llamada, limpieza de intención, respa… | 3.6 |
+| 14/11 21:33 | backend | gpt-6-luna | (seguir) Dos correcciones chicas tras la prueba real (no hagas commit; no leas backend/.env; ignora lo de assu… | LISTO: Reforcé el prompt para quitar muletillas y arranques de discurso, y actualicé el mo… | 0.4 |
+| 14/11 21:35 | backend | gpt-6-luna | Tarea (issue #65, parte 2 de 2): endpoints del feed y del detalle de Cala Match sobre un CATALOGO precalculado… | LISTO: Implementados el catálogo local con refresco por lotes, grafo en memoria, afinidad… | 5.4 |
+| 14/11 21:35 | backend | gpt-6-luna | Tarea (issue #64, parte 1 de 2): crear el paquete `backend/graph/` con el modelo, el almacén del grafo compart… | LISTO: creado `backend/graph/` con modelo, almacén en memoria/Valkey, unión de duplicados… | 4.1 |
+| 14/11 21:40 | backend | gpt-6-luna | (seguir) Segunda ronda sobre `backend/graph/store.py` (ya commiteado por mí; tú no hagas commit). La versión a… | LISTO: lecturas y escrituras de grafo agrupadas; el saneamiento de aliases ya no escanea t… | 16.9 |
+| 14/11 21:42 | backend | gpt-6-luna | (seguir) Revision de la parte 2 (mismas reglas: sin commit, sin cambiar de rama, sin leer backend/.env, solo b… | LISTO: Corregidos la inyección de Cala, el enriquecimiento, la afinidad compartida entre f… | 8.7 |
+| 14/11 21:52 | backend | gpt-6-luna | (seguir) Ultimos ajustes (mismas reglas: sin commit, sin cambiar de rama, sin leer backend/.env; solo backend/… | LISTO: Ajusté las rondas del detalle y ordené `why_match`; amplié los tests de contratos. | 1.0 |
+| 14/11 21:55 | backend | gpt-6-luna | (seguir) Cuatro retoques de texto vistos en una prueba real (mismas reglas: sin commit, sin cambiar de rama, s… | LISTO: Ajusté las etiquetas de región, el formato de tickets, los facts como strings y el… | 2.3 |
+| 14/11 21:58 | backend | gpt-6-luna | Tarea acotada sobre `backend/graph/store.py` y `backend/tests/test_graph_store.py` (issue #64). Lee esos dos a… | BLOQUEADO: Implementé `read_batch`, `rels_key`/`node_is_expanded`, actualicé la configurac… | 1.9 |
+| 14/11 22:00 | backend | gpt-6-luna | (seguir) Ya hice commit de lo que dejaste. No estás bloqueado: nada externo impide terminar; continúa y comple… | BLOQUEADO: No completé los pasos A–C. En este turno solo volví a tomar los bloqueos; no ca… | 0.6 |
+| 14/11 22:01 | backend | gpt-6-luna | Tarea corta (issue #65, PR #77): arreglar 4 hallazgos de revision en `backend/api/` con un test por cada uno.… | LISTO: Corregidos los hallazgos del perfil, tickets, carga del catálogo Valkey y vecinos d… | 2.8 |
+| 14/11 22:02 | backend | gpt-6-luna | Refactor de rendimiento, acotado a `backend/graph/store.py` (+ tests en `backend/tests/test_graph_store.py`).… | BLOQUEADO: la implementación quedó incompleta y la suite de `test_graph_store.py` falla en… | 2.0 |
+| 14/11 22:02 | backend | gpt-6-luna | Tarea (issue #85). Area: canonizador/canonizador/client.py, canonizador/tests/test_client_shared_limit.py (nue… | LISTO: límite compartido por endpoint con Valkey, fallback local ante errores y apagado me… | 1.8 |
+| 14/11 22:05 | backend | gpt-6-luna | Tarea: en canonizador/scripts/medir_limite.py añade la opcion --sin-cache-local: apaga SOLO la cache de respue… | LISTO: añadí `--sin-cache-local`, que desactiva la caché de respuestas y conserva el remot… | 1.1 |
 
 ## 6. How to regenerate
 
