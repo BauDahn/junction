@@ -7,6 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from canonizador.client import CalaClient
+from canonizador.cache import make_cache
 
 
 NAMES = [
@@ -23,9 +24,18 @@ class NullCache:
     def put_key(self, namespace, key, value): pass
 
 
+class NoResponseCache(NullCache):
+    """Desactiva las respuestas y conserva Valkey para el limitador compartido."""
+    def __init__(self, remote=None): self.remote = remote
+
+
 async def run(args):
+    cache = NullCache() if args.sin_cache else None
+    if args.sin_cache_local:
+        configured_cache = make_cache("cache")
+        cache = NoResponseCache(getattr(configured_cache, "remote", None))
     client = CalaClient(entities_interval=args.interval, entities_concurrency=args.concurrency,
-                        cache=NullCache() if args.sin_cache else None)
+                        cache=cache)
     first_429 = None
     start = time.monotonic()
     for index in range(args.n):
@@ -39,9 +49,9 @@ async def run(args):
             raise
     elapsed = time.monotonic() - start
     sent = client.calls
-    print("| n | intervalo (s) | concurrencia | segundos totales | llamadas/s | 429 | primera llamada con 429 | espera total (s) |")
-    print("|---:|---:|---:|---:|---:|---:|---:|---:|")
-    print(f"| {sent} | {args.interval:g} | {args.concurrency} | {elapsed:.2f} | {sent / elapsed if elapsed else 0:.3f} | {client.stats['429']} | {first_429 or '—'} | {client.stats['429_wait_seconds']:.2f} |")
+    print("| n | intervalo (s) | concurrencia | segundos totales | llamadas/s | 429 | primera llamada con 429 | espera total (s) | esperas limitador compartido | errores limitador compartido |")
+    print("|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+    print(f"| {sent} | {args.interval:g} | {args.concurrency} | {elapsed:.2f} | {sent / elapsed if elapsed else 0:.3f} | {client.stats['429']} | {first_429 or '—'} | {client.stats['429_wait_seconds']:.2f} | {client.stats['shared_limit_waits']} | {client.stats['shared_limit_errors']} |")
 
 
 def main():
@@ -50,6 +60,8 @@ def main():
     parser.add_argument("--interval", type=float, default=0.7)
     parser.add_argument("--concurrency", type=int, default=2)
     parser.add_argument("--sin-cache", action="store_true")
+    parser.add_argument("--sin-cache-local", action="store_true",
+                        help="desactiva la cache de respuestas y conserva Valkey para el limitador compartido")
     args = parser.parse_args()
     asyncio.run(run(args))
 

@@ -114,7 +114,7 @@ flowchart TB
 | Raw Cala responses, intents and answers in Valkey, disk layer, TTL, warm-up, failure handling, pre-warm script | **In main** |
 | Graph store on Valkey (nodes, edges with sources, duplicate merging, per-user views) | **In progress** (`backend/graph/`, issue #64) |
 | Slush catalog ingestion into the graph, resumable | **In progress** (issue #72) |
-| Rate limit shared through Valkey (one counter per second, so several machines do not add up against one Cala key) | **Planned** |
+| Rate limit shared through Valkey (one counter per second, so several machines do not add up against one Cala key) | **In progress** |
 | `/api/stats` with hit rate and Cala calls saved | **Planned** |
 
 **Why Valkey fits a graph here:**
