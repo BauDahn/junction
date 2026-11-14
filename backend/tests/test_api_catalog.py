@@ -7,6 +7,12 @@ def test_normalize_features_aliases_and_missing_fields():
     assert f['amount']=={'min':10.0,'max':None} and f['hq']=='Nordics' and f['sources']==[]
     assert normalize_features({'id':'x'}) is None
 
+def test_normalize_features_activity_counts_are_integers():
+    feature = normalize_features({"id": "x", "name": "X", "activity": {"rounds_24m": 4.0, "led_24m": "2"}})
+    assert feature["activity"] == {"rounds_24m": 4, "led_24m": 2}
+    assert type(feature["activity"]["rounds_24m"]) is int
+    assert type(feature["activity"]["led_24m"]) is int
+
 def test_valkey_reads_features_in_batches_not_gets():
     raw={'name':'X','kinds':['investor']}
     class Pipe:

@@ -182,7 +182,7 @@ def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
 
     def add_fact(label, value):
         if value is not None and value != "" and feature_sources:
-            detail["facts"].append({"label": label, "value": value, "sources": feature_sources})
+            detail["facts"].append({"label": label, "value": str(value), "sources": feature_sources})
 
     if features and feature_sources:
         ai_tagged = features.get("ai_tagged", False)
@@ -196,8 +196,11 @@ def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
         low = amount.get("min")
         high = amount.get("max")
         if low is not None or high is not None:
-            size = format_amount(low if low is not None else high)
-            if high is not None and low is not None:
+            if low is not None and high is not None and low == high:
+                size = format_amount(low)
+            else:
+                size = format_amount(low if low is not None else high)
+            if high is not None and low is not None and low != high:
                 size += "–" + format_amount(high)
             add_fact("Typical round size", size)
         activity = features.get("activity") or {}
@@ -212,24 +215,28 @@ def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
             round_sources = round_data.get("sources") or []
             if not round_sources:
                 continue
-            item = {"leads": [name] if round_data.get("is_lead") else [],
-                    "investors": [name], "sources": round_sources}
+            item = {}
             fields = (("round_type", "round_type"), ("funding_amount", "amount"), ("year", "date"))
             for source_key, target_key in fields:
                 if round_data.get(source_key) is not None:
                     item[target_key] = str(round_data[source_key])
+            item["leads"] = [name] if round_data.get("is_lead") else []
+            item["investors"] = [name]
+            item["sources"] = round_sources
             detail["rounds"].append(item)
     elif rounds:
         for round_data in rounds:
             round_sources = round_data.get("sources") or []
             if not round_sources:
                 continue
-            item = {"leads": list(round_data.get("leads") or []),
-                    "investors": list(round_data.get("investors") or []), "sources": round_sources}
+            item = {}
             fields = (("round_type", "round_type"), ("funding_amount", "amount"), ("year", "date"))
             for source_key, target_key in fields:
                 if round_data.get(source_key) is not None:
                     item[target_key] = str(round_data[source_key])
+            item["leads"] = list(round_data.get("leads") or [])
+            item["investors"] = list(round_data.get("investors") or [])
+            item["sources"] = round_sources
             detail["rounds"].append(item)
     else:
         grouped = {}
@@ -238,9 +245,9 @@ def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
                 continue
             event_date = edge.get("event_date")
             key = str(event_date) if event_date else "__undated__"
-            group = grouped.setdefault(key, {"investors": [], "leads": [], "sources": []})
-            if event_date:
-                group["date"] = str(event_date)
+            initial = {"date": str(event_date)} if event_date else {}
+            initial.update({"leads": [], "investors": [], "sources": []})
+            group = grouped.setdefault(key, initial)
             group["investors"].append(neighbor.get("name"))
             if edge.get("is_lead"):
                 group["leads"].append(neighbor.get("name"))

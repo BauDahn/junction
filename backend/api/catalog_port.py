@@ -27,10 +27,13 @@ def normalize_features(raw):
     def num(v):
         try: return float(v) if v is not None else None
         except (TypeError,ValueError): return None
+    def integer(v):
+        try: return int(float(v)) if v is not None else None
+        except (TypeError,ValueError,OverflowError): return None
     activity=raw.get('activity') if isinstance(raw.get('activity'),dict) else {}
     rounds=raw.get('rounds') if isinstance(raw.get('rounds'),list) else []
     rounds=[round_data for round_data in rounds if isinstance(round_data,dict)]
-    return {'id':str(ident),'name':str(name),'kinds':kinds,'description':raw.get('description') if isinstance(raw.get('description'),str) else '', 'sectors':sectors,'stages':stages,'ai_tagged':raw.get('ai_tagged',False),'country':raw.get('country'),'hq':raw.get('hq') or raw.get('region'),'amount':{'min':num(lo),'max':num(hi)},'activity':{'rounds_24m':num(activity.get('rounds_24m')),'led_24m':num(activity.get('led_24m'))},'rounds':rounds,'sources':_list_sources(raw.get('sources')),'loaded_at':raw.get('loaded_at')}
+    return {'id':str(ident),'name':str(name),'kinds':kinds,'description':raw.get('description') if isinstance(raw.get('description'),str) else '', 'sectors':sectors,'stages':stages,'ai_tagged':raw.get('ai_tagged',False),'country':raw.get('country'),'hq':raw.get('hq') or raw.get('region'),'amount':{'min':num(lo),'max':num(hi)},'activity':{'rounds_24m':integer(activity.get('rounds_24m')),'led_24m':integer(activity.get('led_24m'))},'rounds':rounds,'sources':_list_sources(raw.get('sources')),'loaded_at':raw.get('loaded_at')}
 
 def _list_sources(v): return [x for x in v if isinstance(x,dict)] if isinstance(v,list) else []
 class CatalogPort(Protocol):

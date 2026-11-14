@@ -98,9 +98,16 @@ def score_candidate(profile, candidate, *, today=None, weights=WEIGHTS):
     regions=profile.get("regions") or []; located=[r for r in rounds if r.get("location")]
     if not regions: add("region",None)
     elif located:
-        vals=[max(region_match(r["location"],x) for x in regions) for r in located]; n=sum(v==1 for v in vals); partial=sum(v==.6 for v in vals)
-        counts=[sum(region_match(r["location"],x) for r in located) for x in regions]; label=regions[counts.index(max(counts))]
-        add("region",sum(vals)/len(vals),f"{n} of {len(vals)} tracked rounds in {label}" if n else f"{partial} of {len(vals)} tracked rounds in {label}",[s for r in located for s in r["sources"]])
+        vals=[max(region_match(r["location"],x) for x in regions) for r in located]
+        counts=[sum(region_match(r["location"],x) for r in located) for x in regions]
+        selected=regions[counts.index(max(counts))]
+        selected_values=[region_match(r["location"],selected) for r in located]
+        exact=sum(value==1 for value in selected_values)
+        partial_match=sum(value==.6 for value in selected_values)
+        matched_value=max(selected_values, default=0)
+        label=(country_of(selected) or selected) if matched_value==1 else selected
+        count=exact if exact else partial_match
+        add("region",sum(vals)/len(vals),f"{count} of {len(vals)} tracked rounds in {label}",[s for r in located for s in r["sources"]])
     elif attr_ok and (attrs.get("country") or attrs.get("hq")):
         loc=attrs.get("country") or attrs.get("hq"); val=max(region_match(loc,x) for x in regions); add("region",val,f"Headquartered in {country_of(loc) or loc}",attrs["sources"])
     else: add("region",None)
@@ -111,7 +118,9 @@ def score_candidate(profile, candidate, *, today=None, weights=WEIGHTS):
         a=parse_amount(feats["amount"].get("min")); b=parse_amount(feats["amount"].get("max")); a=b if a is None else a; b=a if b is None else b
         lo,hi=(hi,lo) if lo is None else (lo,hi); lo,hi=(lo,lo) if hi is None else (lo,hi)
         overlap=not (b<lo or a>hi); near=min((abs(math.log10(x/y)) for x in (a,b) for y in (lo,hi) if x and y),default=1); value=1.0 if overlap else max(0,1-near)
-        add("ticket",value,f"Typical round size {_fmt(a)}–{_fmt(b)}; your range is {_fmt(lo)}–{_fmt(hi)}",feature_sources)
+        typical=f"Typical round size {_fmt(a)}" if a==b else f"Typical round size {_fmt(a)}–{_fmt(b)}"
+        target=f"you are raising {_fmt(lo)}" if lo==hi else f"your range is {_fmt(lo)}–{_fmt(hi)}"
+        add("ticket",value,f"{typical}; {target}",feature_sources)
     elif not amounts: add("ticket",None)
     else:
         lo,hi=(hi,lo) if lo is None else (lo,hi); lo,hi=(lo,lo) if hi is None else (lo,hi)
@@ -120,7 +129,10 @@ def score_candidate(profile, candidate, *, today=None, weights=WEIGHTS):
             q=quantiles(amounts,n=4,method="inclusive") if len(amounts)>1 else [amounts[0]]*3; typical=q[0],q[2]
         a=parse_amount(typical[0].get("funding_amount")) if isinstance(typical,list) else typical[0]; b=parse_amount(typical[0].get("funding_amount")) if isinstance(typical,list) else typical[1]
         overlap=not (b<lo or a>hi); near=min((abs(math.log10(x/y)) for x in (a,b) for y in (lo,hi) if x and y),default=1)
-        value=1.0 if overlap else max(0,1-near); add("ticket",value,f"Typical round size {_fmt(a)}–{_fmt(b)}; you are raising {_fmt(lo)}" if lo==hi else f"Typical round size {_fmt(a)}–{_fmt(b)}; your range is {_fmt(lo)}–{_fmt(hi)}",[s for r in rounds if parse_amount(r.get("funding_amount")) for s in r["sources"]])
+        value=1.0 if overlap else max(0,1-near)
+        typical=f"Typical round size {_fmt(a)}" if a==b else f"Typical round size {_fmt(a)}–{_fmt(b)}"
+        target=f"you are raising {_fmt(lo)}" if lo==hi else f"your range is {_fmt(lo)}–{_fmt(hi)}"
+        add("ticket",value,f"{typical}; {target}",[s for r in rounds if parse_amount(r.get("funding_amount")) for s in r["sources"]])
     years=[(r,_year(r.get("year"))) for r in rounds]; dated=[(r,y) for r,y in years if y is not None]; cutoff=today.year-2; recent=[(r,y) for r,y in dated if y>=cutoff]
     if not dated and feature_sources and isinstance(feats.get("activity"),dict) and feats["activity"].get("rounds_24m") is not None:
         act=feats["activity"]; n=max(0,int(act["rounds_24m"])); led=act.get("led_24m"); txt=f"Led {led} and joined {max(0,n-int(led))} rounds in the last 24 months" if led is not None else f"{n} rounds in the last 24 months"

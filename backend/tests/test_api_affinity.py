@@ -95,3 +95,15 @@ def test_feature_stage_ai_tag_and_activity_without_lead():
     assert p['signals'][0]['text'].endswith('(AI-tagged)')
     assert p['signals'][1]['text'].endswith('(AI-tagged)')
     assert p['signals'][4]['text']=='3 rounds in the last 24 months'
+
+def test_region_text_uses_canonical_country_or_matched_group():
+    investor={"type":"investor","rounds":[round_(location="Finland") ]}
+    exact=score_candidate({"regions":["Helsinki"]},investor)["signals"][2]
+    group=score_candidate({"regions":["Nordics"]},investor)["signals"][2]
+    assert exact["text"]=="1 of 1 tracked rounds in Finland"
+    assert group["text"]=="1 of 1 tracked rounds in Nordics"
+
+def test_ticket_text_uses_one_value_for_single_amount_range():
+    investor={"type":"investor","rounds":[round_(funding_amount="3M")]}
+    signal=score_candidate({"ticket":{"min":3_000_000,"max":3_000_000}},investor)["signals"][3]
+    assert signal["text"]=="Typical round size 3M; you are raising 3M"

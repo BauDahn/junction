@@ -48,11 +48,13 @@ def test_detail_contract_sources_and_score_matches_feed(client):
                        "rounds", "portfolio", "people", "loaded_at"}
     assert set(detail) <= detail_contract
     assert all(fact["sources"] for fact in detail["facts"])
+    assert all(isinstance(fact["value"], str) for fact in detail["facts"])
     assert all(round_data["sources"] for round_data in detail["rounds"])
     round_contract = {"round_type", "amount", "date", "leads", "investors", "sources"}
     assert all(set(round_data) <= round_contract and "company" not in round_data for round_data in detail["rounds"])
     assert all(signal["sources"] for signal in detail["why_match"])
     assert [signal["signal"] for signal in detail["why_match"][:2]] == ["sector", "stage"]
+    assert list(detail["rounds"][0]) == ["round_type", "amount", "date", "leads", "investors", "sources"]
     card = client.get("/api/feed", params={"session_id": session_id}).json()["items"][0]
     assert set(card) == {"id", "type", "name", "one_liner", "tags", "score", "confidence", "why_match", "sources"}
     size = next(fact["value"] for fact in detail["facts"] if fact["label"] == "Typical round size")
@@ -129,6 +131,19 @@ def test_startup_uses_sourced_feature_rounds_without_company_key(client):
     assert detail["rounds"] == [{"round_type": "Seed", "amount": "3M", "date": "2025",
                                  "leads": [], "investors": [], "sources": [SOURCE]}]
     assert all("company" not in round_data for round_data in detail["rounds"])
+
+
+def test_detail_single_typical_amount_and_activity_facts_are_strings(client):
+    feature = {"id": "fund", "name": "Fund", "kinds": ["investor"],
+               "amount": {"min": 3_000_000, "max": 3_000_000},
+               "activity": {"rounds_24m": 4.0, "led_24m": 2.0}, "sources": [SOURCE]}
+    backend_app.app.dependency_overrides[get_catalog] = lambda: MemoryCatalog([feature])
+    detail = client.get("/api/entities/fund").json()
+    facts = {fact["label"]: fact["value"] for fact in detail["facts"]}
+    assert facts["Typical round size"] == "3M"
+    assert facts["Rounds in the last 24 months"] == "4"
+    assert facts["Rounds led in the last 24 months"] == "2"
+    assert all(isinstance(fact["value"], str) for fact in detail["facts"])
 
 
 def test_detail_not_found(client):
