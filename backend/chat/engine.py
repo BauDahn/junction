@@ -48,6 +48,7 @@ async def handle_text(session_id, text, llm, transcript=None, cala=None, context
             if source not in reply_sources: reply_sources.append(source)
     if len(blocks) == 1 and blocks[0].get("type") == "text":
         reply_text = blocks[0].get("text", "")
+        blocks = []  # el texto ya va en el mensaje; no repetirlo como bloque
     elif (answers := [b["answer"] for b in blocks if b.get("answer")]) and len(answers) == 1:
         reply_text = answers[0]
     elif any(b.get("type") == "cala_table" or b.get("type") == "cala_answer" for b in blocks):
