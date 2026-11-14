@@ -265,7 +265,6 @@ export default function PerfilScreen() {
       </View>
 
       <View style={s.header}>
-        <Text style={s.eyebrow}>CALA MATCH</Text>
         <Text accessibilityRole="header" style={s.title}>
           Profile
         </Text>
@@ -276,7 +275,7 @@ export default function PerfilScreen() {
 
       {loading ? (
         <View style={s.stateWrap}>
-          <StateView kind="loading" title="Loading profile..." />
+          <StateView kind="loading" title="Loading profile…" />
         </View>
       ) : null}
 
@@ -415,7 +414,7 @@ export default function PerfilScreen() {
                 Recommendations
               </Text>
               {recommendations.status === 'running' ? (
-                <Text style={s.recsStatus}>Updating recommendations from Cala...</Text>
+                <Text style={s.recsStatus}>Updating recommendations from Cala…</Text>
               ) : null}
               {sections.map(([key, label]) => (
                 <View key={key} style={s.recGroup}>
@@ -505,12 +504,6 @@ function profileStyles(c: Colors) {
       borderBottomWidth: 1,
       borderBottomColor: c.border,
       gap: 4,
-    },
-    eyebrow: {
-      color: c.textFaint,
-      fontSize: 11,
-      fontWeight: '600',
-      letterSpacing: 1.2,
     },
     title: {
       color: c.text,

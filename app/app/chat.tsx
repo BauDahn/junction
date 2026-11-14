@@ -279,7 +279,7 @@ export default function ChatScreen() {
             ) : (
               <Text style={s.userText}>{item.text}</Text>
             )}
-            {item.pending ? <Text style={s.pending}>Sending...</Text> : null}
+            {item.pending ? <Text style={s.pending}>Sending…</Text> : null}
           </View>
           {item.error ? (
             <View style={s.retryRow}>
@@ -368,7 +368,7 @@ export default function ChatScreen() {
 
         {loading ? (
           <View style={s.stateWrap}>
-            <StateView kind="loading" title="Loading conversation..." />
+            <StateView kind="loading" title="Loading conversation…" />
           </View>
         ) : loadError && !sessionId ? (
           <View style={s.stateWrap}>
@@ -425,7 +425,7 @@ export default function ChatScreen() {
               sending ? (
                 <View style={s.thinkingRow}>
                   <ActivityIndicator size="small" color={colors.textMuted} />
-                  <Text style={s.thinkingText}>Checking Cala sources...</Text>
+                  <Text style={s.thinkingText}>Checking Cala sources…</Text>
                 </View>
               ) : null
             }
@@ -455,7 +455,7 @@ export default function ChatScreen() {
               <TextInput
                 value={draft}
                 onChangeText={setDraft}
-                placeholder="Ask about investors, rounds, or claims..."
+                placeholder="Ask about investors, rounds, or claims…"
                 placeholderTextColor={colors.textFaint}
                 multiline
                 maxLength={4000}
@@ -759,8 +759,8 @@ function chatStyles(c: Colors) {
     },
     input: {
       color: c.text,
-      fontSize: 15,
-      lineHeight: 20,
+      fontSize: 16,
+      lineHeight: 22,
       paddingVertical: 10,
       maxHeight: 100,
     },

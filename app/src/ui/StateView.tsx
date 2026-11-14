@@ -25,7 +25,7 @@ export default function StateView({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
           <ActivityIndicator size="small" color={colors.accent} />
           <Text style={{ color: colors.textMuted, fontSize: font.small }}>
-            {title ?? 'Loading...'}
+            {title ?? 'Loading…'}
           </Text>
         </View>
         <View style={{ gap: space.sm }}>
