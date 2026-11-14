@@ -1,6 +1,6 @@
 # Junction 2026: proyecto del equipo
 
-Hackathon Junction 2026, Espoo (Finlandia), del 13 al 15 de noviembre de 2026. Somos **dos personas, cada una con su máquina, su Claude (Pro) y su Codex**, trabajando en paralelo sobre este repo. Lo leen los Claude de ambas máquinas (central, orquestador, subagentes) y Codex (este archivo es también `AGENTS.md`). Respondé en español.
+Hackathon Junction 2026, Espoo (Finlandia), del 13 al 15 de noviembre de 2026. Somos **tres personas (Bau, Fabricio y Gabriel), cada una con su máquina y sus agentes**, trabajando en paralelo sobre este repo. Este archivo lo leen todos los agentes: Claude (`CLAUDE.md`), Codex (`AGENTS.md`) y los de Google (`GEMINI.md`); los tres nombres apuntan al mismo archivo. Respondé en español.
 
 ## Producto (enfoque desde el 14/11: Cala en el centro)
 **No es un chatbot: es una forma de usar Cala desde la voz.** Plan completo en `docs/PLAN-CALA-CENTRO.md`.
@@ -22,9 +22,16 @@ Cala es el núcleo (no tocamos cómo funciona: mostramos para qué sirve). Todo 
 - Candidatos sin decidir: Context.dev, CRACI. Descartado: bot de WhatsApp/Telegram con n8n (se reemplaza por el chat de la app).
 
 ## Equipo y coordinación
-- Cada máquina tiene **claude-central** instalado (github.com/BauDahn/claude-central): agentes, `cx` (Codex) y `equipo` (coordinación entre máquinas vía GitHub).
-- **Orquestador del equipo: el central de la máquina `bau`.** Ve el estado de todas las máquinas con `equipo ver`, reparte trabajo con `equipo asignar`, revisa PRs y vigila conflictos. La otra máquina es `miembro`: trabaja lo que le llega por `equipo mias` y avisa con `equipo avisar bau "..."`.
-- Estado compartido en GitHub: issue fijo #1 "Estado del equipo" (cada máquina actualiza su comentario cada 10 min), issues con label `maquina:<nombre>` y PRs.
+| Máquina | Persona | Agentes | Rol |
+|---|---|---|---|
+| `bau` | Bau | Claude (orquestador), Codex, Gemini | **Coordina a todo el equipo**: reparte tareas, revisa y mergea PRs, vigila conflictos y comunica las novedades |
+| `fabricio` | Fabricio | Claude, Codex, Gemini | Miembro: app y chat del backend |
+| `gabriel` | Gabriel | Agente de Google (Gemini) como principal | Miembro: tareas que le asigne el orquestador |
+
+- **Todo se coordina por GitHub**, que es lo único que ven las tres máquinas: issue fijo #1 "Estado del equipo" (estado de cada máquina y mensajes), issues con label `maquina:<nombre>` (tareas) y PRs.
+- Con [claude-central](https://github.com/BauDahn/claude-central) instalado se usa el comando `equipo` (`equipo mias`, `equipo mensajes`, `equipo avisar bau "..."`, `equipo publicar`). **Sin claude-central** (por ejemplo, con un agente de Google) se hace lo mismo con `gh`: `gh issue list --label maquina:<nombre>` para ver tus tareas, y un comentario en el issue #1 que empiece con `**<nombre> → bau:**` para avisar. El script `equipo` es un solo archivo de Python que solo necesita `gh`; se puede usar suelto.
+- **Antes de empezar algo que no te asignaron, avisá al orquestador** (comentario en #1 o `equipo avisar bau`), para no duplicar trabajo. Ya pasó.
+- El orquestador responde y reparte por el mismo canal. Las claves (`CALA_API_KEY`, `GEMINI_API_KEY`, `VALKEY_URL`) se pasan por privado, nunca por GitHub.
 
 ### Dueños de cada área (para no pisarse)
 | Área | Dueño | Notas |
@@ -32,6 +39,7 @@ Cala es el núcleo (no tocamos cómo funciona: mostramos para qué sirve). Todo 
 | `backend/cala_core/`, `backend/journal/` | máquina `bau` | Router, ejecución contra Cala, formato de bloques, verificación de afirmaciones y journal |
 | `backend/verifier/`, `canonizador/` | máquina `bau` | Verificador de decks; canonizador de consultas y benchmarks |
 | `backend/chat/`, `backend/app.py` | máquina `fabricio` | Sesiones, mensajes, audio, perfil, recomendaciones; conecta `cala_core` al chat |
+| *(a definir)* | máquina `gabriel` | El orquestador le asigna un área propia por issue al sumarse; hasta entonces, no editar áreas ajenas sin avisar |
 | `app/` | máquina `fabricio` | Expo (web + iOS + Android), TypeScript |
 | `docs/API.md` | compartido | contrato backend ↔ app; cambios fuera de *(borrador)* en un PR propio aprobado por el otro |
 | resto de `docs/` | cualquiera | `PROCESO.md`: una línea por hito |
@@ -89,7 +97,7 @@ Si hace falta tocar el área del otro, se pide por `equipo avisar` o se hace en 
 ## Estado (14/11, tarde)
 - En `main`: verificador de decks, canonizador + benchmarks, app Expo (#6, #7, #8) y chat del backend: sesiones, texto, audio y recomendaciones (#3, #4, #5).
 - En curso: enfoque "Cala en el centro" (`docs/PLAN-CALA-CENTRO.md`): router y bloques (bau), journal (bau), conexión al chat y app (fabricio).
-- Equipo: `bau` (orquestador), `fabricio` (miembro). Gabriel está en el equipo, por ahora en otra tarea.
+- Equipo: `bau` (orquestador), `fabricio` y `gabriel` (miembros).
 
 ## Pendientes
 - [ ] Enfoque Cala en el centro: tareas A–F de `docs/PLAN-CALA-CENTRO.md`.
