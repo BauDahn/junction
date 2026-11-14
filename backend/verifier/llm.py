@@ -96,7 +96,9 @@ class CodexProvider:
                 image_path.write_bytes(image)
                 args.extend(["-i", str(image_path)])
             args.append(system + "\n\n" + user)
-            proc = await asyncio.create_subprocess_exec(*args, cwd=tmp, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            # stdin cerrado: si el servidor corre sin terminal, codex exec se queda esperando entrada.
+            proc = await asyncio.create_subprocess_exec(*args, cwd=tmp, stdin=asyncio.subprocess.DEVNULL,
+                                                        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             try:
                 stdout, stderr = await asyncio.wait_for(proc.communicate(), self.timeout)
             except asyncio.TimeoutError:
@@ -115,7 +117,9 @@ class ClaudeProvider:
         binary = shutil.which("claude")
         if not binary:
             raise RuntimeError("No se encontró el ejecutable claude")
-        proc = await asyncio.create_subprocess_exec(binary, "-p", "--output-format", "json", system + "\n\n" + user, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        proc = await asyncio.create_subprocess_exec(binary, "-p", "--output-format", "json", system + "\n\n" + user,
+                                                    stdin=asyncio.subprocess.DEVNULL,
+                                                    stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         stdout, stderr = await asyncio.wait_for(proc.communicate(), 180)
         if proc.returncode:
             raise RuntimeError("claude falló: " + stderr.decode(errors="replace")[-1200:])
