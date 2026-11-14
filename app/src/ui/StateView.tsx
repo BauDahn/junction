@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
-import { font, space, useTheme } from '../theme';
-import Card from './Card';
+import { font, radius, space, useTheme } from '../theme';
 
-/** Estado de pantalla: cargando, vacío o error, con el mismo aspecto en todas partes. */
+/** Screen state: loading skeleton, empty state, or error state with consistent minimalist styling. */
 export default function StateView({
   kind,
   title,
@@ -16,39 +15,84 @@ export default function StateView({
   action?: ReactNode;
 }) {
   const { colors } = useTheme();
+
   if (kind === 'loading') {
     return (
       <View
         accessibilityLiveRegion="polite"
-        style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.lg }}
+        style={{ gap: space.md, paddingVertical: space.lg }}
       >
-        <ActivityIndicator color={colors.accent} />
-        <Text style={{ color: colors.textMuted, fontSize: font.body }}>{title ?? 'Cargando…'}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+          <ActivityIndicator size="small" color={colors.accent} />
+          <Text style={{ color: colors.textMuted, fontSize: font.small }}>
+            {title ?? 'Loading...'}
+          </Text>
+        </View>
+        <View style={{ gap: space.sm }}>
+          <View
+            style={{
+              height: 12,
+              width: '55%',
+              backgroundColor: colors.surfaceAlt,
+              borderRadius: radius.sm,
+            }}
+          />
+          <View
+            style={{
+              height: 12,
+              width: '85%',
+              backgroundColor: colors.surfaceAlt,
+              borderRadius: radius.sm,
+            }}
+          />
+          <View
+            style={{
+              height: 12,
+              width: '40%',
+              backgroundColor: colors.surfaceAlt,
+              borderRadius: radius.sm,
+            }}
+          />
+        </View>
       </View>
     );
   }
+
   const err = kind === 'error';
   return (
-    <Card
-      style={
-        err
-          ? { backgroundColor: colors.dangerSoft, borderColor: colors.dangerSoft }
-          : { alignItems: 'flex-start' }
-      }
+    <View
+      accessibilityRole={err ? 'alert' : undefined}
+      style={{
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+        borderWidth: 1,
+        borderRadius: radius.sm,
+        padding: space.lg,
+        gap: space.sm,
+        alignItems: 'flex-start',
+      }}
     >
-      <View accessibilityRole={err ? 'alert' : undefined} style={{ gap: space.sm }}>
-        <Text style={{ color: err ? colors.danger : colors.text, fontSize: font.lead, fontWeight: '700' }}>
-          {title ?? (err ? 'Algo salió mal' : 'Todavía no hay nada aquí')}
+      <Text
+        style={{
+          color: err ? colors.danger : colors.text,
+          fontSize: font.lead,
+          fontWeight: '600',
+        }}
+      >
+        {title ?? (err ? 'Something went wrong' : 'Nothing here yet')}
+      </Text>
+      {message ? (
+        <Text
+          style={{
+            color: colors.textMuted,
+            fontSize: font.body,
+            lineHeight: 22,
+          }}
+        >
+          {message}
         </Text>
-        {message ? (
-          <Text
-            style={{ color: err ? colors.danger : colors.textMuted, fontSize: font.body, lineHeight: 22 }}
-          >
-            {message}
-          </Text>
-        ) : null}
-        {action}
-      </View>
-    </Card>
+      ) : null}
+      {action ? <View style={{ marginTop: space.xs }}>{action}</View> : null}
+    </View>
   );
 }
