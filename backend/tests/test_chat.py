@@ -101,3 +101,14 @@ def test_missing_fields_no_incluye_lo_que_ya_sabemos():
     assert "sector" not in missing and "city" not in missing and "competitors" not in missing
     assert "what they are raising" not in missing
     assert "stage" in missing and "what the startup does" in missing
+
+
+def test_executor_accepts_entity_list_result(monkeypatch):
+    import asyncio
+    from cala_core import executor
+    async def fake_answer(text, **kw):
+        return {"intent": {"entities": [{"name": "Mews"}], "attribute": "funding"}, "entity_ids": ["e1"],
+                "result": [{"properties": {"total_funding": {"value": "300M", "sources": [{"name": "Cala", "url": "https://example.test"}]}}}]}
+    monkeypatch.setattr(executor, "answer", fake_answer)
+    block = asyncio.run(executor.execute("¿Cuánto levantó Mews?"))
+    assert block["type"] == "cala_table" and block["rows"][0][:2] == ["total_funding", "300M"]

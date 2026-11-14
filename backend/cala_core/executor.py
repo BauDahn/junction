@@ -89,6 +89,14 @@ def _table_from_entity(data, call):
 async def execute(text, *, cala=None, llm=None, cache_dir=None):
     result = await answer(text, llm=llm, client=cala, cache_dir=cache_dir)
     data = result.get("result") or {}
+    if isinstance(data, list):
+        # Camino de entidades del canonizador: lista de retrieve/search, no filas de knowledge_query.
+        ids = ",".join(result.get("entity_ids") or []) or text
+        table = _table_from_entity(data, _call("entity", f"retrieve:{ids}"))
+        if table:
+            table["title"] = _title({"text": text}, result.get("intent") or {})
+            return _normalize_block_sources(table)
+        data = {}
     query = data.get("query", text)
     tried = [_call("knowledge_query", query)]
     rows = data.get("rows") or []
