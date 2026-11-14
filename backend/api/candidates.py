@@ -1,64 +1,213 @@
 """Construcción rápida del feed sobre datos locales."""
 import time
-from .affinity import score_candidate, rank, parse_amount
+from .affinity import parse_amount, rank, score_candidate
+from .enrich import rounds_for
 
-_BFS={}
-def _uniq(vals):return list(dict.fromkeys(str(v).strip() for v in vals if v is not None and str(v).strip()))
-def normalize_profile(p,mode,seeds):
-    p=p or {}; interests=p.get('interests') or {}; raising=p.get('raising') or {}; sec=interests.get('sectors') or []
-    understood=p.get('what_we_understood') or {}; focus=understood.get('sector_focus')
-    if (sec==['other'] or not sec) and focus: sec=[focus]
-    sector=_uniq(([p.get('sector')] if p.get('sector') else [])+sec)
-    loc=_uniq(([p.get('location')] if p.get('location') else [])+(interests.get('regions') or []))
-    if mode=='raising':
-        stages=_uniq([raising.get('round') or p.get('stage')]); ticket=p.get('ticket_range')
-        if isinstance(ticket,dict) and (ticket.get('min') is not None or ticket.get('max') is not None): t={'min':ticket.get('min'),'max':ticket.get('max')}
+_BFS = {}
+
+
+def _uniq(values):
+    result = []
+    seen = set()
+    for value in values:
+        if value is None or not str(value).strip():
+            continue
+        text = str(value).strip()
+        key = text.casefold()
+        if key not in seen:
+            seen.add(key)
+            result.append(text)
+    return result
+
+
+def normalize_profile(profile, mode, seeds):
+    profile = profile or {}
+    interests = profile.get("interests") or {}
+    raising = profile.get("raising") or {}
+    sectors = interests.get("sectors") or []
+    understood = profile.get("what_we_understood") or {}
+    if (sectors == ["other"] or not sectors) and understood.get("sector_focus"):
+        sectors = [understood["sector_focus"]]
+    profile_sector = profile.get("sector")
+    if profile_sector and str(profile_sector).casefold() == "other" and understood.get("sector_focus"):
+        profile_sector = None
+    sectors = _uniq(([profile_sector] if profile_sector else []) + sectors)
+    regions = _uniq(([profile.get("location")] if profile.get("location") else [])
+                    + (interests.get("regions") or []))
+    if mode == "raising":
+        stages = _uniq([raising.get("round") or profile.get("stage")])
+        ticket_range = profile.get("ticket_range")
+        if isinstance(ticket_range, dict) and any(ticket_range.get(k) is not None for k in ("min", "max")):
+            ticket = {"min": ticket_range.get("min"), "max": ticket_range.get("max")}
         else:
-            amount=parse_amount(raising.get('amount')); t={'min':amount,'max':amount} if amount is not None else None
+            amount = parse_amount(raising.get("amount"))
+            ticket = {"min": amount, "max": amount} if amount is not None else None
     else:
-        stages=_uniq((interests.get('stages') or [])+([p.get('stage')] if p.get('stage') else [])); t=None
-    return {'sectors':sector,'stage':stages[0] if stages else None,'stages':stages,'regions':loc,'ticket':t,'seeds':list(seeds or [])}
-def seed_names(p):
-    i=(p or {}).get('interests') or {}; f=i.get('follows') or {}
-    return _uniq(([p.get('startup_name')] if p.get('startup_name') else [])+(p.get('competitors') or [])+(f.get('companies') or [])+(f.get('investors') or []))
-def _bfs(session,seed_ids,store):
-    key=(session,tuple(sorted(seed_ids))); now=time.monotonic(); cached=_BFS.get(key)
-    if cached and now-cached[0]<30:return cached[1]
-    dist={i:(0,[]) for i in seed_ids}; frontier=list(seed_ids)
-    for depth in range(1,4):
-        batch=store.neighbors(frontier)
-        nxt=[]
-        for i in frontier:
-            for edge,node in batch.get(str(i),[]):
-                sources=edge.get('sources') or []
-                if not sources:continue
-                j=str(node.get('id'))
-                if j not in dist:dist[j]=(depth,sources);nxt.append(j)
-        frontier=nxt
-        if not frontier:break
-    _BFS[key]=(now,dist);return dist
-def build_feed(session_id,profile,mode,catalog,store,today=None):
-    seeds=store.view_seeds(session_id) or [store.resolve(n) for n in seed_names(profile)]; seeds=[str(s) for s in seeds if s]
-    dist=_bfs(session_id,seeds,store) if seeds else {}
-    kind='investor' if mode=='raising' else 'startup'; features=catalog.list_features(kind); seen=set(); candidates=[]
-    for f in features:
-        if f['id'] in seeds:continue
-        seen.add(f['id']); d=dist.get(f['id']); candidates.append({'id':f['id'],'name':f['name'],'type':kind,'rounds':f.get('rounds') or _enriched.get(f['id'],[]),'attrs':{'industries':f.get('sectors',[]),'hq':f.get('hq'),'country':f.get('country'),'ai_tagged':f.get('ai_tagged'),'sources':f.get('sources',[])},'features':{'stages':f.get('stages',[]),'amount':f.get('amount',{}),'activity':f.get('activity',{}),'sources':f.get('sources',[])},'distance':d[0] if d else None,'distance_sources':d[1] if d else []})
-    for ident,(distance,sources) in dist.items():
-        if ident in seen or ident in seeds:continue
-        node=store.get_node(ident)
-        if not node:continue
-        edges=store.edges_of(ident); outgoing=any(e.get('rel')=='INVESTED_IN' and str(e.get('src'))==ident and e.get('sources') for e in edges); incoming=any(e.get('rel')=='INVESTED_IN' and str(e.get('dst'))==ident and e.get('sources') for e in edges)
-        if not (outgoing if kind=='investor' else incoming):continue
-        props=node.get('props') or {}; ns=props.get('sources') or node.get('sources') or []; attrs={'industries':props.get('industries',[]) if ns else [],'hq':props.get('hq') if ns else None,'country':props.get('country') if ns else None,'sources':ns}
-        candidates.append({'id':ident,'name':node.get('name'),'type':kind,'rounds':_enriched.get(ident,[]),'attrs':attrs,'distance':distance,'distance_sources':sources})
-    p=normalize_profile(profile,mode,seeds); results=[]
-    for c in candidates:results.append(score_candidate(p,c,today=today)|{'_candidate':c})
-    ordered=rank(results)
-    status=catalog.status(); notes=[]
-    if len(features)==0 or status and status.get('done',0)<status.get('total',0):notes.append(f"Catalog is still loading: {status.get('done',0)} of {status.get('total',0)} profiled." if status else "Catalog is still loading.")
-    if not any([p['sectors'],p['stage'],p['regions'],p['ticket']]):notes.append('Add your sector, stage and region to get better matches.')
-    if not seeds:notes.append('Your company is not in the graph yet: matches use your profile only.')
-    return {'results':ordered,'note':' '.join(notes) or None}
-_enriched={}
-def set_enriched(ident,rounds):_enriched[ident]=rounds
+        stages = _uniq((interests.get("stages") or [])
+                       + ([profile.get("stage")] if profile.get("stage") else []))
+        ticket = None
+    return {"sectors": sectors, "stage": stages[0] if stages else None, "stages": stages,
+            "regions": regions, "ticket": ticket, "seeds": list(seeds or [])}
+
+
+def seed_names(profile):
+    profile = profile or {}
+    interests = profile.get("interests") or {}
+    follows = interests.get("follows") or {}
+    names = ([profile.get("startup_name")] if profile.get("startup_name") else [])
+    return _uniq(names + (profile.get("competitors") or [])
+                 + (follows.get("companies") or []) + (follows.get("investors") or []))
+
+
+def _seeds(session_id, profile, store):
+    seeds = store.view_seeds(session_id)
+    if not seeds:
+        seeds = [store.resolve(name) for name in seed_names(profile)]
+    return list(dict.fromkeys(str(seed) for seed in seeds if seed))
+
+
+def bfs_for_user(session_id, profile, store):
+    seeds = _seeds(session_id, profile, store)
+    key = (str(session_id), tuple(sorted(seeds)))
+    now = time.monotonic()
+    cached = _BFS.get(key)
+    if cached and now - cached[0] < 30:
+        return seeds, cached[1]
+    distance = {seed: (0, []) for seed in seeds}
+    nodes = {}
+    edges = {}
+    frontier = list(seeds)
+    for depth in range(1, 4):
+        batch = store.neighbors(frontier)
+        next_frontier = []
+        for ident in frontier:
+            for edge, node in batch.get(str(ident), []):
+                node_id = str(node.get("id"))
+                nodes[node_id] = node
+                edges[str(edge.get("id") or repr(sorted(edge.items()))) ] = edge
+                sources = edge.get("sources") or []
+                if not sources or node_id in distance:
+                    continue
+                distance[node_id] = (depth, sources)
+                next_frontier.append(node_id)
+        frontier = list(dict.fromkeys(next_frontier))
+        if not frontier:
+            break
+    data = {"distance": distance, "nodes": nodes, "edges": list(edges.values())}
+    _BFS[key] = (now, data)
+    return seeds, data
+
+
+def _graph_candidate(ident, kind, graph_data):
+    node = graph_data["nodes"].get(str(ident))
+    if not node:
+        return None
+    related = [edge for edge in graph_data["edges"]
+               if (str(edge.get("src")) == str(ident) or str(edge.get("dst")) == str(ident))
+               and edge.get("rel") == "INVESTED_IN" and edge.get("sources")]
+    qualifies = any(str(edge.get("src")) == str(ident) for edge in related) if kind == "investor" else any(
+        str(edge.get("dst")) == str(ident) for edge in related)
+    if not qualifies:
+        return None
+    props = node.get("props") or {}
+    sources = props.get("sources") or node.get("sources") or []
+    return {"id": str(ident), "name": node.get("name"), "type": kind, "rounds": rounds_for(ident),
+            "attrs": {"industries": props.get("industries", []) if sources else [],
+                      "hq": props.get("hq") if sources else None,
+                      "country": props.get("country") if sources else None, "sources": sources}}
+
+
+def candidate_for_entity(ident, session_id, profile, mode, catalog, store):
+    features = catalog.get_features(ident)
+    node = store.get_node(ident)
+    if not features and not node:
+        return None
+    seeds, graph_data = bfs_for_user(session_id, profile, store)
+    distance = graph_data["distance"].get(str(ident))
+    kinds = features.get("kinds", []) if features else []
+    if len(kinds) == 1:
+        kind = kinds[0]
+    elif len(kinds) > 1:
+        kind = "investor" if mode == "raising" else "startup"
+    else:
+        kind = "investor" if mode == "raising" else "startup"
+    candidate = _feature_candidate(features, kind, graph_data, ident) if features else None
+    if candidate is None and node:
+        edges = store.neighbors([ident]).get(str(ident), [])
+        local_data = {"nodes": {str(ident): node}, "edges": [edge for edge, _ in edges]}
+        candidate = _graph_candidate(ident, kind, local_data)
+        if candidate is None:
+            props = node.get("props") or {}
+            sources = props.get("sources") or node.get("sources") or []
+            candidate = {"id": str(ident), "name": node.get("name"), "type": kind,
+                         "rounds": rounds_for(ident),
+                         "attrs": {"industries": props.get("industries", []) if sources else [],
+                                   "hq": props.get("hq") if sources else None,
+                                   "country": props.get("country") if sources else None, "sources": sources}}
+    if candidate is None:
+        return None
+    candidate["distance"] = distance[0] if distance else None
+    candidate["distance_sources"] = distance[1] if distance else []
+    candidate["features"] = features or {}
+    return score_candidate(normalize_profile(profile, mode, seeds), candidate) | {
+        "_candidate": candidate, "_features": features or {}}
+
+
+def _feature_candidate(features, kind, graph_data, ident):
+    if kind not in features.get("kinds", []):
+        return None
+    distance = graph_data["distance"].get(str(ident))
+    return {"id": features["id"], "name": features["name"], "type": kind,
+            "rounds": features.get("rounds") or rounds_for(ident),
+            "attrs": {"industries": features.get("sectors", []), "hq": features.get("hq"),
+                      "country": features.get("country"), "ai_tagged": features.get("ai_tagged"),
+                      "sources": features.get("sources", [])},
+            "features": {"stages": features.get("stages", []), "amount": features.get("amount", {}),
+                         "activity": features.get("activity", {}), "sources": features.get("sources", [])},
+            "distance": distance[0] if distance else None,
+            "distance_sources": distance[1] if distance else [], "features_record": features}
+
+
+def build_feed(session_id, profile, mode, catalog, store, today=None):
+    seeds, graph_data = bfs_for_user(session_id, profile, store)
+    kind = "investor" if mode == "raising" else "startup"
+    features = catalog.list_features(kind)
+    seen = set()
+    candidates = []
+    for feature in features:
+        ident = feature["id"]
+        if ident in seeds:
+            continue
+        seen.add(ident)
+        candidate = _feature_candidate(feature, kind, graph_data, ident)
+        if candidate is None:
+            continue
+        candidates.append(candidate)
+    for ident in graph_data["distance"]:
+        if ident in seen or ident in seeds:
+            continue
+        candidate = _graph_candidate(ident, kind, graph_data)
+        if candidate:
+            distance, sources = graph_data["distance"][ident]
+            candidate["distance"] = distance
+            candidate["distance_sources"] = sources
+            candidates.append(candidate)
+    normalized = normalize_profile(profile, mode, seeds)
+    results = []
+    for candidate in candidates:
+        result = score_candidate(normalized, candidate, today=today)
+        result["_candidate"] = candidate
+        result["_features"] = candidate.get("features_record", {})
+        results.append(result)
+    ordered = rank(results)
+    status = catalog.status()
+    notes = []
+    if not features or status and status.get("done", 0) < status.get("total", 0):
+        note = (f"Catalog is still loading: {status.get('done', 0)} of {status.get('total', 0)} profiled."
+                if status else "Catalog is still loading.")
+        notes.append(note)
+    if not any((normalized["sectors"], normalized["stage"], normalized["regions"], normalized["ticket"])):
+        notes.append("Add your sector, stage and region to get better matches.")
+    if not seeds:
+        notes.append("Your company is not in the graph yet: matches use your profile only.")
+    return {"results": ordered, "note": " ".join(notes) or None}

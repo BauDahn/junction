@@ -56,11 +56,14 @@ def _round_name(round_): return round_.get("round_type")
 def _year(value):
     m = re.search(r"(?:19|20)\d{2}", str(value)) if value is not None else None
     return int(m.group()) if m else None
-def _fmt(n):
+def format_amount(n):
     if n >= 1e9: return f"{n/1e9:g}B"
     if n >= 1e6: return f"{n/1e6:g}M"
     if n >= 1e3: return f"{n/1e3:g}K"
     return f"{n:g}"
+
+
+_fmt = format_amount
 
 def score_candidate(profile, candidate, *, today=None, weights=WEIGHTS):
     """Calcula puntaje y señales con datos trazables."""

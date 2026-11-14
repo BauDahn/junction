@@ -24,3 +24,66 @@ def test_valkey_reads_features_in_batches_not_gets():
     remote=Remote();cat=ValkeyCatalog(remote,refresh_s=30)
     assert len(cat.list_features('investor'))==501
     assert remote.client.pipes==2 and remote.client.gets==['cat:v1:status']
+
+
+def test_valkey_catalog_refresh_uses_environment_interval(monkeypatch):
+    monkeypatch.setenv("CATALOG_REFRESH_S", "45")
+    class Pipe:
+        def mget(self, keys):
+            self.keys = keys
+
+        def execute(self):
+            return [json.dumps({"id": "fund", "name": "Fund", "kinds": ["investor"]})]
+
+    class Client:
+        def __init__(self):
+            self.loads = 0
+
+        def scan_iter(self, **kwargs):
+            self.loads += 1
+            return ["cat:v1:feat:fund"]
+
+        def pipeline(self):
+            return Pipe()
+
+        def get(self, key):
+            return '{"done":1,"total":1}'
+
+    class Remote:
+        def __init__(self):
+            self.client = Client()
+
+        def _run(self, operation):
+            return True, operation(self.client)
+
+    remote = Remote()
+    catalog = ValkeyCatalog(remote)
+    assert catalog.list_features("investor")[0]["id"] == "fund"
+    catalog.list_features("investor")
+    assert catalog.refresh_s == 45
+    assert remote.client.loads == 1
+
+
+def test_valkey_catalog_failure_is_tolerated():
+    class Remote:
+        def _run(self, operation):
+            return False, None
+
+    catalog = ValkeyCatalog(Remote())
+    assert catalog.list_features("investor") == []
+    assert catalog.status() == {}
+
+
+def test_memory_graph_neighbors_get_nodes_and_distance():
+    from api.graph_port import MemoryGraph
+    graph = MemoryGraph()
+    graph.add_node({"id": "a", "name": "A", "aliases": ["Alpha"], "props": {}})
+    graph.add_node({"id": "b", "name": "B", "props": {}})
+    graph.add_node({"id": "c", "name": "C", "props": {}})
+    graph.add_edge({"id": "ab", "src": "a", "dst": "b", "rel": "INVESTED_IN", "sources": []})
+    graph.add_edge({"id": "bc", "src": "b", "dst": "c", "rel": "INVESTED_IN", "sources": []})
+    assert graph.neighbors("a")[0][1]["id"] == "b"
+    assert list(graph.neighbors(["a", "missing"])) == ["a", "missing"]
+    assert graph.get_nodes(["a", "missing"])["a"]["name"] == "A"
+    assert graph.distance(["a"], "c") == 2
+    assert graph.resolve("ALPHA") == "a"

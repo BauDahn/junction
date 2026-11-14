@@ -1,18 +1,130 @@
+import pytest
 from fastapi.testclient import TestClient
 import app as backend_app
-from api.catalog_port import MemoryCatalog,get_catalog
-from api.graph_port import MemoryGraph,get_graph
+from api import enrich
+from api.catalog_port import MemoryCatalog, get_catalog
+from api.graph_port import MemoryGraph, get_graph
 from api.routes import get_cala
 from chat import store
 
-def test_entity_not_found_and_mode_save(tmp_path,monkeypatch):
-    monkeypatch.setenv('CHAT_DB_PATH',str(tmp_path/'chat.db'))
-    backend_app.app.dependency_overrides[get_catalog]=lambda:MemoryCatalog()
-    backend_app.app.dependency_overrides[get_graph]=lambda:MemoryGraph();backend_app.app.dependency_overrides[get_cala]=lambda:None
-    with TestClient(backend_app.app) as c:
-        sid=c.post('/api/sessions').json()['session_id']
-        assert c.get('/api/entities/nope').status_code==404
-        assert c.post(f'/api/sessions/{sid}/mode',json={'mode':'investing'}).json()=={'mode':'investing'}
-        assert store.get_mode(sid)=='investing'
-        assert c.get('/api/feed',params={'session_id':sid}).json()['mode']=='investing'
+SOURCE = {"name": "Cala", "url": "https://cala.test"}
+
+
+@pytest.fixture
+def client(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHAT_DB_PATH", str(tmp_path / "chat.db"))
+    enrich.reset()
+    backend_app.app.dependency_overrides[get_catalog] = lambda: MemoryCatalog()
+    backend_app.app.dependency_overrides[get_graph] = lambda: MemoryGraph()
+    backend_app.app.dependency_overrides[get_cala] = lambda: None
+    with TestClient(backend_app.app) as test_client:
+        yield test_client
+    backend_app.app.dependency_overrides.clear()
+    enrich.reset()
+
+
+def create_session(test_client, profile=None):
+    session_id = test_client.post("/api/sessions").json()["session_id"]
+    if profile is not None:
+        store.save_profile(session_id, {"updated_at": "now", **profile})
+    return session_id
+
+
+def test_detail_contract_sources_and_score_matches_feed(client):
+    feature = {"id": "fund", "name": "Fund", "kinds": ["investor"], "description": "Fintech fund",
+               "sectors": ["Fintech"], "stages": ["Seed"], "country": "Finland",
+               "amount": {"min": 1_000_000, "max": 5_000_000}, "activity": {"rounds_24m": 2, "led_24m": 1},
+               "rounds": [{"company": "Startup A", "round_type": "Seed", "funding_amount": "2M",
+                            "year": 2026, "sector": "Fintech", "location": "Finland",
+                            "is_lead": True, "sources": [SOURCE]}], "sources": [SOURCE]}
+    backend_app.app.dependency_overrides[get_catalog] = lambda: MemoryCatalog([feature])
+    session_id = create_session(client, {"sector": "Fintech", "stage": "Seed", "location": "Finland",
+                                         "raising": {"amount": "2M", "round": "Seed"}})
+    card = client.get("/api/feed", params={"session_id": session_id}).json()["items"][0]
+    detail = client.get("/api/entities/fund", params={"session_id": session_id}).json()
+    assert detail["score"] == card["score"]
+    assert detail["confidence"] == card["confidence"]
+    assert set(detail) == {"id", "type", "name", "description", "score", "confidence", "why_match", "facts",
+                           "rounds", "portfolio", "people", "loaded_at"}
+    assert all(fact["sources"] for fact in detail["facts"])
+    assert all(round_data["sources"] for round_data in detail["rounds"])
+    assert all(signal["sources"] for signal in detail["why_match"])
+    size = next(fact["value"] for fact in detail["facts"] if fact["label"] == "Typical round size")
+    assert size == "1M–5M"
+
+
+def test_detail_without_session_omits_score_fields(client):
+    feature = {"id": "fund", "name": "Fund", "kinds": ["investor"], "sources": [SOURCE]}
+    backend_app.app.dependency_overrides[get_catalog] = lambda: MemoryCatalog([feature])
+    detail = client.get("/api/entities/fund").json()
+    assert "score" not in detail and "confidence" not in detail
+    assert detail["why_match"] == []
+
+
+def test_detail_features_without_sources_are_not_shown(client):
+    feature = {"id": "fund", "name": "Fund", "kinds": ["investor"], "description": "Unverified",
+               "sectors": ["Fintech"], "sources": []}
+    backend_app.app.dependency_overrides[get_catalog] = lambda: MemoryCatalog([feature])
+    detail = client.get("/api/entities/fund").json()
+    assert "description" not in detail
+    assert detail["facts"] == []
+
+
+def test_graph_edges_without_sources_are_hidden_and_people_have_roles(client):
+    graph = MemoryGraph()
+    graph.add_node({"id": "company", "type": "Company", "name": "Company", "props": {}})
+    graph.add_node({"id": "person", "type": "Person", "name": "Person", "props": {}})
+    graph.add_node({"id": "portfolio", "type": "Company", "name": "Portfolio", "props": {}})
+    graph.add_edge({"id": "founder", "src": "person", "dst": "company", "rel": "FOUNDED",
+                    "valid_since": "2020", "sources": [SOURCE]})
+    graph.add_edge({"id": "uncited-person", "src": "person", "dst": "company", "rel": "WORKS_AT", "sources": []})
+    graph.add_edge({"id": "portfolio-edge", "src": "company", "dst": "portfolio", "rel": "INVESTED_IN",
+                    "sources": [SOURCE]})
+    graph.add_edge({"id": "uncited-portfolio", "src": "company", "dst": "portfolio", "rel": "INVESTED_IN",
+                    "sources": []})
+    backend_app.app.dependency_overrides[get_graph] = lambda: graph
+    detail = client.get("/api/entities/company").json()
+    assert detail["people"] == [{"id": "person", "name": "Person", "role": "Founder", "since": "2020"}]
+    assert detail["portfolio"] == [{"id": "portfolio", "name": "Portfolio"}]
+
+
+def test_startup_rounds_group_by_event_date_and_omit_empty_date(client):
+    graph = MemoryGraph()
+    graph.add_node({"id": "startup", "type": "Company", "name": "Startup", "props": {}})
+    graph.add_node({"id": "fund-a", "type": "Company", "name": "Fund A", "props": {}})
+    graph.add_node({"id": "fund-b", "type": "Company", "name": "Fund B", "props": {}})
+    graph.add_edge({"id": "round-a", "src": "fund-a", "dst": "startup", "rel": "INVESTED_IN",
+                    "event_date": "2025", "is_lead": True, "sources": [SOURCE]})
+    graph.add_edge({"id": "round-b", "src": "fund-b", "dst": "startup", "rel": "INVESTED_IN",
+                    "event_date": "2025", "sources": [SOURCE]})
+    graph.add_edge({"id": "round-c", "src": "fund-b", "dst": "startup", "rel": "INVESTED_IN", "sources": [SOURCE]})
+    backend_app.app.dependency_overrides[get_graph] = lambda: graph
+    detail = client.get("/api/entities/startup").json()
+    dated = next(row for row in detail["rounds"] if row.get("date") == "2025")
+    undated = next(row for row in detail["rounds"] if "date" not in row)
+    assert dated["investors"] == ["Fund A", "Fund B"]
+    assert dated["leads"] == ["Fund A"]
+    assert all(row["sources"] for row in detail["rounds"])
+    assert "date" not in undated
+
+
+def test_detail_not_found(client):
+    assert client.get("/api/entities/missing").status_code == 404
+
+
+def test_stats_catalog_counts_status_and_optional_cala(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHAT_DB_PATH", str(tmp_path / "stats.db"))
+    catalog = MemoryCatalog([{"id": "both", "name": "Both", "kinds": ["investor", "startup"]}],
+                            {"done": 2, "total": 8})
+    class Cala:
+        stats = {"calls": 3}
+
+    backend_app.app.dependency_overrides[get_catalog] = lambda: catalog
+    backend_app.app.dependency_overrides[get_cala] = Cala
+    with TestClient(backend_app.app) as test_client:
+        data = test_client.get("/api/stats").json()
+        assert data == {"catalog": {"investors": 1, "startups": 1, "total": 1,
+                                    "status": {"done": 2, "total": 8}}, "cala": {"calls": 3}}
+        backend_app.app.dependency_overrides[get_cala] = lambda: None
+        assert "cala" not in test_client.get("/api/stats").json()
     backend_app.app.dependency_overrides.clear()

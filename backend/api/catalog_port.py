@@ -29,6 +29,7 @@ def normalize_features(raw):
         except (TypeError,ValueError): return None
     activity=raw.get('activity') if isinstance(raw.get('activity'),dict) else {}
     rounds=raw.get('rounds') if isinstance(raw.get('rounds'),list) else []
+    rounds=[round_data for round_data in rounds if isinstance(round_data,dict)]
     return {'id':str(ident),'name':str(name),'kinds':kinds,'description':raw.get('description') if isinstance(raw.get('description'),str) else '', 'sectors':sectors,'stages':stages,'ai_tagged':raw.get('ai_tagged',False),'country':raw.get('country'),'hq':raw.get('hq') or raw.get('region'),'amount':{'min':num(lo),'max':num(hi)},'activity':{'rounds_24m':num(activity.get('rounds_24m')),'led_24m':num(activity.get('led_24m'))},'rounds':rounds,'sources':_list_sources(raw.get('sources')),'loaded_at':raw.get('loaded_at')}
 
 def _list_sources(v): return [x for x in v if isinstance(x,dict)] if isinstance(v,list) else []
@@ -49,7 +50,16 @@ class MemoryCatalog:
     def status(self): return dict(self._status)
 class ValkeyCatalog(MemoryCatalog):
     def __init__(self,remote=None,refresh_s=None):
-        super().__init__(); self.remote=remote; self.refresh_s=float(refresh_s if refresh_s is not None else os.getenv('CATALOG_REFRESH_S','30')); self._stamp=0.; self._lock=threading.Lock(); self._refreshing=False
+        super().__init__()
+        self.remote = remote
+        try:
+            value = refresh_s if refresh_s is not None else os.getenv("CATALOG_REFRESH_S", "30")
+            self.refresh_s = max(0.0, float(value))
+        except (TypeError, ValueError):
+            self.refresh_s = 30.0
+        self._stamp = 0.0
+        self._lock = threading.Lock()
+        self._refreshing = False
     def _load(self):
         if not self.remote:return
         def read(c):
