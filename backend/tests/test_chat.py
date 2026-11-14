@@ -60,3 +60,13 @@ def test_json_invalido_da_400(client):
         headers={"Content-Type": "application/json"},
     )
     assert response.status_code == 400
+
+
+def test_missing_fields_no_incluye_lo_que_ya_sabemos():
+    from chat.engine import missing_fields
+
+    profile = {"sector": "hoteltech", "location": "Barcelona", "competitors": ["Mews"], "raising": {"round": "seed"}}
+    missing = missing_fields(profile)
+    assert "sector" not in missing and "city" not in missing and "competitors" not in missing
+    assert "what they are raising" not in missing
+    assert "stage" in missing and "what the startup does" in missing
