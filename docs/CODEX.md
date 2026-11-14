@@ -10,11 +10,13 @@
 | Of those, follow-up corrections after a real test (`seguir`) | **9** |
 | Codex time on that machine | **53 min** (14 Nov, 02:20 to 16:16) |
 | Tokens on that machine | **14.4 M input** (**95% from cache**), **184 k output**, 28 k reasoning |
-| Gabriel's machine | **4 tasks, 12 min, 5.2 M input** (96% cached), **115 k output** |
-| Code in `main` | about **7,500 lines** of Python and TypeScript (app 2,700, backend 2,800, canonizer 2,000) |
-| Tests | **104** test functions; the suites run green (61 backend, 43 canonizer at the last check) |
+| Gabriel's machine (`gabriel`) | **4 tasks, 12 min, 5.2 M input** (96% cached), **115 k output** |
+| Fabricio's machine (`fabricio`) | **30 tasks, 107 min, 34.9 M input** (96% cached), **371 k output** |
+| **Team total (three machines)** | **53 tasks, about 172 min of Codex time, 54.5 M input tokens, 670 k output tokens** |
+| Code in `main` | about **7,500 lines** of Python and TypeScript at the time of the first count, and growing (app, backend, canonizer, catalog, graph, feed API) |
+| Tests | **206 passing** on the combined main (backend) plus the canonizer suite |
 
-Fabricio's and Adrian's logs are not in these totals yet (see section 5). The real figure is higher.
+Adrian's machine is not in these totals (it works with Antigravity). The real figure is slightly higher.
 
 ## 1. How we use Codex
 
@@ -90,8 +92,8 @@ Each correction was a short task with the failing input attached. The nine follo
 ## 5. Other machines
 
 - **`gabriel`:** 4 tasks, 12 min, 5,177,047 input tokens (96% cached), 115,061 output, model `gpt-6-luna`. They built the three n8n workflows (#47), validated with `n8n-mcp`, and the context module (#66).
-- **`fabricio`:** in progress. Tasks seen on 14 Nov: Cala client optimizer, Gemini audio, feed API (parts 1 of 2), journal and chat integration, design system, router fixes, Valkey connection. *Pending: export of the full log.*
-- **`adrian`:** *pending.*
+- **`fabricio`:** 30 tasks, 107 min, 34.9 M input tokens (96% cached), 371 k output. Cala client optimizer and shared rate limit, Gemini audio, feed and detail API with the affinity score, shared graph store on Valkey, journal and chat integration, design system, router fixes, Valkey connection.
+- **`adrian`:** works with Antigravity; no Codex log.
 
 ## 6. How to regenerate
 
