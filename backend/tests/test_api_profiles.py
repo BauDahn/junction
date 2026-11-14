@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 from api.profiles import investor_query, rounds_from_result, investor_rounds
 
@@ -19,13 +20,11 @@ class Cala:
     def __init__(self,result): self.result=result; self.calls=[]
     async def knowledge_query(self,input): self.calls.append(input); return self.result
 
-@pytest.mark.asyncio
-async def test_one_query_and_entities_mentions():
+def test_one_query_and_entities_mentions():
     cala=Cala({"results":[{"company":"Acme","amount":"$1M"}],"entities":[{"id":"1","name":"Acme Fund","mentions":[{"id":"2","name":"Acme"}]}]})
-    out=await investor_rounds(cala,"Acme Fund")
+    out=asyncio.run(investor_rounds(cala,"Acme Fund"))
     assert len(cala.calls)==1 and out["entities"]=={"acme fund":"1","acme":"2"}
     assert out["rounds"][0]["funding_amount"]=="$1M"
 
-@pytest.mark.asyncio
-async def test_non_list_results_raises():
-    with pytest.raises(TypeError): await investor_rounds(Cala({"results":None}),"Fund")
+def test_non_list_results_raises():
+    with pytest.raises(TypeError): asyncio.run(investor_rounds(Cala({"results":None}),"Fund"))

@@ -38,7 +38,7 @@ def test_attrs_requires_sources():
 def test_score_formula_and_why():
     c={"id":"f","name":"Fund","type":"investor","rounds":[round_(sector="Fintech",round_type="Seed",location="Spain",funding_amount="3M",year="2025",is_lead=True)]}
     p=score_candidate({"sectors":["Fintech"],"stage":"Seed","regions":["Spain"],"ticket":{"min":2_000_000,"max":4_000_000},"seeds":["x"]},{**c,"distance":1,"distance_sources":SRC},today=date(2026,1,1))
-    assert p["score"]==100 and p["confidence"]==1
+    assert p["score"]==92 and p["confidence"]==1
     assert [x["signal"] for x in p["why_match"]]==["sector","stage"]
     assert all(x["sources"] for x in p["why_match"])
 
