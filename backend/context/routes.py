@@ -1,3 +1,4 @@
+import asyncio
 import os
 import tempfile
 import uuid
@@ -11,7 +12,7 @@ from chat.routes import get_transcriber
 from chat.transcribe import hint_from_profile
 from verifier.llm import make_llm
 from verifier.pdf import read_pdf
-from .service import UNDERSTOOD_KEYS, build_context_payload, extract_context, update_profile
+from .service import UNDERSTOOD_KEYS, _items, _parse_ticket_range, build_context_payload, extract_context, understood_from_profile, update_profile
 
 router = APIRouter()
 MAX_PDF = 20 * 1024 * 1024
@@ -64,7 +65,7 @@ async def post_pdf(session_id: str, file: UploadFile = File(...), llm=Depends(ge
     path = Path(name)
     try:
         with os.fdopen(fd, "wb") as stream: stream.write(data)
-        try: pages = read_pdf(path, max_pages=15, width=1024)
+        try: pages = await asyncio.to_thread(read_pdf, path, max_pages=15, width=1024)
         except Exception as exc: raise HTTPException(422, "The PDF could not be opened.") from exc
         text = "\n\n".join(page.get("text", "") for page in pages)
         if not text.strip() and not pages: raise HTTPException(422, "The PDF could not be opened.")
@@ -93,12 +94,13 @@ async def _voice(session_id, request, llm, transcriber):
         except Exception as exc:
             if "no configurada" in str(exc).lower(): raise HTTPException(503, "Transcription is not configured.") from exc
             raise HTTPException(502, "Audio transcription failed.") from exc
-        transcript = str(result.get("text", "")).strip()
-        if not transcript: raise HTTPException(422, "Audio could not be understood.")
+        raw_transcript = str(result.get("transcript") or result.get("text") or "").strip()
+        if not raw_transcript: raise HTTPException(422, "Audio could not be understood.")
+        clean_text = str(result.get("text") or raw_transcript).strip()
         duration = result.get("duration_s", 0)
         if duration and duration > 120: raise HTTPException(413, "Audio must be 2 minutes or shorter.")
-        source = {"id": uuid.uuid4().hex, "kind": "voice", "title": "Voice note", "subtitle": "Voice note analyzed", "duration_s": duration, "transcript": transcript}
-        return await _save(session_id, llm, transcript, source)
+        source = {"id": uuid.uuid4().hex, "kind": "voice", "title": "Voice note", "subtitle": "Voice note analyzed", "duration_s": duration, "transcript": raw_transcript}
+        return await _save(session_id, llm, clean_text, source)
     finally:
         path.unlink(missing_ok=True)
 
@@ -130,7 +132,6 @@ async def update_understood(session_id: str, request: Request):
     if not isinstance(body, dict) or any(k not in UNDERSTOOD_KEYS or not isinstance(v, list) or any(not isinstance(x, str) for x in v) for k, v in body.items()):
         raise HTTPException(400, "Context fields must be lists of strings.")
     profile = _profile(session_id)
-    from .service import understood_from_profile, _items
     understood = understood_from_profile(profile)
     for key, value in body.items(): understood[key] = _items(value)
     profile["what_we_understood"] = understood
@@ -144,14 +145,28 @@ async def update_understood(session_id: str, request: Request):
         if understood["target_round_size"]:
             profile["ticket"] = understood["target_round_size"][0]
             profile.setdefault("raising", {})["amount"] = understood["target_round_size"][0]
+            ticket_range = _parse_ticket_range(understood["target_round_size"][0])
+            if ticket_range:
+                profile["ticket_range"] = ticket_range
+            else:
+                profile.pop("ticket_range", None)
         else:
             profile.pop("ticket", None)
             profile.setdefault("raising", {}).pop("amount", None)
-    profile["interests"] = {"sectors": understood["sector_focus"], "stages": understood["target_stage"], "regions": understood["geography"]}
+            profile.pop("ticket_range", None)
+    existing_follows = (profile.get("interests") or {}).get("follows")
+    interests = {"sectors": understood["sector_focus"], "stages": understood["target_stage"], "regions": understood["geography"]}
+    if isinstance(existing_follows, dict) and any(existing_follows.get(k) for k in ("companies", "investors")):
+        interests["follows"] = {k: list(existing_follows.get(k) or []) for k in ("companies", "investors") if existing_follows.get(k)}
     try:
         from cala_core import _normalize_interests
-        profile["interests"] = _normalize_interests(profile["interests"])
-    except ImportError: pass
+        interests = _normalize_interests(interests)
+    except ImportError:
+        interests = {k: v for k, v in interests.items() if v}
+    if interests:
+        profile["interests"] = interests
+    else:
+        profile.pop("interests", None)
     profile["updated_at"] = store.now_iso()
     store.save_profile(session_id, profile)
     return build_context_payload(session_id, profile)
