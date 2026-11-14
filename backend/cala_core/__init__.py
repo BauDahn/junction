@@ -91,7 +91,7 @@ def _merge_patch(target, patch):
 
 
 async def handle_message(text, profile, llm, cala=None, cache_dir=None):
-    parts = await route(text, profile, llm)
+    parts = await route(text, profile, llm, cache_dir=cache_dir)
     profile_patch = {}
 
     async def process(part):
