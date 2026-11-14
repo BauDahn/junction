@@ -1,16 +1,21 @@
 import os
+import asyncio
 import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from verifier.llm import make_llm
+from verifier.config import settings
+from verifier.cala import CalaClient
 from . import store
 from .engine import handle_text
 from .profile import empty_profile
 from . import transcribe as transcription
+from . import recommend
 
 router = APIRouter()
+_recommendation_tasks = set()
 
 
 class MessageInput(BaseModel):
@@ -23,6 +28,10 @@ def get_llm():
 
 def get_transcriber():
     return transcription.transcribe
+
+
+def get_cala():
+    return CalaClient(settings.cala_api_key, settings.cache_dir)
 
 
 def _session(session_id):
@@ -38,7 +47,7 @@ async def create_session():
     return {"session_id": session_id}
 
 
-async def _process_text(session_id, text, llm, transcript=None):
+async def _process_text(session_id, text, llm, cala, transcript=None):
     try:
         user, reply, profile = await handle_text(session_id, text, llm, transcript=transcript)
     except Exception as exc:
@@ -47,11 +56,19 @@ async def _process_text(session_id, text, llm, transcript=None):
     store.add_message(reply)
     if profile is not None:
         store.save_profile(session_id, profile)
-    return {"message": {k: v for k, v in user.items() if k != "session_id"}, "reply": {k: v for k, v in reply.items() if k != "session_id"}, "profile_updated": profile is not None, "recommendations_status": "idle"}
+        fp = recommend.fingerprint(profile)
+        previous = store.get_recommendations(session_id)
+        if settings.cala_api_key and (profile.get("sector") or profile.get("one_liner")) and (not previous or previous["fingerprint"] != fp or previous["status"] == "error"):
+            store.save_recommendations(session_id, "running", {}, fp, notified=0)
+            task = asyncio.create_task(recommend.run_recommendations(session_id, profile, llm, cala))
+            _recommendation_tasks.add(task)
+            task.add_done_callback(_recommendation_tasks.discard)
+    rec = store.get_recommendations(session_id)
+    return {"message": {k: v for k, v in user.items() if k != "session_id"}, "reply": {k: v for k, v in reply.items() if k != "session_id"}, "profile_updated": profile is not None, "recommendations_status": rec["status"] if rec else "idle"}
 
 
 @router.post("/api/sessions/{session_id}/messages")
-async def post_message(session_id: str, request: Request, llm=Depends(get_llm), transcriber=Depends(get_transcriber)):
+async def post_message(session_id: str, request: Request, llm=Depends(get_llm), transcriber=Depends(get_transcriber), cala=Depends(get_cala)):
     _session(session_id)
     if "multipart/form-data" in request.headers.get("content-type", ""):
         form = await request.form()
@@ -83,7 +100,7 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
                 raise HTTPException(422, "No se entendió el audio.")
             if result.get("duration_s", 0) > 120:
                 raise HTTPException(413, "El audio debe durar 2 minutos o menos.")
-            return await _process_text(session_id, text, llm, transcript=text)
+            return await _process_text(session_id, text, llm, cala, transcript=text)
         finally:
             path.unlink(missing_ok=True)
     try:
@@ -95,7 +112,7 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
         raise HTTPException(400, "Text must not be empty.")
     if len(text) > 4000:
         raise HTTPException(413, "Text must be 4000 characters or fewer.")
-    return await _process_text(session_id, text.strip(), llm)
+    return await _process_text(session_id, text.strip(), llm, cala)
 
 
 @router.get("/api/sessions/{session_id}/messages")
@@ -108,3 +125,12 @@ async def get_messages(session_id: str):
 async def get_session_profile(session_id: str):
     _session(session_id)
     return store.get_profile(session_id) or empty_profile()
+
+
+@router.get("/api/sessions/{session_id}/recommendations")
+async def get_session_recommendations(session_id: str):
+    _session(session_id)
+    rec = store.get_recommendations(session_id)
+    if not rec:
+        return {"status":"idle", "updated_at":None, "investors":[], "competitors":[], "prospects":[]}
+    return {"status":rec["status"], "updated_at":rec["updated_at"], **{key:rec["data"].get(key, []) for key in ("investors","competitors","prospects")}}

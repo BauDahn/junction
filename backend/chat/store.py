@@ -21,6 +21,7 @@ def _connect():
     CREATE TABLE IF NOT EXISTS messages(id TEXT PRIMARY KEY, session_id TEXT NOT NULL, role TEXT NOT NULL, text TEXT NOT NULL, transcript TEXT, sources_json TEXT NOT NULL, cards_json TEXT NOT NULL, created_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS messages_session_created ON messages(session_id, created_at, id);
     CREATE TABLE IF NOT EXISTS profiles(session_id TEXT PRIMARY KEY, json TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS recommendations(session_id TEXT PRIMARY KEY, status TEXT NOT NULL, json TEXT NOT NULL, fingerprint TEXT NOT NULL, updated_at TEXT NOT NULL, notified INTEGER NOT NULL DEFAULT 0);
     """)
     try:
         with conn:  # commit o rollback
@@ -65,3 +66,20 @@ def get_profile(session_id):
 def save_profile(session_id, profile):
     with _connect() as db:
         db.execute("INSERT INTO profiles VALUES (?, ?, ?) ON CONFLICT(session_id) DO UPDATE SET json=excluded.json, updated_at=excluded.updated_at", (session_id, json.dumps(profile, ensure_ascii=False), profile["updated_at"]))
+
+
+def get_recommendations(session_id):
+    with _connect() as db:
+        row = db.execute("SELECT * FROM recommendations WHERE session_id=?", (session_id,)).fetchone()
+    return dict(row) | {"data": json.loads(row["json"])} if row else None
+
+
+def save_recommendations(session_id, status, data, fingerprint, updated_at=None, notified=0):
+    updated_at = updated_at or now_iso()
+    with _connect() as db:
+        db.execute("INSERT INTO recommendations VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(session_id) DO UPDATE SET status=excluded.status, json=excluded.json, fingerprint=excluded.fingerprint, updated_at=excluded.updated_at, notified=excluded.notified", (session_id, status, json.dumps(data, ensure_ascii=False), fingerprint, updated_at, notified))
+
+
+def mark_notified(session_id):
+    with _connect() as db:
+        db.execute("UPDATE recommendations SET notified=1 WHERE session_id=?", (session_id,))
