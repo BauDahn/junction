@@ -1,3 +1,4 @@
+import logging
 import os
 import asyncio
 import tempfile
@@ -16,10 +17,12 @@ from . import recommend
 
 router = APIRouter()
 _recommendation_tasks = set()
+logger = logging.getLogger("uvicorn.error")
 
 
 class MessageInput(BaseModel):
     text: str
+    context: dict | None = None
 
 
 def get_llm():
@@ -47,10 +50,11 @@ async def create_session():
     return {"session_id": session_id}
 
 
-async def _process_text(session_id, text, llm, cala, transcript=None):
+async def _process_text(session_id, text, llm, cala, transcript=None, context=None):
     try:
-        user, reply, profile = await handle_text(session_id, text, llm, transcript=transcript)
+        user, reply, profile = await handle_text(session_id, text, llm, transcript=transcript, cala=cala, context=context)
     except Exception as exc:
+        logger.exception("chat: fallo procesando el mensaje")
         raise HTTPException(502, "El modelo no respondió, intenta de nuevo.") from exc
     store.add_message(user)
     store.add_message(reply)
@@ -94,6 +98,7 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
             except Exception as exc:
                 if "no configurada" in str(exc).lower():
                     raise HTTPException(503, "Transcripción no configurada") from exc
+                logger.exception("chat: fallo transcribiendo %s (%s, %d bytes)", audio.filename, audio.content_type, len(data))
                 raise HTTPException(502, "No se pudo transcribir el audio.") from exc
             text = result.get("text", "").strip()
             if not text:
@@ -112,7 +117,10 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
         raise HTTPException(400, "Text must not be empty.")
     if len(text) > 4000:
         raise HTTPException(413, "Text must be 4000 characters or fewer.")
-    return await _process_text(session_id, text.strip(), llm, cala)
+    context = payload.get("context") if isinstance(payload, dict) else None
+    if context is not None and (not isinstance(context, dict) or ("journal_item_id" in context and not isinstance(context["journal_item_id"], str))):
+        raise HTTPException(400, "Context inválido.")
+    return await _process_text(session_id, text.strip(), llm, cala, context=context)
 
 
 @router.get("/api/sessions/{session_id}/messages")

@@ -20,6 +20,33 @@ def merge(profile, patch):
             raising[key] = value.strip()
     if raising:
         result["raising"] = raising
+    role = patch.get("role")
+    if role in {"founder", "investor", "other"}:
+        result["role"] = role
+    interests = patch.get("interests")
+    if isinstance(interests, dict):
+        try:
+            from cala_core import _normalize_interests
+            interests = _normalize_interests(interests)
+        except ImportError:
+            pass
+        current = result.setdefault("interests", {})
+        for key in ("sectors", "regions", "stages"):
+            values = interests.get(key) or []
+            if values:
+                existing = current.setdefault(key, [])
+                existing.extend(v for v in values if v not in existing)
+        follows = interests.get("follows") or {}
+        if follows:
+            current_follows = current.setdefault("follows", {})
+            for kind in ("companies", "investors"):
+                existing = current_follows.setdefault(kind, [])
+                existing.extend(v for v in follows.get(kind, []) if v not in existing)
+        current = {k: v for k, v in current.items() if v}
+        if current:
+            result["interests"] = current
+        else:
+            result.pop("interests", None)
     competitors = result.setdefault("competitors", [])
     seen = {item.casefold() for item in competitors}
     for item in patch.get("competitors", []) or []:

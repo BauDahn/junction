@@ -23,6 +23,9 @@ def _connect():
     CREATE TABLE IF NOT EXISTS profiles(session_id TEXT PRIMARY KEY, json TEXT NOT NULL, updated_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS recommendations(session_id TEXT PRIMARY KEY, status TEXT NOT NULL, json TEXT NOT NULL, fingerprint TEXT NOT NULL, updated_at TEXT NOT NULL, notified INTEGER NOT NULL DEFAULT 0);
     """)
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(messages)")}
+    if "blocks_json" not in columns:
+        conn.execute("ALTER TABLE messages ADD COLUMN blocks_json TEXT NOT NULL DEFAULT '[]'")
     try:
         with conn:  # commit o rollback
             yield conn
@@ -46,15 +49,15 @@ def session_exists(session_id):
 
 def add_message(message):
     with _connect() as db:
-        db.execute("INSERT INTO messages VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (
+        db.execute("INSERT INTO messages (id, session_id, role, text, transcript, sources_json, cards_json, created_at, blocks_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (
             message["id"], message["session_id"], message["role"], message["text"], message.get("transcript"),
-            json.dumps(message.get("sources", [])), json.dumps(message.get("cards", [])), message["created_at"]))
+            json.dumps(message.get("sources", [])), json.dumps(message.get("cards", [])), message["created_at"], json.dumps(message.get("blocks", []))))
 
 
 def list_messages(session_id):
     with _connect() as db:
         rows = db.execute("SELECT * FROM messages WHERE session_id=? ORDER BY created_at, rowid", (session_id,)).fetchall()
-    return [{"id": r["id"], "role": r["role"], "text": r["text"], "transcript": r["transcript"], "sources": json.loads(r["sources_json"]), "cards": json.loads(r["cards_json"]), "created_at": r["created_at"]} for r in rows]
+    return [{"id": r["id"], "role": r["role"], "text": r["text"], "transcript": r["transcript"], "sources": json.loads(r["sources_json"]), "cards": json.loads(r["cards_json"]), "blocks": json.loads(r["blocks_json"]), "created_at": r["created_at"]} for r in rows]
 
 
 def get_profile(session_id):

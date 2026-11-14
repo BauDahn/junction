@@ -1,6 +1,8 @@
-import json
 import uuid
+from cala_core import handle_message as cala_handle_message
+from verifier.config import settings
 from . import store
+from .focus import focus_table
 from .profile import empty_profile, merge
 
 SCHEMA = {"type": "object", "properties": {"reply": {"type": "string"}, "used_cards": {"type":"array", "items":{"type":"integer"}}, "profile_patch": {"type": "object", "properties": {
@@ -24,25 +26,41 @@ def missing_fields(profile):
     return [name for name, value in checks.items() if not value]
 
 
-async def handle_text(session_id, text, llm, transcript=None):
+async def handle_text(session_id, text, llm, transcript=None, cala=None, context=None):
     profile = store.get_profile(session_id) or empty_profile()
-    history = store.list_messages(session_id)[-10:]
     rec = store.get_recommendations(session_id)
-    cards = []
-    for category in ("investors", "competitors", "prospects"):
-        cards.extend((rec["data"].get(category) or []) if rec and rec["status"] == "ready" else [])
-    compact = [{"index":i,"type":c.get("type"),"title":c.get("title"),"reason":c.get("reason")} for i,c in enumerate(cards)]
     pending_notice = bool(rec and rec["status"] == "ready" and not rec["notified"])
-    user = json.dumps({"current_profile": profile, "recent_messages": history, "new_message": text, "missing_fields": missing_fields(profile), "recommendation_cards":compact, "recommendations_ready":pending_notice}, ensure_ascii=False)
-    result = await llm.complete_json(SYSTEM, user, SCHEMA)
+    # cala_core usa el cliente del canonizador (knowledge_query); el CalaClient del verificador no sirve aquí.
+    core_cala = cala if hasattr(cala, "knowledge_query") else None
+    result = await cala_handle_message(text, profile, llm, cala=core_cala, cache_dir=getattr(settings, "cache_dir", None))
+    blocks = result.get("blocks", [])
+    for block in blocks:
+        if isinstance(block, dict) and block.get("type") == "cala_table":
+            await focus_table(text, block, llm)
     patch = result.get("profile_patch", {})
     updated, changed = merge(profile, patch)
     user_msg = {"id": uuid.uuid4().hex, "session_id": session_id, "role": "user", "text": text, "transcript": transcript, "sources": [], "cards": [], "created_at": store.now_iso()}
-    reply_msg = {"id": uuid.uuid4().hex, "session_id": session_id, "role": "assistant", "text": result["reply"], "transcript": None, "sources": [], "cards": [], "created_at": store.now_iso()}
-    used = result.get("used_cards") or []
-    for idx in used:
-        if isinstance(idx, int) and not isinstance(idx, bool) and 0 <= idx < len(cards):
-            reply_msg["sources"].extend(s for s in cards[idx].get("sources", []) if s not in reply_msg["sources"])
+    reply_sources = []
+    for block in blocks:
+        for source in block.get("sources", []) if isinstance(block, dict) else []:
+            if source not in reply_sources: reply_sources.append(source)
+    if len(blocks) == 1 and blocks[0].get("type") == "text":
+        reply_text = blocks[0].get("text", "")
+    elif (answers := [b["answer"] for b in blocks if b.get("answer")]) and len(answers) == 1:
+        reply_text = answers[0]
+    elif any(b.get("type") == "cala_table" or b.get("type") == "cala_answer" for b in blocks):
+        reply_text = "Esto es lo que tiene Cala."
+    elif any(b.get("type") == "claim_check" for b in blocks):
+        reply_text = "Contrasté tu afirmación con Cala."
+    elif any(b.get("type") == "profile_update" for b in blocks):
+        reply_text = "Actualicé tu perfil."
+    elif any(b.get("type") == "not_found" for b in blocks):
+        reply_text = "Cala no tiene datos sobre esto; abajo lo que se buscó."
+    else:
+        reply_text = "De acuerdo."
+    if pending_notice:
+        reply_text = f"{reply_text} Tus recomendaciones están listas."
+    reply_msg = {"id": uuid.uuid4().hex, "session_id": session_id, "role": "assistant", "text": reply_text, "transcript": None, "sources": reply_sources, "cards": [], "blocks": blocks, "created_at": store.now_iso()}
     if pending_notice:
         selected = []
         for category in ("investors", "competitors", "prospects"):
