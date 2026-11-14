@@ -29,11 +29,21 @@ async def run(args, store=None, cala=None):
         names = list(dict.fromkeys(names + NORDIC_FUNDS))
     resolved = {"cala_calls": 0}
     seed_ids = await resolve_seeds(store, cala, names, stats=resolved)
+    seed_map = {}
+    for name in names:
+        seed_id = store.resolve(name)
+        if seed_id:
+            seed_map[name] = seed_id
+    if not seed_map:
+        result = {"backend": getattr(store, "backend", "memory"), "user": args.user,
+                  "seeds": {}, "error": "no seeds resolved",
+                  "cala_calls": resolved["cala_calls"]}
+        print(json.dumps(result, ensure_ascii=False))
+        return result
     stats = await load_neighborhood(store, cala, seed_ids, user=args.user, depth=args.depth,
                                     quota=args.quota, introspect=getattr(args, "introspect", False))
     # Resolver calls pueden venir en caché; http_calls cuenta solo peticiones salidas.
     stats["cala_calls"] += resolved["cala_calls"]
-    seed_map = {name: store.resolve(name) for name in names if store.resolve(name)}
     result = {"backend": getattr(store, "backend", "memory"), "user": args.user,
               "seeds": seed_map, **stats,
               "http_calls": getattr(cala, "calls", 0), "store": store.stats()}
@@ -59,4 +69,6 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    main()
+    result = main()
+    if result.get("error") == "no seeds resolved":
+        raise SystemExit(1)

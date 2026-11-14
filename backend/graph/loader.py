@@ -86,39 +86,38 @@ async def expand_node(store, cala, node_id, stats, *, introspect=False):
                     for key in ("role", "is_lead", "valid_since", "valid_until", "event_date"):
                         if key in props: edge[key] = props[key]
                     edges.append(edge)
-        store.put_expansion(node, edges, neighbors, rels=EXPAND_KEY, truncated=truncated)
-        canonical = store.canonical_id(anchor_id)
+        canonical = store.put_expansion(node, edges, neighbors, rels=EXPAND_KEY, truncated=truncated)
         if truncated: stats["truncated"].append(canonical)
         stats["nodes"].add(canonical)
         stats["edges"].update(str(edge["id"]) for edge in edges if edge.get("id"))
-        return [n["id"] for _, n in store.neighbors(canonical, rels=REL_WHITELIST)]
+        return canonical
     except Exception as exc:
         stats["errors"].append({"id": str(node_id), "error": str(exc)[:200]})
-        return []
+        return None
 
 
 async def load_neighborhood(store, cala, seed_ids, *, user=None, depth=2, quota=15, priority=None, introspect=False):
     started = time.monotonic()
     stats = {"nodes": set(), "edges": set(), "cala_calls": 0, "skipped_expanded": 0,
              "excluded": Counter(), "truncated": [], "errors": [], "levels": []}
-    seeds = list(dict.fromkeys(store.canonical_id(str(i)) for i in seed_ids))
+    canonical_seeds = store.canonical_ids(seed_ids)
+    seeds = list(dict.fromkeys(canonical_seeds[str(i)] for i in seed_ids))
     reached, visited, frontier = set(seeds), set(seeds), seeds
     for level in range(max(0, depth)):
         current = list(frontier)
         fetched_nodes = store.get_nodes(current)
         for ident in current:
             node = fetched_nodes.get(ident)
-            if not node: continue
-            if node_is_expanded(node, EXPAND_KEY, store.ttl_s):
+            if node and node_is_expanded(node, EXPAND_KEY, store.ttl_s):
                 stats["skipped_expanded"] += 1
             else:
                 await expand_node(store, cala, ident, stats, introspect=introspect)
-        stats["levels"].append(current)
+        stats["levels"].append(len(current))
         rows = store.neighbors(current, rels=REL_WHITELIST)
         candidates = {}
         for ident in current:
             for _, node in rows.get(ident, []):
-                nid = store.canonical_id(node["id"])
+                nid = node["id"]
                 reached.add(nid)
                 if nid not in visited: candidates[nid] = node
         visited.update(candidates)
@@ -129,21 +128,18 @@ async def load_neighborhood(store, cala, seed_ids, *, user=None, depth=2, quota=
         frontier = [ident for ident, _ in sorted(candidates.items(), key=sort_key)[:max(0, quota)]]
         if level + 1 >= depth: break
     # Cuenta aristas y nodos del recorrido desde el store, incluidos los ya existentes.
-    if seeds:
+    if reached:
         all_rows = store.neighbors(list(reached), rels=REL_WHITELIST)
-        for ident, row in all_rows.items():
-            for edge, node in row:
-                other = store.canonical_id(node["id"])
-                if other in reached:
+        for row in all_rows.values():
+            for edge, _ in row:
+                if edge["src"] in reached and edge["dst"] in reached:
                     stats["edges"].add(str(edge["id"]))
-                    stats["nodes"].add(other)
     stats["nodes"].update(reached)
     if user is not None:
         prior = store.view_seeds(user)
         if prior:
             merged_seeds = list(dict.fromkeys(prior + seeds))
-            store.set_view(user, merged_seeds, [])
-            store.add_to_view(user, reached)
+            store.set_view(user, merged_seeds, store.view_nodes(user) | reached)
         else:
             store.set_view(user, seeds, reached)
     return {"nodes": len(stats["nodes"]), "edges": len(stats["edges"]),
