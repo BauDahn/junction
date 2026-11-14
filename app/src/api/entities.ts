@@ -90,6 +90,12 @@ const POINT_NINE_SOURCE: Source = {
   source_rank: 'PRIMARY',
 };
 
+const LIFELINE_SOURCE: Source = {
+  name: 'Lifeline Ventures',
+  url: 'https://lifelineventures.com',
+  source_rank: 'PRIMARY',
+};
+
 const AMENITIZ_SOURCE: Source = {
   name: 'Amenitiz',
   url: 'https://amenitiz.com',
@@ -123,8 +129,8 @@ const MOCK_RECORDS: Record<string, MockSeed> = {
     name: 'Eight Roads Ventures',
     description:
       'Global venture capital firm backing enterprise software, fintech, and healthcare technology companies across Europe, Asia, and North America.',
-    matchScore: 88,
-    matchConfidence: 0.91,
+    matchScore: 92,
+    matchConfidence: 0.9,
     matchSignals: [
       {
         signal: 'sector',
@@ -201,8 +207,8 @@ const MOCK_RECORDS: Record<string, MockSeed> = {
     name: 'Chalfen Ventures',
     description:
       'London-based solo-GP venture firm partnering with software founders across Europe from Seed through Series A.',
-    matchScore: 79,
-    matchConfidence: 0.44,
+    matchScore: 87,
+    matchConfidence: 0.85,
     matchSignals: [
       {
         signal: 'stage',
@@ -260,8 +266,8 @@ const MOCK_RECORDS: Record<string, MockSeed> = {
     name: 'Northzone',
     description:
       'Multi-stage European venture capital firm investing from Seed to Growth out of Stockholm, London, Amsterdam, and New York.',
-    matchScore: 84,
-    matchConfidence: 0.86,
+    matchScore: 81,
+    matchConfidence: 0.82,
     matchSignals: [
       {
         signal: 'region',
@@ -308,8 +314,8 @@ const MOCK_RECORDS: Record<string, MockSeed> = {
     name: 'Point Nine',
     description:
       'Berlin-based early-stage venture fund focused exclusively on B2B SaaS and digital marketplaces.',
-    matchScore: 82,
-    matchConfidence: 0.84,
+    matchScore: 76,
+    matchConfidence: 0.78,
     matchSignals: [
       {
         signal: 'stage',
@@ -354,14 +360,65 @@ const MOCK_RECORDS: Record<string, MockSeed> = {
     loaded_at: '2026-11-14T18:30:00Z',
   },
 
+  'lifeline-ventures': {
+    id: 'lifeline-ventures',
+    type: 'investor',
+    name: 'Lifeline Ventures',
+    description:
+      'Helsinki-based early-stage venture capital firm backing technical founders across climate tech, software, and health from day zero.',
+    matchScore: 64,
+    matchConfidence: 0.42,
+    matchSignals: [
+      {
+        signal: 'region',
+        text: 'Active in the Helsinki pre-seed ecosystem with limited disclosed ticket metadata.',
+        sources: [LIFELINE_SOURCE, CALA_SOURCE],
+      },
+      {
+        signal: 'stage',
+        text: 'Leads Pre-seed and Seed investments in Nordic technical startups (AI-tagged).',
+        sources: [CALA_SOURCE],
+      },
+    ],
+    facts: [
+      {
+        label: 'Sectors (AI-tagged)',
+        value: 'ClimateTech, Software, DeepTech',
+        sources: [CALA_SOURCE],
+      },
+      {
+        label: 'Stages (AI-tagged)',
+        value: 'Pre-seed, Seed',
+        sources: [LIFELINE_SOURCE],
+      },
+      {
+        label: 'Headquarters',
+        value: 'Helsinki, Finland',
+        sources: [LIFELINE_SOURCE],
+      },
+    ],
+    rounds: [
+      {
+        amount: '€1.2M',
+        date: '2025',
+        leads: ['Lifeline Ventures'],
+        investors: ['Lifeline Ventures'],
+        sources: [CALA_SOURCE],
+      },
+    ],
+    portfolio: [{ id: 'nordleaf', name: 'Nordleaf' }],
+    people: [],
+    loaded_at: '2026-11-14T18:30:00Z',
+  },
+
   amenitiz: {
     id: 'amenitiz',
     type: 'startup',
     name: 'Amenitiz',
     description:
       'Barcelona-based all-in-one hospitality management software platform (PMS, channel manager, and direct booking engine) built for independent hotels.',
-    matchScore: 86,
-    matchConfidence: 0.9,
+    matchScore: 91,
+    matchConfidence: 0.92,
     matchSignals: [
       {
         signal: 'sector',
@@ -429,8 +486,8 @@ const MOCK_RECORDS: Record<string, MockSeed> = {
     name: 'Nordleaf',
     description:
       'Energy efficiency analytics and automated building operations software for commercial property owners in the Nordics.',
-    matchScore: 76,
-    matchConfidence: 0.45,
+    matchScore: 85,
+    matchConfidence: 0.8,
     matchSignals: [
       {
         signal: 'sector',
@@ -464,11 +521,92 @@ const MOCK_RECORDS: Record<string, MockSeed> = {
       {
         amount: '€750K',
         date: '2025',
-        leads: ['Arctic Seed'],
-        investors: ['Arctic Seed'],
+        leads: ['Lifeline Ventures'],
+        investors: ['Lifeline Ventures'],
         sources: [CALA_SOURCE],
       },
     ],
+    portfolio: [],
+    people: [],
+    loaded_at: '2026-11-14T18:30:00Z',
+  },
+
+  'solita-grid': {
+    id: 'solita-grid',
+    type: 'startup',
+    name: 'Vektor Grid',
+    description:
+      'Automated grid balancing and dispatch optimization software for distributed commercial battery assets across Northern Europe.',
+    matchScore: 78,
+    matchConfidence: 0.74,
+    matchSignals: [
+      {
+        signal: 'stage',
+        text: 'Raising within target Seed check size across Northern European energy infrastructure.',
+        sources: [CALA_SOURCE],
+      },
+      {
+        signal: 'sector',
+        text: 'Grid software and energy management platform (AI-tagged).',
+        sources: [CALA_SOURCE],
+      },
+    ],
+    facts: [
+      {
+        label: 'Sectors (AI-tagged)',
+        value: 'Energy, ClimateTech',
+        sources: [CALA_SOURCE],
+      },
+      {
+        label: 'Stages (AI-tagged)',
+        value: 'Seed',
+        sources: [CALA_SOURCE],
+      },
+      {
+        label: 'Headquarters',
+        value: 'Stockholm, Sweden',
+        sources: [CALA_SOURCE],
+      },
+    ],
+    rounds: [],
+    portfolio: [],
+    people: [],
+    loaded_at: '2026-11-14T18:30:00Z',
+  },
+
+  'krono-pay': {
+    id: 'krono-pay',
+    type: 'startup',
+    name: 'Krono Treasury',
+    description:
+      'Multi-currency cash management and automated FX hedging workflow software built for Nordic SMEs.',
+    matchScore: 63,
+    matchConfidence: 0.44,
+    matchSignals: [
+      {
+        signal: 'region',
+        text: 'Operating in target Nordic fintech market with partial historical round disclosures.',
+        sources: [CALA_SOURCE],
+      },
+    ],
+    facts: [
+      {
+        label: 'Sectors (AI-tagged)',
+        value: 'Fintech, Treasury Software',
+        sources: [CALA_SOURCE],
+      },
+      {
+        label: 'Stages (AI-tagged)',
+        value: 'Seed',
+        sources: [CALA_SOURCE],
+      },
+      {
+        label: 'Headquarters',
+        value: 'Helsinki, Finland',
+        sources: [CALA_SOURCE],
+      },
+    ],
+    rounds: [],
     portfolio: [],
     people: [],
     loaded_at: '2026-11-14T18:30:00Z',
@@ -679,6 +817,9 @@ const MOCK_ALIASES: Record<string, string> = {
   'company-1': 'amenitiz',
   'startup-2': 'nordleaf',
   'company-2': 'nordleaf',
+  'vektor-grid': 'solita-grid',
+  'krono-treasury': 'krono-pay',
+  lifeline: 'lifeline-ventures',
 };
 
 function findMockEntity(id: string, mode: EntityMode): EntityDetail | null {
