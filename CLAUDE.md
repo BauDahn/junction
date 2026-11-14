@@ -75,6 +75,14 @@ Una tarea por persona para cada eje; cada una es un issue con label `maquina:<no
 | **Otras herramientas y utilidades nuevas** | n8n: avisos de nuevas rondas y matches, resumen semanal; evaluar Context.dev y otras APIs; ideas de `docs/IDEAS-CALA.md` (camino de introducción, escalera de inversores) | `gabriel` |
 | **Presentación** | Pitch, guion de la demo, video, números del benchmark, slides del reto de Cala, Gemini, Aiven y Codex | `bau` con aporte de todos |
 
+## Principios de calidad (decisión del 14/11 noche)
+**Menos cantidad, más calidad. Una app simple que se vea y se sienta bien vale más que muchas funciones a medias.**
+- La app tiene **tres pestañas**: Feed, Ask (el chat) y Context. El perfil es una hoja que se abre desde el avatar, no una pestaña. Más el detalle de una tarjeta.
+- **Fuera de la app:** Deck, Journal y la pantalla de estado. Si el código queda, no se muestra.
+- Antes de sumar una función, preguntarse si mejora la primera pantalla de la demo. Si no, no entra; va a la lista "después" de `docs/PITCH.md`.
+- Terminar una pantalla es que se vea bien en teléfono, tenga estados vacío, de carga y de error con texto humano, y esté probada con datos reales. No se mergea una pantalla a medias aunque "ya funcione".
+- **Diseño minimalista y humano.** Las reglas están en el issue de rediseño de la app (un solo acento de color, sin degradados ni brillos, poca sombra, texto específico en lugar de eslóganes, nada de tarjetas dentro de tarjetas). Los PRs de interfaz llevan capturas a 390 px de ancho y Claude las revisa antes de mergear.
+
 ## Cómo trabajamos: tres roles (decisión del 14/11)
 | Quién | Rol | Qué hace | Qué no hace |
 |---|---|---|---|
