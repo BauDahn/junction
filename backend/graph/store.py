@@ -104,10 +104,9 @@ def _sources(a, b):
     return out
 
 class GraphStore:
-    def __init__(self, kv, ttl_s=TTL_S, prefix=PREFIX, cache_size=0, cache_ttl_s=30, local_ttl_s=None):
+    def __init__(self, kv, ttl_s=TTL_S, prefix=PREFIX, cache_size=0, cache_ttl_s=30):
         self.kv, self.ttl_s, self.prefix = kv, ttl_s, prefix
-        if local_ttl_s is not None and cache_size == 0: cache_size = 2048
-        self.cache_ttl_s = cache_ttl_s if local_ttl_s is None else local_ttl_s
+        self.cache_ttl_s = cache_ttl_s
         self._local, self._local_max = OrderedDict(), cache_size
     def _cache_get(self, key):
         if not self.cache_ttl_s or not self._local_max: return None
@@ -123,6 +122,26 @@ class GraphStore:
         self._local.move_to_end(key)
         while len(self._local) > self._local_max: self._local.popitem(last=False)
     def _invalidate(self): self._local.clear()
+    def _cache_written(self, sets=(), adds=(), deletes=()):
+        for key in deletes:
+            kind, _, ident = key[len(self.prefix):].partition(":")
+            self._local.pop((kind, ident), None)
+        for key, value, _ in sets:
+            kind, _, ident = key[len(self.prefix):].partition(":")
+            if kind in ("node", "edge"):
+                self._cache_set((kind, ident), _json(value))
+            elif kind == "alias:id":
+                self._cache_set(("alias-id", ident), value)
+        for key, members, _ in adds:
+            kind, _, ident = key[len(self.prefix):].partition(":")
+            if kind == "adj":
+                current = set(self._cache_get(("adj", ident)) or ())
+                current.update(members)
+                self._cache_set(("adj", ident), sorted(current))
+        for key, _, _ in sets:
+            if key.startswith(self._k("alias:id", "")):
+                ident = key[len(self._k("alias:id", "")):]
+                self._local.pop(("node", ident), None)
     def _k(self, kind, ident): return f"{self.prefix}{kind}:{ident}"
     def _put_json(self, k, value): self.kv.set(k, _dump(value), self.ttl_s)
     def canonical_id(self, node_id):
@@ -131,10 +150,15 @@ class GraphStore:
         originals = list(dict.fromkeys(str(i) for i in ids)); current = {i:i for i in originals}
         pending = originals[:]
         while pending:
-            keys = [self._k("alias:id", current[i]) for i in pending]
-            vals = self.kv.mget(keys)
+            uncached = [i for i in pending if self._cache_get(("alias-id", current[i])) is None]
+            vals = self.kv.mget([self._k("alias:id", current[i]) for i in uncached])
+            resolved = {i: self._cache_get(("alias-id", current[i])) for i in pending if i not in uncached}
+            resolved.update({i: raw or current[i] for i, raw in zip(uncached, vals)})
+            for i, value in resolved.items():
+                self._cache_set(("alias-id", current[i]), value)
             changed = []
-            for ident, raw in zip(pending, vals):
+            for ident in pending:
+                raw = resolved[ident]
                 if raw and raw != current[ident]: current[ident] = raw; changed.append(ident)
             # Solo se vuelve a consultar una cadena que realmente avanzó.
             pending = changed
@@ -179,12 +203,62 @@ class GraphStore:
                 if value is not None: edges[eid] = value; self._cache_set(("edge", eid), value)
         return sorted([e for e in edges.values() if e and (not require_sources or e.get("sources"))], key=lambda e: e["id"])
     def neighbors(self, node_id, rels=None, require_sources=False):
-        current = self.canonical_id(node_id); edges = self.edges_of(current, require_sources)
-        edges = [e for e in edges if rels is None or e.get("rel") in rels]
-        endpoint_ids = [x for e in edges for x in (e["src"], e["dst"])]
-        canonical = self.canonical_ids(endpoint_ids)
-        pairs = [(e, canonical[e["dst"]] if canonical[e["src"]] == current else canonical[e["src"]]) for e in edges]
-        nodes = self.get_nodes([n for _, n in pairs]); return [(e, nodes[n]) for e, n in pairs if n in nodes]
+        if isinstance(node_id, str):
+            return self.neighbors([node_id], rels, require_sources)[str(node_id)]
+        requested = list(dict.fromkeys(str(value) for value in node_id))
+        canonical = self.canonical_ids(requested)
+        currents = list(dict.fromkeys(canonical[value] for value in requested))
+        groups, missing_adj = [], []
+        for value in currents:
+            cached = self._cache_get(("adj", value))
+            groups.append(set(cached) if cached is not None else None)
+            if cached is None:
+                missing_adj.append(value)
+        fetched_groups = self.kv.smembers_many([self._k("adj", value) for value in missing_adj])
+        fetched_map = dict(zip(missing_adj, fetched_groups))
+        for index, value in enumerate(currents):
+            if groups[index] is None:
+                groups[index] = fetched_map[value]
+                self._cache_set(("adj", value), sorted(groups[index]))
+        per_current = {value: set(group) for value, group in zip(currents, groups)}
+        edge_ids = sorted(set().union(*per_current.values()) if per_current else set())
+        edge_map = {}
+        missing_edges = []
+        for ident in edge_ids:
+            cached = self._cache_get(("edge", ident))
+            if cached is None:
+                missing_edges.append(ident)
+            else:
+                edge_map[ident] = cached
+        edge_values = self.kv.mget([self._k("edge", value) for value in missing_edges])
+        for ident, raw in zip(missing_edges, edge_values):
+            edge = _json(raw)
+            if edge:
+                edge_map[ident] = edge
+                self._cache_set(("edge", ident), edge)
+        neighbor_ids = set()
+        rows = {}
+        for requested_id in requested:
+            current = canonical[requested_id]
+            rows[requested_id] = []
+            for ident in sorted(per_current.get(current, ())):
+                edge = edge_map.get(ident)
+                if not edge or (require_sources and not edge.get("sources")):
+                    continue
+                if rels is not None and edge.get("rel") not in rels:
+                    continue
+                neighbor = edge["dst"] if edge["src"] == current else edge["src"]
+                rows[requested_id].append((edge, neighbor))
+                neighbor_ids.add(neighbor)
+        missing = [value for value in sorted(neighbor_ids) if self._cache_get(("node", value)) is None]
+        fetched = self.kv.mget([self._k("node", value) for value in missing])
+        nodes = {value: _json(raw) for value, raw in zip(missing, fetched) if raw}
+        for value, found in nodes.items():
+            self._cache_set(("node", value), found)
+        nodes.update({value: self._cache_get(("node", value)) for value in neighbor_ids
+                      if self._cache_get(("node", value)) is not None})
+        return {value: [(edge, nodes[neighbor]) for edge, neighbor in pairs if nodes.get(neighbor)]
+                for value, pairs in rows.items()}
     def resolve(self, name):
         norm = normalize_name(name)
         ids = _json(self.kv.get(self._k("alias", norm))) or []
@@ -211,73 +285,149 @@ class GraphStore:
         result["truncated"] = bool(existing.get("truncated") or incoming.get("truncated"))
         result["loaded_at"] = max(existing.get("loaded_at", ""), incoming.get("loaded_at") or now_iso())
         return result
-    def put_node(self, node):
-        incoming = dict(node); incoming["id"] = str(node["id"]); incoming.setdefault("loaded_at", now_iso()); incoming.setdefault("aliases", []); incoming.setdefault("props", {}); incoming.setdefault("expanded", {})
-        name = incoming.get("name") or ""; norm = normalize_name(name)
-        id_map = self.canonical_ids([incoming["id"]]); old_id = id_map[incoming["id"]]
-        existing_raw = self.kv.mget([self._k("node", old_id)])[0]
-        existing = _json(existing_raw)
-        if existing:
-            canonical = old_id
-        else:
-            alias_raw = self.kv.mget([self._k("alias", norm)])[0] if norm else None
-            candidates = _json(alias_raw) or []
-            candidate_ids = self.canonical_ids(candidates)
-            candidate_nodes = self.kv.mget([self._k("node", candidate_ids[i]) for i in candidates])
-            compatible = []
-            for cid, raw in zip(candidates, candidate_nodes):
-                cid = candidate_ids[cid]; n = _json(raw)
-                if not n or not types_compatible(n.get("type"), incoming.get("type")): continue
-                a, b = self._website(n), self._website(incoming)
+    def _apply(self, nodes, edges, expand=None):
+        incoming = []
+        for node in nodes:
+            value = dict(node)
+            value["id"] = str(value["id"])
+            value.setdefault("loaded_at", now_iso())
+            value.setdefault("aliases", [])
+            value.setdefault("props", {})
+            value.setdefault("expanded", {})
+            incoming.append(value)
+        edge_values = [dict(edge) for edge in edges]
+        ids = list(dict.fromkeys([n["id"] for n in incoming] +
+              [str(x) for e in edge_values for x in (e["src"], e["dst"])]))
+        names = list(dict.fromkeys(n for value in incoming for n in self._aliases(value)))
+        names_norm = list(dict.fromkeys(normalize_name(n) for n in names if normalize_name(n)))
+        edge_ids = [str(e["id"]) for e in edge_values if e.get("id")]
+        keys = ([self._k("node", i) for i in ids] + [self._k("alias:id", i) for i in ids] +
+                [self._k("alias", n) for n in names_norm] + [self._k("edge", i) for i in edge_ids])
+        vals, initial_adj = self.kv.read_batch(gets=keys, sets=[self._k("adj", i) for i in ids])
+        raw = dict(zip(keys, vals))
+        adj_by_id = dict(zip(ids, initial_adj))
+        mapped = {i: raw.get(self._k("alias:id", i)) or i for i in ids}
+        candidates = list(dict.fromkeys(x for n in names_norm for x in (_json(raw.get(self._k("alias", n))) or [])))
+        missing = [i for i in candidates if self._k("node", mapped.get(i, i)) not in raw]
+        candidate_ids = list(dict.fromkeys(candidates))
+        if missing or any(i not in adj_by_id for i in candidate_ids):
+            extra, candidate_adj = self.kv.read_batch(
+                gets=[self._k("node", i) for i in missing],
+                sets=[self._k("adj", i) for i in candidate_ids])
+            raw.update(zip([self._k("node", i) for i in missing], extra))
+            adj_by_id.update(zip(candidate_ids, candidate_adj))
+        work_nodes = {}
+        for ident in set(ids + candidates):
+            value = _json(raw.get(self._k("node", mapped.get(ident, ident))))
+            if value: work_nodes[mapped.get(ident, ident)] = value
+        canonical = dict(mapped)
+        touched_aliases = {n: list(_json(raw.get(self._k("alias", n))) or []) for n in names_norm}
+        node_sets, deletes, alias_id_sets, adj_adds = {}, [], {}, {}
+        old_ids = set()
+        repoints = {}
+        for value in incoming:
+            ident = value["id"]
+            old = work_nodes.get(mapped[ident])
+            norm = normalize_name(value.get("name") or "")
+            choices = []
+            for cid in touched_aliases.get(norm, []):
+                cid = mapped.get(cid, cid)
+                candidate = work_nodes.get(cid)
+                if not candidate or not types_compatible(candidate.get("type"), value.get("type")): continue
+                a, b = self._website(candidate), self._website(value)
                 if a and b and a != b: continue
-                compatible.append((cid, n))
-            if compatible:
-                cid, existing = compatible[0]
-                canonical = incoming["id"] if incoming.get("type") == "Company" and existing.get("type") != "Company" else cid
-            else: canonical = incoming["id"]
-        if existing:
-            merged = self._merge(existing, incoming, canonical)
-        else: merged = incoming; merged["id"] = canonical
-        old_ids = [i for i in dict.fromkeys(([existing.get("id")] if existing else []) + [incoming["id"]] + (merged.get("merged_ids") or [])) if i and i != canonical]
-        old_adj = self.kv.smembers_many([self._k("adj", i) for i in old_ids]) if old_ids else []
-        edge_ids = sorted(set().union(*old_adj) if old_adj else set())
-        edge_raw = self.kv.mget([self._k("edge", i) for i in edge_ids])
-        edge_sets, adj_adds = [], {}
-        for eid, raw in zip(edge_ids, edge_raw):
-            edge = _json(raw)
-            if not edge: continue
-            if edge.get("src") in old_ids: edge["src"] = canonical
-            if edge.get("dst") in old_ids: edge["dst"] = canonical
-            edge_sets.append((self._k("edge", eid), _dump(edge), self.ttl_s))
-            adj_adds.setdefault(self._k("adj", canonical), set()).add(eid)
-        names = list(dict.fromkeys(self._aliases(merged) + self._aliases(existing or {}) + self._aliases(incoming)))
-        alias_norms = list(dict.fromkeys(normalize_name(n) for n in names if normalize_name(n)))
-        alias_keys = [self._k("alias", n) for n in alias_norms]
-        alias_values = self.kv.mget(alias_keys)
-        alias_lists = [_json(raw) or [] for raw in alias_values]
-        alias_ids = self.canonical_ids([i for values in alias_lists for i in values])
-        sets = [(self._k("node", canonical), _dump(merged), self.ttl_s)] + edge_sets
-        for ident in old_ids: sets.append((self._k("alias:id", ident), canonical, self.ttl_s))
-        for key, arr in zip(alias_keys, alias_lists):
-            arr = [canonical if x in old_ids or alias_ids[x] == canonical else x for x in arr]
-            if canonical not in arr: arr.append(canonical)
-            sets.append((key, _dump(list(dict.fromkeys(arr))), self.ttl_s))
-        adds = [(key, sorted(members), self.ttl_s) for key, members in adj_adds.items()]
-        deletes = [self._k("node", i) for i in old_ids] + [self._k("adj", i) for i in old_ids]
-        self.kv.write_batch(sets, adds, deletes); self._invalidate()
-        return canonical
+                choices.append((cid, candidate))
+            if old:
+                chosen = mapped[ident]
+            elif choices:
+                chosen, old = choices[0]
+                if value.get("type") == "Company" and old.get("type") != "Company": chosen = ident
+            else:
+                chosen = ident
+            canonical[ident] = chosen
+            if chosen != ident and ident not in work_nodes:
+                repoints[ident] = chosen
+            if old and old.get("id") != chosen:
+                repoints[old["id"]] = chosen
+            merged = self._merge(old, value, chosen) if old else dict(value, id=chosen)
+            if expand and ident == str(expand[0]):
+                merged.setdefault("expanded", {})[rels_key(expand[1])] = now_iso()
+                merged["truncated"] = bool(merged.get("truncated") or expand[2])
+            if old and old.get("id") != chosen: old_ids.add(old["id"])
+            merged["merged_ids"] = [x for x in merged.get("merged_ids", []) if x != chosen]
+            for previous in merged.get("merged_ids", []):
+                if previous != chosen: old_ids.add(previous)
+            for prior in (ident, *(old.get("merged_ids", []) if old else [])):
+                if prior != chosen: old_ids.add(prior)
+            work_nodes[chosen] = merged
+            node_sets[chosen] = merged
+            for name in self._aliases(merged):
+                alias_norm = normalize_name(name)
+                if alias_norm:
+                    touched_aliases.setdefault(alias_norm, [])
+                    if chosen not in touched_aliases[alias_norm]: touched_aliases[alias_norm].append(chosen)
+        saved_edges = []
+        edge_sets = {}
+        if repoints:
+            old_ids.update(repoints)
+            old_list = sorted(repoints)
+            old_edge_ids = sorted(set().union(*(adj_by_id.get(i, set()) for i in old_list)))
+            old_raw = self.kv.mget([self._k("edge", i) for i in old_edge_ids])
+            for eid, value in zip(old_edge_ids, old_raw):
+                edge = _json(value)
+                if not edge:
+                    continue
+                edge["src"] = repoints.get(edge["src"], edge["src"])
+                edge["dst"] = repoints.get(edge["dst"], edge["dst"])
+                edge_sets[eid] = edge
+                for endpoint in (edge["src"], edge["dst"]):
+                    adj_adds.setdefault(endpoint, set()).add(eid)
+        for edge in edge_values:
+            edge["src"] = canonical.get(str(edge["src"]), mapped.get(str(edge["src"]), str(edge["src"])))
+            edge["dst"] = canonical.get(str(edge["dst"]), mapped.get(str(edge["dst"]), str(edge["dst"])))
+            edge["src"] = repoints.get(edge["src"], edge["src"])
+            edge["dst"] = repoints.get(edge["dst"], edge["dst"])
+            if edge["src"] == edge["dst"]: continue
+            edge["sources"] = edge.get("sources") or []
+            edge.setdefault("loaded_at", now_iso())
+            if not edge.get("id"):
+                digest = hashlib.sha1("|".join(str(edge.get(k, "")) for k in
+                    ("src", "rel", "dst", "role")).encode()).hexdigest()[:16]
+                edge["id"] = "e:" + digest
+            old_edge = _json(raw.get(self._k("edge", str(edge["id"]))))
+            if old_edge:
+                old_edge.update({k: v for k, v in edge.items() if k != "sources" and _nonempty(v)})
+                old_edge["sources"] = _sources(old_edge.get("sources"), edge["sources"])
+                edge = old_edge
+            edge_sets[edge["id"]] = edge
+            saved_edges.append(edge["id"])
+            for endpoint in (edge["src"], edge["dst"]):
+                adj_adds.setdefault(endpoint, set()).add(edge["id"])
+        sets = [(self._k("node", i), _dump(v), self.ttl_s) for i, v in node_sets.items()]
+        sets += [(self._k("edge", i), _dump(v), self.ttl_s) for i, v in edge_sets.items()]
+        sets += [(self._k("alias:id", i), v, self.ttl_s) for i, v in alias_id_sets.items()]
+        for ident in old_ids:
+            target = repoints.get(ident) or next((v for k, v in canonical.items() if k == ident), None)
+            if target is None and node_sets:
+                target = next(iter(node_sets))
+            if target:
+                sets.append((self._k("alias:id", ident), target, self.ttl_s))
+                deletes.extend((self._k("node", ident), self._k("adj", ident)))
+        for ident, target in canonical.items():
+            if target != ident:
+                sets.append((self._k("alias:id", ident), target, self.ttl_s))
+        for norm, values in touched_aliases.items():
+            values = [repoints.get(x, canonical.get(x, mapped.get(x, x))) for x in values]
+            sets.append((self._k("alias", norm), _dump(list(dict.fromkeys(values))), self.ttl_s))
+        adds = [(self._k("adj", i), sorted(v), self.ttl_s) for i, v in adj_adds.items()]
+        self.kv.write_batch(sets, adds, deletes)
+        self._cache_written(sets, adds, deletes)
+        return canonical, saved_edges
+    def put_node(self, node):
+        return self._apply([node], [])[0][str(node["id"])]
     def put_edge(self, edge):
-        e = dict(edge); mapped = self.canonical_ids([e["src"], e["dst"]]); e["src"], e["dst"] = mapped[str(e["src"])], mapped[str(e["dst"])]
-        if e["src"] == e["dst"]: return None
-        e["sources"] = e.get("sources") or []; e.setdefault("loaded_at", now_iso())
-        if not e.get("id"):
-            digest = hashlib.sha1("|".join(str(e.get(k, "")) for k in ("src", "rel", "dst", "role")).encode()).hexdigest()[:16]; e["id"] = "e:" + digest
-        old = self.get_edge(e["id"])
-        if old:
-            old.update({k:v for k,v in e.items() if k != "sources" and _nonempty(v)}); old["sources"] = _sources(old.get("sources"), e["sources"]); e = old
-        adds = [(self._k("adj", i), [e["id"]], self.ttl_s) for i in dict.fromkeys((e["src"], e["dst"]))]
-        self.kv.write_batch([(self._k("edge", e["id"]), _dump(e), self.ttl_s)], adds); self._invalidate()
-        return e["id"]
+        saved = self._apply([], [edge])[1]
+        return saved[0] if saved else None
     def view_seeds(self, user):
         ids = _json(self.kv.get(self._k("view", f"{user}:seeds"))) or []; mapped = self.canonical_ids(ids)
         return [mapped[str(i)] for i in ids]
@@ -286,10 +436,15 @@ class GraphStore:
     def set_view(self, user, seeds, nodes):
         ids = list(dict.fromkeys([str(i) for i in seeds])); nodes = list(dict.fromkeys([str(i) for i in nodes]))
         mapped = self.canonical_ids(ids + nodes); key = self._k("view", f"{user}:nodes")
-        self.kv.write_batch([(self._k("view", f"{user}:seeds"), _dump([mapped[i] for i in ids]), self.ttl_s)], [(key, [mapped[i] for i in nodes], self.ttl_s)], [key]); self._invalidate()
+        sets = [(self._k("view", f"{user}:seeds"), _dump([mapped[i] for i in ids]), self.ttl_s)]
+        adds = [(key, [mapped[i] for i in nodes], self.ttl_s)]
+        self.kv.write_batch(sets, adds, [key])
+        self._cache_written(sets, adds, [key])
     def add_to_view(self, user, node_ids):
         ids = list(dict.fromkeys(str(i) for i in node_ids)); mapped = self.canonical_ids(ids)
-        self.kv.sadd(self._k("view", f"{user}:nodes"), list(dict.fromkeys(mapped.values())), self.ttl_s); self._invalidate()
+        key = self._k("view", f"{user}:nodes")
+        self.kv.sadd(key, list(dict.fromkeys(mapped.values())), self.ttl_s)
+        self._cache_written(adds=[(key, list(dict.fromkeys(mapped.values())), self.ttl_s)])
     def distance(self, sources, target, max_depth=3, within=None):
         ids = list(dict.fromkeys([str(x) for x in sources] + [str(target)])); mapped = self.canonical_ids(ids)
         target = mapped[str(target)]; start = {mapped[str(s)] for s in sources}
@@ -298,15 +453,26 @@ class GraphStore:
         within_ids = set(self.canonical_ids(within).values()) if within is not None else None
         seen = set(start); frontier = start
         for depth in range(1, max_depth + 1):
-            keys = [self._k("adj", n) for n in sorted(frontier)]; groups = self.kv.smembers_many(keys)
-            edge_ids = sorted(set().union(*groups) if groups else set()); vals = self.kv.mget([self._k("edge", i) for i in edge_ids])
+            missing_adj = [n for n in sorted(frontier) if self._cache_get(("adj", n)) is None]
+            groups = self.kv.smembers_many([self._k("adj", n) for n in missing_adj])
+            fetched_groups = dict(zip(missing_adj, groups))
+            for ident, group in zip(missing_adj, groups):
+                self._cache_set(("adj", ident), sorted(group))
+            groups = [set(self._cache_get(("adj", n)) if self._cache_get(("adj", n)) is not None
+                          else fetched_groups.get(n, ())) for n in sorted(frontier)]
+            edge_ids = sorted(set().union(*groups) if groups else set())
+            decoded_map = {i: self._cache_get(("edge", i)) for i in edge_ids}
+            missing_edges = [i for i in edge_ids if decoded_map[i] is None]
+            vals = self.kv.mget([self._k("edge", i) for i in missing_edges])
+            for ident, raw in zip(missing_edges, vals):
+                decoded_map[ident] = _json(raw)
+                if decoded_map[ident] is not None:
+                    self._cache_set(("edge", ident), decoded_map[ident])
             nxt = set()
-            decoded = [_json(raw) for raw in vals]
-            endpoint_ids = [x for edge in decoded if edge for x in (edge["src"], edge["dst"])]
-            canonical = self.canonical_ids(endpoint_ids)
+            decoded = [decoded_map[i] for i in edge_ids]
             for e in decoded:
                 if not e: continue
-                a, b = canonical[e["src"]], canonical[e["dst"]]
+                a, b = e["src"], e["dst"]
                 if a in frontier: nxt.add(b)
                 if b in frontier: nxt.add(a)
             nxt -= seen
@@ -320,19 +486,15 @@ class GraphStore:
     def mark_expanded(self, node_id, rels, truncated=False):
         node = self.get_node(node_id)
         if not node: return
-        node.setdefault("expanded", {})[rels_key(rels)] = now_iso(); node["truncated"] = bool(node.get("truncated") or truncated); self._put_json(self._k("node", node["id"]), node)
-        self._invalidate()
-    @staticmethod
-    def rels_key(rels): return rels_key(rels)
-    def put_expansion(self, node, edges=(), neighbors=(), *, rels, truncated=False):
+        node.setdefault("expanded", {})[rels_key(rels)] = now_iso()
+        node["truncated"] = bool(node.get("truncated") or truncated)
+        key = self._k("node", node["id"])
+        self._put_json(key, node)
+        self._cache_written([(key, _dump(node), self.ttl_s)])
+    def put_expansion(self, node, edges, neighbors, *, rels, truncated=False):
         """Guarda los elementos recibidos y marca el conjunto de relaciones como expandido."""
-        if isinstance(node, str):
-            node = self.get_node(node) or {"id": node}
-        node_id = self.put_node(node)
-        saved = [self.put_node(n) for n in neighbors]
-        for edge in edges: self.put_edge(edge)
-        self.mark_expanded(node_id, rels_key(rels), truncated=truncated)
-        return node_id
+        mapped, _ = self._apply([node, *neighbors], edges, (str(node["id"]), rels, truncated))
+        return mapped[str(node["id"])]
     def stats(self): return {kind: len(self.kv.keys(self._k(kind, "*"))) for kind in ("node", "edge")}
 
 _STORE = None

@@ -30,7 +30,8 @@ class Pipe:
     def execute(self):
         before=self.c.trips; result=[]
         for method,args,kwargs in self.ops:
-            if method=="set": result.append(self.c.set(*args,**kwargs))
+            if method=="get": result.append(self.c.data.get(args[0]))
+            elif method=="set": result.append(self.c.set(*args,**kwargs))
             elif method=="sadd": result.append(self.c.sadd(*args,**kwargs))
             elif method=="expire": result.append(self.c.expire(*args,**kwargs))
             elif method=="delete": result.append(self.c.delete(*args,**kwargs))
@@ -110,7 +111,7 @@ def test_views_expansion_and_relations(store):
     assert store.view_seeds("u")==["a"] and store.view_nodes("u")=={"a","b","c"} and store.view_nodes("v")=={"b"}
     assert not store.is_expanded("a","R"); store.mark_expanded("a","R")
     assert store.is_expanded("a","R") and not store.is_expanded("a","R",0)
-    assert store.rels_key(["B","A","A"])==rels_key(["B","A","A"])
+    assert rels_key(["B","A","A"])==rels_key(["A","B"])
     store.put_expansion(node("a", name="a"), edges=[{"src":"a","dst":"z","rel":"A"}], neighbors=[node("z",name="Z")], rels=["A"])
     assert store.is_expanded("a",["A"]) and store.get_node("z")
 
@@ -121,7 +122,7 @@ def test_rtt_counts_are_batched():
     client.trips=0; graph.get_nodes([str(i) for i in range(20)]); get_count=client.trips
     client.trips=0; graph.neighbors("0"); neighbors_count=client.trips
     client.trips=0; assert graph.distance(["0"],"20")==1; distance_count=client.trips
-    assert get_count==2 and neighbors_count==7 and distance_count==6
+    assert get_count==2 and neighbors_count<=4 and distance_count<=6
 
 def test_put_node_roundtrips_do_not_scale_with_candidates():
     client=FakeRedis(); graph=GraphStore(ValkeyKV("fake",client=client))
@@ -130,17 +131,120 @@ def test_put_node_roundtrips_do_not_scale_with_candidates():
     for i in range(12): graph.put_node(node(f"other{i}","Company","Beta",f"{i}.example"))
     for i in range(12): graph.put_node(node(f"acme{i}","Company","Acme",f"{i}.example"))
     client.trips=0; graph.put_node(node("winner2","Company","Acme")); many_candidates=client.trips
-    assert one_candidate==many_candidates==9
+    assert one_candidate<=4 and many_candidates<=4
 
 def test_local_cache_lru_and_invalidation():
-    client=FakeRedis(); graph=GraphStore(ValkeyKV("fake",client=client),local_ttl_s=60); graph._local_max=2
+    client=FakeRedis(); graph=GraphStore(ValkeyKV("fake",client=client),cache_ttl_s=60,cache_size=2)
     for i in "abc": graph.put_node(node(i,name=i))
     client.trips=0; graph.get_node("a"); first=client.trips; graph.get_node("a")
-    assert first==2 and client.trips==first+1
+    assert first==2 and client.trips==first
     graph.get_node("b"); graph.get_node("a"); graph.get_node("c") # b es el LRU que debe salir
     client.trips=0; graph.get_node("b"); assert client.trips==2
     graph.put_node({**node("a"),"props":{"description":{"value":"Changed"}}})
     assert graph.get_node("a")["props"]["description"]["value"]=="Changed"
+
+@pytest.mark.parametrize("backend",["memory","valkey"])
+def test_expansion_batch_roundtrips_and_state(backend):
+    def make(kv): return GraphStore(kv)
+    client=FakeRedis()
+    kv=MemoryKV() if backend=="memory" else ValkeyKV("fake",client=client)
+    batched=make(kv)
+    anchor=node("root",name="Root")
+    neighbors=[node(f"n{i}",name=f"N{i}") for i in range(30)]
+    edges=[{"id":f"e{i}","src":"root","dst":f"n{i}","rel":"INVESTED_IN"} for i in range(30)]
+    if backend=="valkey": client.trips=0
+    batched.put_expansion(anchor,edges,neighbors,rels=["INVESTED_IN"])
+    assert backend=="memory" or client.trips<=3
+    baseline=GraphStore(MemoryKV())
+    baseline.put_node(anchor)
+    for neighbor in neighbors: baseline.put_node(neighbor)
+    for edge in edges: baseline.put_edge(edge)
+    baseline.mark_expanded("root",["INVESTED_IN"])
+    actual=batched.kv.data if backend=="memory" else batched.kv.client.data
+    expected=baseline.kv.data
+    assert set(actual)==set(expected)
+    def without_dates(raw):
+        value=__import__("json").loads(raw)
+        value.pop("loaded_at",None)
+        value.pop("expanded",None)
+        return value
+    for key in actual:
+        if key.startswith("graph:v1:node:") or key.startswith("graph:v1:edge:"):
+            assert without_dates(actual[key])==without_dates(expected[key])
+        else:
+            assert actual[key]==expected[key]
+
+@pytest.mark.parametrize("backend",["memory","valkey"])
+def test_batch_neighbors_distance_and_cache(backend):
+    client=FakeRedis()
+    kv=MemoryKV() if backend=="memory" else ValkeyKV("fake",client=client)
+    graph=GraphStore(kv,cache_size=1000)
+    for i in range(25): graph.put_node(node(str(i),name=f"N{i}"))
+    for i in range(20):
+        for j in range(3):
+            graph.put_edge({"id":f"e{i}-{j}","src":str(i),"dst":str(i+1),"rel":"INVESTED_IN"})
+    singles={str(i):graph.neighbors(str(i)) for i in range(20)}
+    if backend=="valkey": client.trips=0
+    batched=graph.neighbors([str(i) for i in range(20)])
+    assert batched==singles
+    assert backend=="memory" or client.trips<=4
+    assert isinstance(graph.neighbors("0"),list)
+    graph.distance(["0"],"3")
+    if backend=="valkey":
+        client.trips=0
+        graph.neighbors([str(i) for i in range(20)])
+        assert client.trips==0
+        client.trips=0
+        graph.distance(["0"],"3")
+        assert client.trips==0
+        graph.put_edge({"id":"new","src":"0","dst":"4","rel":"INVESTED_IN"})
+        assert any(edge["id"]=="new" for edge,_ in graph.neighbors("0"))
+    tiny=GraphStore(MemoryKV(),cache_size=2)
+    for i in "abc": tiny.put_node(node(i,name=i))
+    tiny.get_nodes("abc")
+    assert len(tiny._local)<=2
+
+@pytest.mark.parametrize("ttl",[60,604800])
+def test_all_writes_keep_prefix_and_ttl(ttl):
+    client=FakeRedis(); graph=GraphStore(ValkeyKV("fake",client=client),ttl_s=ttl)
+    graph.put_node(node("a",name="A")); graph.put_node(node("b",name="B"))
+    graph.put_node(node("org","Organization","Merge"))
+    graph.put_node(node("co","Company","Merge"))
+    graph.put_edge({"id":"e","src":"a","dst":"b","rel":"R"})
+    graph.put_expansion(node("a",name="A"),[],[],rels="R")
+    graph.set_view("u",["a"],["a","b"]); graph.add_to_view("u",["c"])
+    graph.mark_expanded("a","R")
+    assert client.data and all(key.startswith("graph:v1:") for key in client.data)
+    assert all(value==ttl for value in client.ttl.values())
+
+def test_canonical_batch_merge_and_repoint_roundtrips():
+    client=FakeRedis(); graph=GraphStore(ValkeyKV("fake",client=client))
+    org=node("org","Organization","Otium Capital")
+    company=node("company","Company","OTIUM CAPITAL SAS")
+    graph.put_expansion(org,[],[],rels="R")
+    graph.put_node(node("linked",name="Linked"))
+    graph.put_edge({"id":"prior","src":"org","dst":"linked","rel":"R"})
+    client.trips=0
+    graph.put_expansion(company,[{"id":"e1","src":"company","dst":"x","rel":"R"},
+        {"id":"e2","src":"company","dst":"y","rel":"R"}],
+        [node("x",name="X"),node("y",name="Y")],rels="R")
+    assert client.trips<=4
+    assert graph.get_node("company")["id"]=="company"
+    assert graph.get_node("org")["id"]=="company"
+    assert all(edge["src"]=="company" for edge in graph.edges_of("company"))
+
+def test_duplicates_within_one_expansion_lot():
+    graph=GraphStore(MemoryKV())
+    org=node("org","Organization","Otium Capital")
+    company=node("company","Company","OTIUM CAPITAL SAS")
+    anchor=node("root",name="Root")
+    edges=[{"id":"e1","src":"root","dst":"org","rel":"R"},
+           {"id":"e2","src":"root","dst":"company","rel":"R"}]
+    graph.put_expansion(anchor,edges,[org,company],rels="R")
+    assert graph.get_node("org")["id"]=="company"
+    assert graph.get_node("company")["id"]=="company"
+    assert len(graph.edges_of("root"))==2
+    assert all(edge["dst"]=="company" for edge in graph.edges_of("root"))
 
 def test_get_store_fallback_and_singleton(monkeypatch):
     monkeypatch.setenv("VALKEY_URL",""); reset_store(); a=get_store()

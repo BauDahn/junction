@@ -2,3 +2,5 @@ from .model import ATTRIBUTE_RELS, EXCLUDED_TYPES, PREFIX, REL_WHITELIST, TTL_S,
 from .store import GraphStore, get_store, reset_store
 
 __all__ = ["GraphStore", "get_store", "reset_store", "normalize_name", "rels_key", "node_is_expanded", "REL_WHITELIST", "ATTRIBUTE_RELS", "EXCLUDED_TYPES"]
+
+from .model import rels_key
