@@ -33,16 +33,17 @@ Cala es el núcleo (no tocamos cómo funciona: mostramos para qué sirve). Todo 
 - **Antes de empezar algo que no te asignaron, avisá al orquestador** (comentario en #1 o `equipo avisar bau`), para no duplicar trabajo. Ya pasó.
 - El orquestador responde y reparte por el mismo canal. Las claves (`CALA_API_KEY`, `GEMINI_API_KEY`, `VALKEY_URL`) se pasan por privado, nunca por GitHub.
 
-### Dueños de cada área (para no pisarse)
+### Dueños de cada área (para no pisarse; reparto del 14/11 por la tarde)
 | Área | Dueño | Notas |
 |---|---|---|
-| `backend/cala_core/`, `backend/journal/` | máquina `bau` | Router, ejecución contra Cala, formato de bloques, verificación de afirmaciones y journal |
-| `backend/verifier/`, `canonizador/` | máquina `bau` | Verificador de decks; canonizador de consultas y benchmarks |
-| `backend/chat/`, `backend/app.py` | máquina `fabricio` | Sesiones, mensajes, audio, perfil, recomendaciones; conecta `cala_core` al chat |
-| *(a definir)* | máquina `gabriel` | El orquestador le asigna un área propia por issue al sumarse; hasta entonces, no editar áreas ajenas sin avisar |
+| `backend/` completo (`chat/`, `cala_core/`, `journal/`, `verifier/`, `app.py`) | máquina `fabricio` | Chat, audio, router y consultas a Cala, journal, verificador de decks |
 | `app/` | máquina `fabricio` | Expo (web + iOS + Android), TypeScript |
-| `docs/API.md` | compartido | contrato backend ↔ app; cambios fuera de *(borrador)* en un PR propio aprobado por el otro |
-| resto de `docs/` | cualquiera | `PROCESO.md`: una línea por hito |
+| `canonizador/` | máquina `fabricio` | Canonizador, caché (disco + Aiven Valkey) y benchmarks |
+| `n8n/` | máquina `gabriel` | Flujos de n8n contra el contrato de la API |
+| `docs/API.md` | compartido | Contrato; los cambios fuera de *(borrador)* los revisa `bau` |
+| `CLAUDE.md`, resto de `docs/` | máquina `bau` | Coordinación, plan, informes; `PROCESO.md`: una línea por hito |
+
+**Quién mergea:** cada máquina mergea sus propios PRs cuando sus tests pasan y solo tocan su área. `bau` revisa únicamente lo que cambia `docs/API.md` o cruza áreas. `fabricio` revisa los PRs de `gabriel`. Al mergear, avisar en el issue #1.
 
 Si hace falta tocar el área del otro, se pide por `equipo avisar` o se hace en un PR que el dueño aprueba.
 
