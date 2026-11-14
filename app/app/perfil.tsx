@@ -3,14 +3,8 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { getProfile, getRecommendations, type Profile, type Recommendations } from '../src/api';
 import { mockProfile, mockRecommendations } from '../src/api/mock';
 import CardView from '../src/components/CardView';
+import { getSessionId } from '../src/session';
 const mockEnabled = process.env.EXPO_PUBLIC_MOCK === '1';
-function savedSession(): string | null {
-  try {
-    return typeof localStorage !== 'undefined' ? localStorage.getItem('junction_session_id') : null;
-  } catch {
-    return null;
-  }
-}
 export default function PerfilScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendations | null>(null);
@@ -19,35 +13,41 @@ export default function PerfilScreen() {
   const [error, setError] = useState('');
   useEffect(() => {
     let alive = true;
-    const sessionId = savedSession();
-    if (!sessionId) {
-      if (mockEnabled) {
-        setProfile(mockProfile);
-        setRecommendations(mockRecommendations);
-      } else setEmpty(true);
-      setLoading(false);
-      return () => {
-        alive = false;
-      };
-    }
-    Promise.all([getProfile(sessionId), getRecommendations(sessionId)])
-      .then(([p, r]) => {
-        if (alive) {
-          setProfile(p);
-          setRecommendations(r);
-        }
-      })
-      .catch((e: unknown) => {
+    getSessionId()
+      .then((sessionId) => {
         if (!alive) return;
-        if ((e as { status?: number })?.status === 404) {
+        if (!sessionId) {
           if (mockEnabled) {
             setProfile(mockProfile);
             setRecommendations(mockRecommendations);
           } else setEmpty(true);
-        } else setError(e instanceof Error ? e.message : 'No se pudo cargar el perfil.');
+          setLoading(false);
+          return;
+        }
+        Promise.all([getProfile(sessionId), getRecommendations(sessionId)])
+          .then(([p, r]) => {
+            if (alive) {
+              setProfile(p);
+              setRecommendations(r);
+            }
+          })
+          .catch((e: unknown) => {
+            if (!alive) return;
+            if ((e as { status?: number })?.status === 404) {
+              if (mockEnabled) {
+                setProfile(mockProfile);
+                setRecommendations(mockRecommendations);
+              } else setEmpty(true);
+            } else setError(e instanceof Error ? e.message : 'No se pudo cargar el perfil.');
+          })
+          .finally(() => {
+            if (alive) setLoading(false);
+          });
       })
-      .finally(() => {
-        if (alive) setLoading(false);
+      .catch((e: unknown) => {
+        if (!alive) return;
+        setError(e instanceof Error ? e.message : 'No se pudo leer la sesión.');
+        setLoading(false);
       });
     return () => {
       alive = false;

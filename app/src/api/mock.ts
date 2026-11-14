@@ -1,4 +1,4 @@
-import type { Card, Profile, Recommendations } from './index';
+import type { Card, Message, Profile, Recommendations, SendTextResponse } from './index';
 export const mockProfile: Profile = {
   startup_name: 'Nordleaf',
   one_liner: 'Herramientas de eficiencia energética para edificios',
@@ -71,3 +71,49 @@ export const mockRecommendations: Recommendations = {
     ),
   ],
 };
+
+const histories = new Map<string, Message[]>();
+const wait = () => new Promise((resolve) => setTimeout(resolve, 800));
+export async function createMockSession(): Promise<string> {
+  await wait();
+  const id = 'mock-session';
+  if (!histories.has(id)) histories.set(id, []);
+  return id;
+}
+export async function listMockMessages(sessionId: string): Promise<Message[]> {
+  await wait();
+  return [...(histories.get(sessionId) ?? [])];
+}
+function response(sessionId: string, text: string, transcript?: string): SendTextResponse {
+  const now = new Date().toISOString();
+  const user: Message = {
+    id: `mock-user-${Date.now()}`,
+    role: 'user',
+    text,
+    ...(transcript ? { transcript, audio: true } : {}),
+    created_at: now,
+  };
+  const reply: Message = {
+    id: `mock-assistant-${Date.now()}`,
+    role: 'assistant',
+    text: 'Por lo que me cuentas, estas referencias pueden encajar con tu startup.',
+    created_at: now,
+    sources: [{ name: 'Cala · ejemplo', url: 'https://cala.ai' }],
+    cards: [mockRecommendations.investors[0], mockRecommendations.competitors[0]],
+  };
+  const history = histories.get(sessionId) ?? [];
+  histories.set(sessionId, [...history, user, reply]);
+  return { message: user, reply, profile_updated: true, recommendations_status: 'ready' };
+}
+export async function sendMockText(sessionId: string, text: string): Promise<SendTextResponse> {
+  await wait();
+  return response(sessionId, text);
+}
+export async function sendMockAudio(sessionId: string): Promise<SendTextResponse> {
+  await wait();
+  return response(
+    sessionId,
+    'Busco inversores para mi startup de energía en Helsinki.',
+    'Busco inversores para mi startup de energía en Helsinki.',
+  );
+}
