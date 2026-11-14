@@ -5,7 +5,7 @@ import os
 import time
 from collections import OrderedDict
 from datetime import datetime, timezone
-from .model import PREFIX, TTL_S, normalize_name, now_iso, types_compatible, website_key
+from .model import PREFIX, TTL_S, normalize_name, now_iso, rels_key, node_is_expanded, types_compatible, website_key
 
 class MemoryKV:
     def __init__(self): self.data, self.expiry = {}, {}
@@ -14,6 +14,7 @@ class MemoryKV:
         return self.data.get(k)
     def get(self, k): return self._live(k)
     def mget(self, keys): return [self.get(k) for k in keys]
+    def read_batch(self, gets=(), sets=()): return self.mget(gets), [self.smembers(k) for k in sets]
     def set(self, k, v, ttl): self.data[k] = v; self.expiry[k] = time.time() + ttl if ttl else float("inf"); return True
     def delete(self, k): self.data.pop(k, None); self.expiry.pop(k, None)
     def sadd(self, k, members, ttl):
@@ -48,6 +49,13 @@ class ValkeyKV:
         return self.client
     def get(self, k): return self._client().get(k)
     def mget(self, keys): return self._client().mget(keys) if keys else []
+    def read_batch(self, gets=(), sets=()):
+        if not gets and not sets: return [], []
+        pipe = self._client().pipeline()
+        for key in gets: pipe.get(key)
+        for key in sets: pipe.smembers(key)
+        result = pipe.execute()
+        return result[:len(gets)], [set(value) for value in result[len(gets):]]
     def set(self, k, v, ttl): return self._client().set(k, v, ex=ttl)
     def delete(self, k): return self._client().delete(k)
     def sadd(self, k, members, ttl):
@@ -96,19 +104,22 @@ def _sources(a, b):
     return out
 
 class GraphStore:
-    def __init__(self, kv, ttl_s=TTL_S, prefix=PREFIX, local_ttl_s=0):
-        self.kv, self.ttl_s, self.prefix, self.local_ttl_s = kv, ttl_s, prefix, local_ttl_s
-        self._local, self._local_max = OrderedDict(), 2048
+    def __init__(self, kv, ttl_s=TTL_S, prefix=PREFIX, cache_size=0, cache_ttl_s=30, local_ttl_s=None):
+        self.kv, self.ttl_s, self.prefix = kv, ttl_s, prefix
+        if local_ttl_s is not None and cache_size == 0: cache_size = 2048
+        self.cache_ttl_s = cache_ttl_s if local_ttl_s is None else local_ttl_s
+        self._local, self._local_max = OrderedDict(), cache_size
     def _cache_get(self, key):
-        if not self.local_ttl_s: return None
+        if not self.cache_ttl_s or not self._local_max: return None
         item = self._local.get(key)
         if not item: return None
         if item[0] <= time.monotonic(): self._local.pop(key, None); return None
         self._local.move_to_end(key)
         return item[1]
     def _cache_set(self, key, value):
-        if not self.local_ttl_s: return
-        self._local[key] = (time.monotonic() + self.local_ttl_s, value)
+        if not self.cache_ttl_s or not self._local_max: return
+        if not self._local_max: return
+        self._local[key] = (time.monotonic() + self.cache_ttl_s, value)
         self._local.move_to_end(key)
         while len(self._local) > self._local_max: self._local.popitem(last=False)
     def _invalidate(self): self._local.clear()
@@ -304,28 +315,24 @@ class GraphStore:
             seen |= nxt; frontier = nxt
             if not frontier: break
         return None
-    def is_expanded(self, node_id, key, max_age_s=None):
-        node = self.get_node(node_id); date = (node or {}).get("expanded", {}).get(key)
-        if not date: return False
-        try:
-            parsed = datetime.fromisoformat(date)
-            if parsed.tzinfo is None: parsed = parsed.replace(tzinfo=timezone.utc)
-            age = (datetime.now(timezone.utc) - parsed.astimezone(timezone.utc)).total_seconds()
-        except (ValueError, TypeError): return False
-        return age < (self.ttl_s if max_age_s is None else max_age_s)
-    def mark_expanded(self, node_id, key, truncated=False):
+    def is_expanded(self, node_id, rels, max_age_s=None):
+        return node_is_expanded(self.get_node(node_id), rels, self.ttl_s if max_age_s is None else max_age_s)
+    def mark_expanded(self, node_id, rels, truncated=False):
         node = self.get_node(node_id)
         if not node: return
-        node.setdefault("expanded", {})[key] = now_iso(); node["truncated"] = bool(node.get("truncated") or truncated); self._put_json(self._k("node", node["id"]), node)
+        node.setdefault("expanded", {})[rels_key(rels)] = now_iso(); node["truncated"] = bool(node.get("truncated") or truncated); self._put_json(self._k("node", node["id"]), node)
         self._invalidate()
     @staticmethod
-    def rels_key(rels): return ",".join(sorted(set(rels or ())))
-    def put_expansion(self, node_id, rels, nodes=(), edges=(), truncated=False):
+    def rels_key(rels): return rels_key(rels)
+    def put_expansion(self, node, edges=(), neighbors=(), *, rels, truncated=False):
         """Guarda los elementos recibidos y marca el conjunto de relaciones como expandido."""
-        saved = [self.put_node(n) for n in nodes]
+        if isinstance(node, str):
+            node = self.get_node(node) or {"id": node}
+        node_id = self.put_node(node)
+        saved = [self.put_node(n) for n in neighbors]
         for edge in edges: self.put_edge(edge)
-        self.mark_expanded(node_id, self.rels_key(rels), truncated=truncated)
-        return saved
+        self.mark_expanded(node_id, rels_key(rels), truncated=truncated)
+        return node_id
     def stats(self): return {kind: len(self.kv.keys(self._k(kind, "*"))) for kind in ("node", "edge")}
 
 _STORE = None
@@ -345,5 +352,5 @@ def get_store():
         kv = ValkeyKV(url, timeout_s=_timeout_env("VALKEY_TIMEOUT", 3), connect_timeout_s=_timeout_env("VALKEY_CONNECT_TIMEOUT", 8))
         try: connected = kv.ping()
         except Exception: connected = False
-        if connected: _STORE = GraphStore(kv, local_ttl_s=30); _STORE.backend = "valkey"; return _STORE
+        if connected: _STORE = GraphStore(kv, ttl_s=int(os.getenv("GRAPH_TTL_S", TTL_S)), cache_size=20000); _STORE.backend = "valkey"; return _STORE
     _STORE = GraphStore(MemoryKV()); _STORE.backend = "memory"; return _STORE

@@ -2,6 +2,7 @@
 from datetime import datetime, timezone
 import re
 import unicodedata
+import hashlib
 from urllib.parse import urlsplit
 
 REL_WHITELIST = frozenset("INVESTED_IN PARTICIPATES_IN_FUNDING_ROUND FOUNDED IS_CEO_OF IS_CTO_OF IS_BOARD_MEMBER_OF WORKS_AT IS_MEMBER_OF PARTICIPATES_IN_CORPORATE_EVENT PARTICIPATES_IN_EVENT".split())
@@ -41,3 +42,21 @@ def website_key(url):
 
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
+
+def rels_key(rels):
+    if isinstance(rels, str):
+        return rels
+    values = sorted(set(rels or ()))
+    return "rels:" + hashlib.sha1(",".join(values).encode()).hexdigest()[:12]
+
+def node_is_expanded(node, rels, ttl_s=TTL_S):
+    date = (node or {}).get("expanded", {}).get(rels_key(rels))
+    if not date:
+        return False
+    try:
+        parsed = datetime.fromisoformat(date)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return (datetime.now(timezone.utc) - parsed.astimezone(timezone.utc)).total_seconds() < ttl_s
+    except (ValueError, TypeError):
+        return False

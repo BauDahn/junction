@@ -1,6 +1,6 @@
 import fnmatch
 import pytest
-from graph.model import normalize_name, types_compatible, website_key
+from graph.model import normalize_name, rels_key, types_compatible, website_key
 from graph.store import GraphStore, MemoryKV, ValkeyKV, get_store, reset_store
 
 class FakeRedis:
@@ -110,9 +110,9 @@ def test_views_expansion_and_relations(store):
     assert store.view_seeds("u")==["a"] and store.view_nodes("u")=={"a","b","c"} and store.view_nodes("v")=={"b"}
     assert not store.is_expanded("a","R"); store.mark_expanded("a","R")
     assert store.is_expanded("a","R") and not store.is_expanded("a","R",0)
-    assert store.rels_key(["B","A","A"])=="A,B"
-    store.put_expansion("a",["A"],nodes=[node("z",name="Z")],edges=[{"src":"a","dst":"z","rel":"A"}])
-    assert store.is_expanded("a","A") and store.get_node("z")
+    assert store.rels_key(["B","A","A"])==rels_key(["B","A","A"])
+    store.put_expansion(node("a", name="a"), edges=[{"src":"a","dst":"z","rel":"A"}], neighbors=[node("z",name="Z")], rels=["A"])
+    assert store.is_expanded("a",["A"]) and store.get_node("z")
 
 def test_rtt_counts_are_batched():
     client=FakeRedis(); graph=GraphStore(ValkeyKV("fake",client=client))
