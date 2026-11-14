@@ -34,6 +34,14 @@ Una conversación por usuario. Manda texto o audio; el backend transcribe y el *
 - `Message`: `{id, role: user|assistant, text, transcript?: string, created_at, blocks?: [Block], sources?: [Source], cards?: [Card]}`. `text` en las respuestas pasa a ser una línea de contexto; el contenido está en `blocks`. `cards` se mantiene por compatibilidad con las recomendaciones.
 - `Card`: `{type: investor|company|competitor|prospect|claim, title, subtitle?, reason, sources: [Source]}`
 
+## Feed y detalle *(borrador, nuevo 14/11 noche)*
+Cala Match. Detalle de cómo se calcula el puntaje en `docs/SPEC-grafo-afinidad.md`.
+- `GET /api/feed?mode=raising|investing&limit=20&cursor=` → `{mode, items: [FeedCard], next_cursor?, confidence_note?}`. `raising` devuelve inversores; `investing`, startups. Ordenado por `score` descendente.
+- `FeedCard`: `{id, type: investor|startup, name, one_liner, tags: [string], score: 0-100, confidence: 0-1, why_match: [string], sources: [Source]}`. Con `confidence < 0.5` la app muestra "partial data".
+- `GET /api/entities/{id}?mode=` → `EntityDetail`: `{id, type, name, description?, score?, confidence?, why_match: [{signal, text, sources: [Source]}], facts: [{label, value, sources: [Source]}], rounds: [{round_type, amount?, date?, leads: [string], investors: [string], sources: [Source]}], portfolio: [{id, name}], people: [{id, name, role, since?}], loaded_at}`.
+- `POST /api/sessions/{id}/mode` con `{mode}` → `{mode}`: guarda el modo activo de la sesión.
+- Todo dato viaja con `sources`; si no hay fuente, el campo no se devuelve.
+
 ## Perfil y recomendaciones *(borrador)*
 - `GET /api/sessions/{id}/profile` → `{startup_name?, one_liner?, sector?, stage?, location?, raising?: {amount?, round?}, competitors: [string], target_customers?, role?: founder|investor|other, interests?: {sectors: [string], regions: [string], stages: [string], follows: {companies: [string], investors: [string]}}, facts: [{text, origin: user, verified?: Claim}], updated_at}`
 - `GET /api/sessions/{id}/recommendations` → `{status: idle|running|ready|error, updated_at, investors: [Card], competitors: [Card], prospects: [Card]}`
