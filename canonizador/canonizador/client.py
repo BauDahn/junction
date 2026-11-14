@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import json
 import os
+import time
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -12,11 +13,41 @@ import httpx
 from .cache import load_env, make_cache
 
 
+class _ValkeySharedLimiter:
+    def __init__(self, remote): self.remote = remote
+
+    def increment(self, kind, interval, now):
+        if interval > 1:
+            size = interval
+            window = int(now // size)
+            limit = 1
+        else:
+            size = 1.0
+            window = int(now)
+            limit = max(1, int(1 / interval)) if interval > 0 else 1
+        key = f"ratelimit:v1:cala:{kind}:{window}"
+        ttl = int(size) + 2
+        existing_client = getattr(self.remote, "_client", None)
+        if existing_client is not None and not callable(getattr(existing_client, "pipeline", None)):
+            raise RuntimeError("Valkey client does not support pipelines")
+        def operation(client):
+            if not callable(getattr(client, "pipeline", None)):
+                raise RuntimeError("Valkey client does not support pipelines")
+            pipe = client.pipeline()
+            pipe.incr(key)
+            pipe.expire(key, ttl)
+            result = pipe.execute()
+            return result[0]
+        ok, value = self.remote._run(operation)
+        if not ok: raise RuntimeError("Valkey rate limiter unavailable")
+        return value, limit, size
+
+
 class CalaClient:
     BASE = "https://api.cala.ai/v1"
 
     def __init__(self, api_key=None, cache_dir="cache", client=None, sleep=asyncio.sleep, min_interval=8, cache=None,
-                 knowledge_interval=None, entities_interval=None, entities_concurrency=None):
+                 knowledge_interval=None, entities_interval=None, entities_concurrency=None, shared_limiter=None):
         if not api_key: load_env()
         self.api_key = api_key or os.getenv("CALA_API_KEY", "")
         if not self.api_key: raise RuntimeError("Definí CALA_API_KEY en el entorno o backend/.env")
@@ -39,8 +70,38 @@ class CalaClient:
         self._retry_base = float(os.getenv("CALA_429_WAIT", "5"))
         self.calls = 0
         self.stats = {"knowledge_calls": 0, "entities_calls": 0, "429": 0,
-                      "pause_seconds": 0.0, "429_wait_seconds": 0.0, "cache_hits": 0}
+                      "pause_seconds": 0.0, "429_wait_seconds": 0.0, "cache_hits": 0,
+                      "shared_limit_waits": 0, "shared_limit_errors": 0}
         self.cache = cache or make_cache(self.cache_dir)
+        remote = getattr(self.cache, "remote", None)
+        if remote is None and hasattr(self.cache, "_client") and hasattr(self.cache, "_run"):
+            remote = self.cache
+        enabled = os.getenv("CALA_SHARED_LIMIT", "1") != "0"
+        self.shared_limiter = shared_limiter if shared_limiter is not None else (
+            _ValkeySharedLimiter(remote) if enabled and remote is not None else None)
+        self._shared_down_until = 0.0
+
+    async def _wait_shared_slot(self, kind):
+        limiter = self.shared_limiter
+        if limiter is None: return
+        loop = asyncio.get_running_loop()
+        if loop.time() < self._shared_down_until: return
+        interval = self.intervals[kind]
+        for _ in range(10):
+            try:
+                now = time.time()
+                count, limit, window_size = await asyncio.to_thread(limiter.increment, kind, interval, now)
+            except Exception:
+                self.stats["shared_limit_errors"] += 1
+                self._shared_down_until = loop.time() + 30
+                return
+            if count <= limit: return
+            wait = window_size - (now % window_size)
+            self.stats["pause_seconds"] += wait
+            self.stats["shared_limit_waits"] += 1
+            await self.sleep(wait)
+        self.stats["shared_limit_errors"] += 1
+        self._shared_down_until = loop.time() + 30
 
     async def _wait_for_slot(self, kind):
         # Serializing only start times keeps the configured spacing without holding a lock over HTTP.
@@ -55,6 +116,7 @@ class CalaClient:
                 self.stats["pause_seconds"] += wait
                 await self.sleep(wait)
             self._last_call[kind] = loop.time()
+        await self._wait_shared_slot(kind)
 
     @staticmethod
     def _retry_after(response):

@@ -37,4 +37,7 @@ Cómo funciona (`canonizador/cache.py`):
 - Claves `cala:v1:<namespace>:<sha256>`. Las respuestas de Cala caducan a los `CACHE_TTL_S` segundos; las intenciones del LLM (`intents`) no caducan.
 - Valkey es opcional de verdad: timeout de conexión configurable (`VALKEY_CONNECT_TIMEOUT`, 8 s) y de lectura/escritura (`VALKEY_TIMEOUT`, 3 s). Si falla, se sigue solo con disco y no se reintenta durante 60 s. El backend intenta precalentar la conexión en segundo plano al arrancar.
 - Ahorro para la demo: `cache.stats` (o `canonizador.cache.STATS`, acumulado del proceso) tiene `local_hits`, `remote_hits` y `misses`.
+- Con Valkey, `CALA_SHARED_LIMIT` (activado por defecto; `0` lo desactiva) aplica un cupo compartido por clase de endpoint: knowledge cada 8 s y entities según su intervalo.
+- El contador usa `INCR` + `EXPIRE` atómicos por ventana y la conexión de Valkey de la caché; los procesos esperan la ventana siguiente cuando se agota el cupo.
+- Si Valkey falla, se mantiene el límite local y se omiten los intentos compartidos durante 30 s.
 - En los tests la caché remota está desactivada (`VALKEY_URL=""` en `tests/conftest.py`).
