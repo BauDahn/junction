@@ -12,7 +12,7 @@ from pathlib import Path
 
 DEFAULT_TTL_S = 7 * 24 * 3600  # respuestas de Cala: 7 días
 NO_TTL_NAMESPACES = ("intents",)  # intenciones del LLM: no caducan
-ENV_KEYS = ("CALA_API_KEY", "VALKEY_URL", "CACHE_TTL_S", "GEMINI_API_KEY", "GOOGLE_API_KEY", "GEMINI_MODEL", "GEMINI_FAST_MODEL", "LLM_PROVIDER")
+ENV_KEYS = ("CALA_API_KEY", "VALKEY_URL", "VALKEY_CONNECT_TIMEOUT", "VALKEY_TIMEOUT", "CACHE_TTL_S", "GEMINI_API_KEY", "GOOGLE_API_KEY", "GEMINI_MODEL", "GEMINI_FAST_MODEL", "LLM_PROVIDER")
 STATS = {"local_hits": 0, "remote_hits": 0, "misses": 0}  # acumulado del proceso (cachés de make_cache)
 
 
@@ -86,10 +86,11 @@ class ValkeyCache(_Base):
     """Caché en Valkey/Redis. Nunca rompe una consulta: ante cualquier error devuelve None / no escribe,
     y deja de intentar durante `retry_after_s` para no sumar latencia."""
 
-    def __init__(self, url, prefix="cala:v1", ttl_s=None, *, client=None, timeout_s=2, retry_after_s=60,
+    def __init__(self, url, prefix="cala:v1", ttl_s=None, *, client=None, timeout_s=3, connect_timeout_s=8, retry_after_s=60,
                  no_ttl_namespaces=NO_TTL_NAMESPACES, clock=time.monotonic):
         self.url, self.prefix, self.ttl_s = url, prefix, ttl_s
-        self.timeout_s, self.retry_after_s, self.clock = timeout_s, retry_after_s, clock
+        self.timeout_s, self.connect_timeout_s = timeout_s, connect_timeout_s
+        self.retry_after_s, self.clock = retry_after_s, clock
         self.no_ttl_namespaces = tuple(no_ttl_namespaces)
         self._client, self._down_until = client, None
         self.stats = _new_stats()
@@ -111,7 +112,7 @@ class ValkeyCache(_Base):
         try:
             if self._client is None:
                 import redis
-                self._client = redis.Redis.from_url(self.url, socket_connect_timeout=self.timeout_s,
+                self._client = redis.Redis.from_url(self.url, socket_connect_timeout=self.connect_timeout_s,
                                                     socket_timeout=self.timeout_s, decode_responses=True)
             value = operation(self._client)
             self._down_until = None
@@ -184,8 +185,26 @@ def remote_from_env():
     url = (os.getenv("VALKEY_URL") or "").strip()
     if not url: return None
     ttl = ttl_from_env()
-    if (url, ttl) not in _REMOTES: _REMOTES[(url, ttl)] = ValkeyCache(url, ttl_s=ttl)
-    return _REMOTES[(url, ttl)]
+    connect_timeout = _int_env("VALKEY_CONNECT_TIMEOUT", 8)
+    timeout = _int_env("VALKEY_TIMEOUT", 3)
+    key = (url, ttl, connect_timeout, timeout)
+    if key not in _REMOTES:
+        _REMOTES[key] = ValkeyCache(url, ttl_s=ttl, timeout_s=timeout, connect_timeout_s=connect_timeout)
+    return _REMOTES[key]
+
+
+def _int_env(name, default):
+    try: return max(0.1, float(os.getenv(name, str(default))))
+    except (TypeError, ValueError): return default
+
+
+def warmup():
+    """Intenta establecer la conexión compartida sin propagar errores. False si no está disponible."""
+    try:
+        remote = remote_from_env()
+        return remote.ping() if remote is not None else False
+    except Exception:
+        return False
 
 
 def make_cache(root):

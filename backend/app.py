@@ -1,6 +1,7 @@
 import asyncio
 import os
 import tempfile
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -21,6 +22,20 @@ from chat.routes import router as chat_router
 ROOT = Path(__file__).parent
 MAX_PDF_BYTES = 20 * 1024 * 1024
 app = FastAPI(title="Deck Verifier")
+
+
+@app.on_event("startup")
+async def warmup_valkey():
+    # La primera conexión TLS a Aiven puede tardar varios segundos; no retrases el arranque HTTP.
+    def run():
+        try:
+            from canonizador.cache import warmup
+            warmup()
+        except Exception:
+            pass  # Valkey es opcional; las consultas mantienen el respaldo local a disco.
+    threading.Thread(target=run, name="valkey-warmup", daemon=True).start()
+
+
 app.include_router(chat_router)
 ERROR_CODES = {
     400: "bad_request",
