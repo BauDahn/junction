@@ -35,9 +35,8 @@ Una conversación por usuario. Manda texto o audio; el backend transcribe y el *
 - `Card`: `{type: investor|company|competitor|prospect|claim, title, subtitle?, reason, sources: [Source]}`
 
 ## Perfil y recomendaciones *(borrador)*
-- `GET /api/sessions/{id}/profile` → `{startup_name?, one_liner?, sector?, stage?, location?, raising?: {amount?, round?}, competitors: [string], target_customers?, role?: founder|investor|other, interests?: {sectors: [string], regions: [string], stages: [string], follows: {companies: [string], investors: [string]}}, facts: [{text, origin: user|deck, verified?: Claim}], updated_at}`
+- `GET /api/sessions/{id}/profile` → `{startup_name?, one_liner?, sector?, stage?, location?, raising?: {amount?, round?}, competitors: [string], target_customers?, role?: founder|investor|other, interests?: {sectors: [string], regions: [string], stages: [string], follows: {companies: [string], investors: [string]}}, facts: [{text, origin: user, verified?: Claim}], updated_at}`
 - `GET /api/sessions/{id}/recommendations` → `{status: idle|running|ready|error, updated_at, investors: [Card], competitors: [Card], prospects: [Card]}`
-- `POST /api/sessions/{id}/deck` (multipart `file`) → `{job_id}`: verifica el deck (mismo job que abajo) y suma sus afirmaciones al perfil.
 
 ## Journal diario *(borrador, nuevo 14/11)*
 Dos ediciones armadas solo con consultas a Cala. Se genera bajo demanda la primera vez del día y queda cacheado.
@@ -48,7 +47,8 @@ Dos ediciones armadas solo con consultas a Cala. Se genera bajo demanda la prime
 - `Section`: `{id, title, description, items: [JournalItem]}`
 - `JournalItem`: `{id, is_new: bool, block: Block}`. `id` sirve para preguntar desde el journal (`context.journal_item_id` en el chat).
 
-## Verificador de decks (implementado)
+## Verificador de decks (fuera del producto desde el 14/11)
+La app no usa estos endpoints. Siguen en el backend, sin mantenimiento.
 - `POST /api/verify` (multipart `file`: PDF ≤ 20 MB) → `{job_id}`
 - `POST /api/verify-sample` → `{job_id}` (deck de ejemplo)
 - `GET /api/jobs/{job_id}` → `{status: queued|extracting|checking|judging|done|error, progress: {done, total}, report?, error?}`
