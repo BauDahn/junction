@@ -2,6 +2,8 @@ import asyncio
 import hashlib
 import json
 import os
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -13,44 +15,125 @@ from .cache import load_env, make_cache
 class CalaClient:
     BASE = "https://api.cala.ai/v1"
 
-    def __init__(self, api_key=None, cache_dir="cache", client=None, sleep=asyncio.sleep, min_interval=8, cache=None):
+    def __init__(self, api_key=None, cache_dir="cache", client=None, sleep=asyncio.sleep, min_interval=8, cache=None,
+                 knowledge_interval=None, entities_interval=None, entities_concurrency=None):
         if not api_key: load_env()
         self.api_key = api_key or os.getenv("CALA_API_KEY", "")
         if not self.api_key: raise RuntimeError("Definí CALA_API_KEY en el entorno o backend/.env")
         self.cache_dir, self.client, self.sleep = Path(cache_dir), client, sleep
-        self.min_interval, self._last_call = min_interval, None
-        self._lock = asyncio.Lock()
+        # min_interval sigue siendo el valor predeterminado explícito para knowledge.
+        self.min_interval = min_interval
+        self.intervals = {
+            "knowledge": float(knowledge_interval if knowledge_interval is not None else os.getenv("CALA_KNOWLEDGE_INTERVAL", min_interval)),
+            "entities": float(entities_interval if entities_interval is not None else os.getenv("CALA_ENTITIES_INTERVAL", "0.7")),
+        }
+        concurrency = int(entities_concurrency if entities_concurrency is not None else os.getenv("CALA_ENTITIES_CONCURRENCY", "2"))
+        if concurrency < 1: raise ValueError("entities_concurrency debe ser al menos 1")
+        self._semaphores = {"knowledge": asyncio.Semaphore(1), "entities": asyncio.Semaphore(concurrency)}
+        self._schedule_locks = {kind: asyncio.Lock() for kind in self.intervals}
+        self._last_call = {kind: None for kind in self.intervals}
+        self._paused_until = {kind: 0.0 for kind in self.intervals}
+        self._inflight = {}
+        self._inflight_lock = asyncio.Lock()
+        self._wait_locks = {kind: asyncio.Lock() for kind in self.intervals}
+        self._retry_base = float(os.getenv("CALA_429_WAIT", "5"))
         self.calls = 0
-        # Respuestas crudas de Cala en el namespace "cala": disco y, si hay VALKEY_URL, Valkey compartido.
+        self.stats = {"knowledge_calls": 0, "entities_calls": 0, "429": 0,
+                      "pause_seconds": 0.0, "429_wait_seconds": 0.0, "cache_hits": 0}
         self.cache = cache or make_cache(self.cache_dir)
+
+    async def _wait_for_slot(self, kind):
+        # Serializing only start times keeps the configured spacing without holding a lock over HTTP.
+        async with self._schedule_locks[kind]:
+            loop = asyncio.get_running_loop()
+            while True:
+                now = loop.time()
+                wait = max(0.0, self._paused_until[kind] - now)
+                if self._last_call[kind] is not None:
+                    wait = max(wait, self.intervals[kind] - (now - self._last_call[kind]))
+                if wait <= 0: break
+                self.stats["pause_seconds"] += wait
+                await self.sleep(wait)
+            self._last_call[kind] = loop.time()
+
+    @staticmethod
+    def _retry_after(response):
+        value = response.headers.get("Retry-After")
+        if value is None: return None
+        try: return max(0.0, float(value))
+        except ValueError:
+            try:
+                date = parsedate_to_datetime(value)
+                if date.tzinfo is None: date = date.replace(tzinfo=timezone.utc)
+                return max(0.0, (date - datetime.now(timezone.utc)).total_seconds())
+            except (TypeError, ValueError, OverflowError): return None
 
     async def request(self, method, path, *, params=None, body=None):
         cache_key = json.dumps([method, path, params, body], sort_keys=True, ensure_ascii=False)
         digest = hashlib.sha256(cache_key.encode()).hexdigest()
         cached = self.cache.get_key("cala", digest)
-        if cached is not None: return cached
-        async with self._lock:
-            if self._last_call is not None:
-                remaining = self.min_interval - (asyncio.get_running_loop().time() - self._last_call)
-                if remaining > 0: await self.sleep(remaining)
-            owns = self.client is None
-            client = self.client or httpx.AsyncClient(timeout=120)
-            try:
-                response = None
-                for attempt in range(3):
-                    self.calls += 1
-                    response = await client.request(method, self.BASE + path, params=params, json=body, headers={"X-API-KEY": self.api_key})
-                    self._last_call = asyncio.get_running_loop().time()
-                    if response.status_code == 429:
-                        if attempt < 2: await self.sleep(60)
-                        continue
-                    if response.status_code != 429 and response.status_code < 500: break
-                    if attempt < 2: await self.sleep(20 * (2 ** attempt))
-                response.raise_for_status(); value = response.json()
-            finally:
-                if owns: await client.aclose()
-            self.cache.put_key("cala", digest, value)
+        if cached is not None:
+            self.stats["cache_hits"] += 1
+            return cached
+        async with self._inflight_lock:
+            future = self._inflight.get(digest)
+            if future is None:
+                future = asyncio.get_running_loop().create_future()
+                self._inflight[digest] = future
+                owner = True
+            else: owner = False
+        if not owner:
+            value = await future
+            self.stats["cache_hits"] += 1
             return value
+        try:
+            kind = "knowledge" if path.startswith("/knowledge/") else "entities"
+            async with self._semaphores[kind]:
+                cached = self.cache.get_key("cala", digest)
+                if cached is not None:
+                    self.stats["cache_hits"] += 1
+                    future.set_result(cached)
+                    return cached
+                owns = self.client is None
+                client = self.client or httpx.AsyncClient(timeout=120)
+                try:
+                    for attempt in range(4):
+                        await self._wait_for_slot(kind)
+                        self.calls += 1
+                        self.stats[f"{kind}_calls"] += 1
+                        response = await client.request(method, self.BASE + path, params=params, json=body,
+                                                        headers={"X-API-KEY": self.api_key})
+                        if response.status_code == 429:
+                            self.stats["429"] += 1
+                            if attempt == 3:
+                                response.raise_for_status()
+                            retry = self._retry_after(response)
+                            delay = min(60.0, retry if retry is not None else self._retry_base * (2 ** attempt))
+                            async with self._wait_locks[kind]:
+                                self._paused_until[kind] = max(self._paused_until[kind], asyncio.get_running_loop().time() + delay)
+                            self.stats["429_wait_seconds"] += delay
+                            await self.sleep(delay)
+                            # The sleep hook may be virtual in tests; production sleep advances loop.time().
+                            if asyncio.get_running_loop().time() < self._paused_until[kind]:
+                                self._paused_until[kind] = asyncio.get_running_loop().time()
+                            continue
+                        if response.status_code < 500: break
+                        if attempt < 3: await self.sleep(20 * (2 ** attempt))
+                    response.raise_for_status()
+                    value = response.json()
+                finally:
+                    if owns: await client.aclose()
+                self.cache.put_key("cala", digest, value)
+                future.set_result(value)
+                return value
+        except BaseException as exc:
+            if not future.done(): future.set_exception(exc)
+            # Retrieve the exception when there were no waiters, avoiding an unhandled-future warning.
+            if not future.cancelled(): future.exception()
+            raise
+        finally:
+            async with self._inflight_lock:
+                self._inflight.pop(digest, None)
 
     async def entities(self, name, entity_type):
         return await self.request("GET", "/entities", params={"name": name, "entity_types": entity_type})
@@ -60,7 +143,6 @@ class CalaClient:
 
     async def retrieve(self, entity_id, *, properties=None, relationships=None, numerical_observations=None):
         body = {"properties": properties or [], "relationships": relationships or {}}
-        # Cala exige un diccionario ({id_de_metrica: {...}}); una lista (aunque esté vacía) da 422.
         if numerical_observations:
             body["numerical_observations"] = (numerical_observations if isinstance(numerical_observations, dict)
                                               else {oid: {"limit": 100} for oid in numerical_observations})
