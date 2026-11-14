@@ -44,11 +44,17 @@ def test_detail_contract_sources_and_score_matches_feed(client):
     detail = client.get("/api/entities/fund", params={"session_id": session_id}).json()
     assert detail["score"] == card["score"]
     assert detail["confidence"] == card["confidence"]
-    assert set(detail) == {"id", "type", "name", "description", "score", "confidence", "why_match", "facts",
-                           "rounds", "portfolio", "people", "loaded_at"}
+    detail_contract = {"id", "type", "name", "description", "score", "confidence", "why_match", "facts",
+                       "rounds", "portfolio", "people", "loaded_at"}
+    assert set(detail) <= detail_contract
     assert all(fact["sources"] for fact in detail["facts"])
     assert all(round_data["sources"] for round_data in detail["rounds"])
+    round_contract = {"round_type", "amount", "date", "leads", "investors", "sources"}
+    assert all(set(round_data) <= round_contract and "company" not in round_data for round_data in detail["rounds"])
     assert all(signal["sources"] for signal in detail["why_match"])
+    assert [signal["signal"] for signal in detail["why_match"][:2]] == ["sector", "stage"]
+    card = client.get("/api/feed", params={"session_id": session_id}).json()["items"][0]
+    assert set(card) == {"id", "type", "name", "one_liner", "tags", "score", "confidence", "why_match", "sources"}
     size = next(fact["value"] for fact in detail["facts"] if fact["label"] == "Typical round size")
     assert size == "1M–5M"
 
@@ -106,6 +112,23 @@ def test_startup_rounds_group_by_event_date_and_omit_empty_date(client):
     assert dated["leads"] == ["Fund A"]
     assert all(row["sources"] for row in detail["rounds"])
     assert "date" not in undated
+
+
+def test_startup_uses_sourced_feature_rounds_without_company_key(client):
+    feature = {"id": "startup", "name": "Startup", "kinds": ["startup"], "sources": [SOURCE],
+               "rounds": [{"company": "Internal company label", "round_type": "Seed",
+                           "funding_amount": "3M", "year": 2025, "sources": [SOURCE]}]}
+    backend_app.app.dependency_overrides[get_catalog] = lambda: MemoryCatalog([feature])
+    graph = MemoryGraph()
+    graph.add_node({"id": "startup", "name": "Startup", "props": {}})
+    graph.add_node({"id": "fund", "name": "Fund", "props": {}})
+    graph.add_edge({"id": "graph-round", "src": "fund", "dst": "startup", "rel": "INVESTED_IN",
+                    "event_date": "2024", "sources": [SOURCE]})
+    backend_app.app.dependency_overrides[get_graph] = lambda: graph
+    detail = client.get("/api/entities/startup", params={"mode": "investing"}).json()
+    assert detail["rounds"] == [{"round_type": "Seed", "amount": "3M", "date": "2025",
+                                 "leads": [], "investors": [], "sources": [SOURCE]}]
+    assert all("company" not in round_data for round_data in detail["rounds"])
 
 
 def test_detail_not_found(client):

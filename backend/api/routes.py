@@ -214,8 +214,19 @@ def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
                 continue
             item = {"leads": [name] if round_data.get("is_lead") else [],
                     "investors": [name], "sources": round_sources}
-            fields = (("company", "company"), ("round_type", "round_type"),
-                      ("funding_amount", "amount"), ("year", "date"))
+            fields = (("round_type", "round_type"), ("funding_amount", "amount"), ("year", "date"))
+            for source_key, target_key in fields:
+                if round_data.get(source_key) is not None:
+                    item[target_key] = str(round_data[source_key])
+            detail["rounds"].append(item)
+    elif rounds:
+        for round_data in rounds:
+            round_sources = round_data.get("sources") or []
+            if not round_sources:
+                continue
+            item = {"leads": list(round_data.get("leads") or []),
+                    "investors": list(round_data.get("investors") or []), "sources": round_sources}
+            fields = (("round_type", "round_type"), ("funding_amount", "amount"), ("year", "date"))
             for source_key, target_key in fields:
                 if round_data.get(source_key) is not None:
                     item[target_key] = str(round_data[source_key])
@@ -255,10 +266,11 @@ def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
         if scored:
             detail["score"] = scored["score"]
             detail["confidence"] = scored["confidence"]
+            signals = [signal for signal in scored["signals"]
+                       if signal["value"] is not None and signal["sources"]]
+            signals.sort(key=lambda signal: signal["weight"] * signal["value"], reverse=True)
             detail["why_match"] = [{"signal": signal["signal"], "text": signal["text"],
-                                     "sources": signal["sources"]}
-                                    for signal in scored["signals"]
-                                    if signal["value"] is not None and signal["sources"]]
+                                     "sources": signal["sources"]} for signal in signals]
     return detail
 
 
