@@ -10,9 +10,13 @@ import {
 } from '../src/api';
 import BlockView from '../src/components/BlockView';
 import { getSessionId } from '../src/session';
+import { useTheme } from '../src/theme';
+import { Button, Card, Screen, ScreenHeader, StateView } from '../src/ui';
 
 export default function JournalScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const s = journalStyles(colors);
   const [edition, setEdition] = useState<'ecosistema' | 'founders'>('ecosistema');
   const [journal, setJournal] = useState<Journal | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -57,9 +61,8 @@ export default function JournalScreen() {
     }
   }
   return (
-    <ScrollView style={s.screen} contentContainerStyle={s.content}>
-      <Text style={s.eyebrow}>JUNCTION · STARTUP INTELLIGENCE</Text>
-      <Text style={s.title}>Journal</Text>
+    <Screen>
+      <ScreenHeader title="Journal" subtitle="Ediciones diarias del ecosistema y para founders." />
       <View style={s.switcher}>
         {(['ecosistema', 'founders'] as const).map((value) => (
           <Pressable
@@ -98,7 +101,7 @@ export default function JournalScreen() {
       ) : null}
       {journal?.status === 'generating' ? (
         <View style={s.card}>
-          <ActivityIndicator color="#a78bfa" />
+          <ActivityIndicator color={colors.accent} />
           <Text style={s.body}>
             Generando journal… {journal.progress?.done ?? 0}/{journal.progress?.total ?? 0}
           </Text>
@@ -138,60 +141,62 @@ export default function JournalScreen() {
             </View>
           ))
         : null}
-    </ScrollView>
+    </Screen>
   );
 }
-const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#0b1020' },
-  content: { padding: 20, paddingBottom: 40, maxWidth: 820, width: '100%', alignSelf: 'center' },
-  eyebrow: { color: '#a78bfa', fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
-  title: { color: '#f8fafc', fontSize: 30, fontWeight: '800', marginTop: 5 },
-  switcher: { flexDirection: 'row', gap: 8, marginTop: 18 },
-  tab: { padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#29324b' },
-  active: { backgroundColor: '#6d45cf' },
-  tabText: { color: '#f8fafc', fontWeight: '700' },
-  date: { color: '#9aa6bf', marginTop: 14 },
-  button: {
-    alignSelf: 'flex-start',
-    marginTop: 10,
-    backgroundColor: '#8b5cf6',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  buttonText: { color: '#fff', fontWeight: '700' },
-  card: {
-    backgroundColor: '#151c30',
-    borderColor: '#29324b',
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: 16,
-    marginTop: 14,
-    gap: 8,
-  },
-  body: { color: '#cbd5e1', fontSize: 14, lineHeight: 21 },
-  link: { color: '#c4b5fd', textDecorationLine: 'underline', fontWeight: '700' },
-  error: { color: '#fecaca' },
-  section: { marginTop: 24 },
-  sectionTitle: { color: '#f8fafc', fontWeight: '800', fontSize: 20 },
-  item: { marginTop: 10 },
-  new: {
-    color: '#0b1020',
-    backgroundColor: '#34d399',
-    overflow: 'hidden',
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    alignSelf: 'flex-start',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  ask: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#29324b',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 10,
-    marginTop: 8,
-  },
-});
+function journalStyles(c: import('../src/theme').Colors) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.bg },
+    content: { padding: 20, paddingBottom: 40, maxWidth: 820, width: '100%', alignSelf: 'center' },
+    eyebrow: { color: c.accent, fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
+    title: { color: c.text, fontSize: 30, fontWeight: '800', marginTop: 5 },
+    switcher: { flexDirection: 'row', gap: 8, marginTop: 18 },
+    tab: { padding: 10, borderRadius: 10, borderWidth: 1, borderColor: c.surfaceAlt },
+    active: { backgroundColor: c.accent },
+    tabText: { color: c.text, fontWeight: '700' },
+    date: { color: c.textMuted, marginTop: 14 },
+    button: {
+      alignSelf: 'flex-start',
+      marginTop: 10,
+      backgroundColor: c.accent,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 10,
+    },
+    buttonText: { color: c.accentText, fontWeight: '700' },
+    card: {
+      backgroundColor: c.surface,
+      borderColor: c.surfaceAlt,
+      borderWidth: 1,
+      borderRadius: 14,
+      padding: 16,
+      marginTop: 14,
+      gap: 8,
+    },
+    body: { color: c.textMuted, fontSize: 14, lineHeight: 21 },
+    link: { color: c.accent, textDecorationLine: 'underline', fontWeight: '700' },
+    error: { color: c.danger },
+    section: { marginTop: 24 },
+    sectionTitle: { color: c.text, fontWeight: '800', fontSize: 20 },
+    item: { marginTop: 10 },
+    new: {
+      color: c.bg,
+      backgroundColor: c.confirmed,
+      overflow: 'hidden',
+      borderRadius: 10,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      alignSelf: 'flex-start',
+      fontSize: 11,
+      fontWeight: '800',
+    },
+    ask: {
+      alignSelf: 'flex-start',
+      backgroundColor: c.surfaceAlt,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 10,
+      marginTop: 8,
+    },
+  });
+}

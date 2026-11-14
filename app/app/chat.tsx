@@ -24,6 +24,8 @@ import {
 } from '../src/api';
 import CardView from '../src/components/CardView';
 import BlockView from '../src/components/BlockView';
+import { font, space, useTheme } from '../src/theme';
+import { ScreenHeader, StateView } from '../src/ui';
 
 type ChatMessage = Message & {
   pending?: boolean;
@@ -33,6 +35,8 @@ type ChatMessage = Message & {
   retryContext?: { journal_item_id: string };
 };
 export default function ChatScreen() {
+  const { colors } = useTheme();
+  const s = chatStyles(colors);
   const params = useLocalSearchParams<{ journal_item_id?: string; journal_title?: string }>();
   const [journalContext, setJournalContext] = useState<{ id: string; title: string } | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -258,9 +262,8 @@ export default function ChatScreen() {
       style={s.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={s.header}>
-        <Text style={s.eyebrow}>JUNCTION · STARTUP INTELLIGENCE</Text>
-        <Text style={s.title}>Chat</Text>
+      <View style={{ paddingHorizontal: space.xl, paddingTop: space.lg }}>
+        <ScreenHeader title="Chat" subtitle="Habla con Cala sobre tu startup." />
       </View>
       {journalContext ? (
         <View style={s.contextBanner}>
@@ -276,8 +279,7 @@ export default function ChatScreen() {
       ) : null}
       {loading ? (
         <View style={s.center}>
-          <ActivityIndicator color="#a78bfa" />
-          <Text style={s.muted}>Cargando conversación…</Text>
+          <StateView kind="loading" title="Cargando conversación…" />
         </View>
       ) : (
         <FlatList
@@ -319,7 +321,7 @@ export default function ChatScreen() {
               value={draft}
               onChangeText={setDraft}
               placeholder="Escribe un mensaje…"
-              placeholderTextColor="#77839c"
+              placeholderTextColor={colors.textFaint}
               multiline
               maxLength={4000}
               style={s.input}
@@ -352,94 +354,106 @@ export default function ChatScreen() {
   );
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0b1020' },
-  header: { paddingHorizontal: 22, paddingTop: 18, paddingBottom: 10 },
-  eyebrow: { color: '#a78bfa', fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
-  title: { color: '#f8fafc', fontSize: 27, fontWeight: '800', marginTop: 5 },
-  messages: { paddingHorizontal: 16, paddingVertical: 14, flexGrow: 1, justifyContent: 'flex-end' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  empty: {
-    color: '#9aa6bf',
-    textAlign: 'center',
-    maxWidth: 300,
-    alignSelf: 'center',
-    marginBottom: 32,
-    lineHeight: 22,
-  },
-  row: { width: '100%', marginVertical: 5 },
-  userRow: { alignItems: 'flex-end' },
-  assistantRow: { alignItems: 'flex-start' },
-  bubble: { maxWidth: '88%', borderRadius: 18, padding: 13 },
-  userBubble: { backgroundColor: '#8b5cf6', borderBottomRightRadius: 5 },
-  assistantBubble: { backgroundColor: '#151c30', borderBottomLeftRadius: 5 },
-  messageText: { color: '#f8fafc', fontSize: 15, lineHeight: 22 },
-  transcriptLabel: { color: '#ddd6fe', fontSize: 11, fontWeight: '700', marginBottom: 5 },
-  source: { color: '#c4b5fd', textDecorationLine: 'underline', marginTop: 9 },
-  pending: { color: '#ede9fe', fontSize: 12, marginTop: 7 },
-  thinking: { color: '#9aa6bf', padding: 10 },
-  errorText: { color: '#fecaca', marginTop: 8 },
-  retry: { color: '#ddd6fe', textDecorationLine: 'underline', marginTop: 6, fontWeight: '700' },
-  muted: { color: '#9aa6bf' },
-  notice: {
-    marginHorizontal: 14,
-    marginBottom: 8,
-    padding: 11,
-    borderRadius: 12,
-    backgroundColor: '#1e1b3a',
-  },
-  contextBanner: {
-    marginHorizontal: 14,
-    marginBottom: 6,
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: '#1e1b3a',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  contextText: { color: '#ddd6fe', fontSize: 13, fontWeight: '600' },
-  noticeText: { color: '#ddd6fe', textAlign: 'center' },
-  noticeLink: { color: '#c4b5fd', textDecorationLine: 'underline', fontWeight: '700' },
-  globalError: { color: '#fecaca', paddingHorizontal: 16, paddingBottom: 6 },
-  composer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingTop: 10,
-    paddingBottom: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#29324b',
-  },
-  inputWrap: {
-    flex: 1,
-    minHeight: 46,
-    maxHeight: 120,
-    justifyContent: 'center',
-    borderRadius: 15,
-    backgroundColor: '#151c30',
-    paddingHorizontal: 13,
-  },
-  input: { color: '#f8fafc', fontSize: 15, paddingVertical: 11, maxHeight: 100 },
-  recording: { color: '#fecaca', fontWeight: '700', paddingVertical: 12 },
-  iconButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 15,
-    backgroundColor: '#29324b',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  recordingButton: { backgroundColor: '#7f1d1d' },
-  sendButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 15,
-    backgroundColor: '#8b5cf6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  disabled: { opacity: 0.45 },
-  buttonText: { color: 'white', fontSize: 20, fontWeight: '700' },
-});
+function chatStyles(c: import('../src/theme').Colors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.bg },
+    header: { paddingHorizontal: 22, paddingTop: 18, paddingBottom: 10 },
+    eyebrow: { color: c.accent, fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
+    title: { color: c.text, fontSize: 27, fontWeight: '800', marginTop: 5 },
+    messages: {
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      flexGrow: 1,
+      justifyContent: 'flex-end',
+    },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
+    empty: {
+      color: c.textMuted,
+      textAlign: 'center',
+      maxWidth: 300,
+      alignSelf: 'center',
+      marginBottom: 32,
+      lineHeight: 22,
+    },
+    row: { width: '100%', marginVertical: 5 },
+    userRow: { alignItems: 'flex-end' },
+    assistantRow: { alignItems: 'flex-start' },
+    bubble: { maxWidth: '88%', borderRadius: 18, padding: 13 },
+    userBubble: { backgroundColor: c.accent, borderBottomRightRadius: 5 },
+    assistantBubble: { backgroundColor: c.surface, borderBottomLeftRadius: 5 },
+    messageText: { color: c.text, fontSize: 15, lineHeight: 22 },
+    transcriptLabel: { color: c.accentText, fontSize: 11, fontWeight: '700', marginBottom: 5 },
+    source: { color: c.accent, textDecorationLine: 'underline', marginTop: 9 },
+    pending: { color: c.accentText, fontSize: 12, marginTop: 7 },
+    thinking: { color: c.textMuted, padding: 10 },
+    errorText: { color: c.danger, marginTop: 8 },
+    retry: {
+      color: c.accentText,
+      textDecorationLine: 'underline',
+      marginTop: 6,
+      fontWeight: '700',
+    },
+    muted: { color: c.textMuted },
+    notice: {
+      marginHorizontal: 14,
+      marginBottom: 8,
+      padding: 11,
+      borderRadius: 12,
+      backgroundColor: c.accentSoft,
+    },
+    contextBanner: {
+      marginHorizontal: 14,
+      marginBottom: 6,
+      padding: 10,
+      borderRadius: 10,
+      backgroundColor: c.accentSoft,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    contextText: { color: c.accentText, fontSize: 13, fontWeight: '600' },
+    noticeText: { color: c.accentText, textAlign: 'center' },
+    noticeLink: { color: c.accent, textDecorationLine: 'underline', fontWeight: '700' },
+    globalError: { color: c.danger, paddingHorizontal: 16, paddingBottom: 6 },
+    composer: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      gap: 8,
+      paddingHorizontal: 12,
+      paddingTop: 10,
+      paddingBottom: 12,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+    },
+    inputWrap: {
+      flex: 1,
+      minHeight: 46,
+      maxHeight: 120,
+      justifyContent: 'center',
+      borderRadius: 15,
+      backgroundColor: c.surface,
+      paddingHorizontal: 13,
+    },
+    input: { color: c.text, fontSize: 15, paddingVertical: 11, maxHeight: 100 },
+    recording: { color: c.danger, fontWeight: '700', paddingVertical: 12 },
+    iconButton: {
+      width: 46,
+      height: 46,
+      borderRadius: 15,
+      backgroundColor: c.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    recordingButton: { backgroundColor: c.dangerSoft },
+    sendButton: {
+      width: 46,
+      height: 46,
+      borderRadius: 15,
+      backgroundColor: c.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    disabled: { opacity: 0.45 },
+    buttonText: { color: c.accentText, fontSize: 20, fontWeight: '700' },
+  });
+}

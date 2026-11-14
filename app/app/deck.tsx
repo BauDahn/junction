@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { getJob, verifyDeck, verifySample, type Claim, type JobStatus } from '../src/api';
-import { verdictColors, verdictLabels } from '../src/verdict';
+import { verdictLabels } from '../src/verdict';
+import { dark, useTheme } from '../src/theme';
+import { Badge, Button, Card, Screen, ScreenHeader, StateView, VerdictBadge } from '../src/ui';
 
 const stages: Record<JobStatus['status'], string> = {
   queued: 'En cola',
@@ -25,12 +27,10 @@ const labels: Record<Claim['verdict'], string> = {
   not_checked: 'No verificada',
   error: 'Error',
 };
-const colors: Record<Claim['verdict'], string> = {
-  ...verdictColors,
-  not_checked: '#94a3b8',
-  error: '#f87171',
-};
+
 export default function DeckScreen() {
+  const { colors: theme } = useTheme();
+  const s = deckStyles(theme);
   const [job, setJob] = useState<JobStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -95,9 +95,11 @@ export default function DeckScreen() {
   const visibleClaims =
     report?.claims.filter((c) => filter === 'all' || c.verdict === filter) ?? [];
   return (
-    <ScrollView style={s.screen} contentContainerStyle={s.content}>
-      <Text style={s.eyebrow}>JUNCTION · STARTUP INTELLIGENCE</Text>
-      <Text style={s.title}>Verifica tu deck</Text>
+    <Screen>
+      <ScreenHeader
+        title="Verifica tu deck"
+        subtitle="Contrasta cada afirmación con información de Cala y revisa las fuentes."
+      />
       <Text style={s.intro}>
         Contrasta cada afirmación con información de Cala y revisa las fuentes.
       </Text>
@@ -114,7 +116,7 @@ export default function DeckScreen() {
       ) : null}
       {busy && job ? (
         <View style={s.card}>
-          <ActivityIndicator color="#a78bfa" />
+          <ActivityIndicator color={theme.accent} />
           <Text style={s.white}>{stages[job.status]}</Text>
           <Text style={s.muted}>
             {job.progress.done}/{job.progress.total} afirmaciones
@@ -162,7 +164,25 @@ export default function DeckScreen() {
               ] as const
             ).map((k) => (
               <View key={k} style={s.count}>
-                <Text style={[s.countNumber, { color: colors[k] }]}>{report.summary[k]}</Text>
+                <Text
+                  style={[
+                    s.countNumber,
+                    {
+                      color:
+                        theme[
+                          k === 'confirmed'
+                            ? 'confirmed'
+                            : k === 'partially_confirmed'
+                              ? 'partial'
+                              : k === 'contradicted'
+                                ? 'contradicted'
+                                : 'neutral'
+                        ],
+                    },
+                  ]}
+                >
+                  {report.summary[k]}
+                </Text>
                 <Text style={s.countLabel}>{labels[k]}</Text>
               </View>
             ))}
@@ -203,7 +223,7 @@ export default function DeckScreen() {
           </View>
         </>
       ) : null}
-    </ScrollView>
+    </Screen>
   );
 }
 function PlatformWebFile(asset: DocumentPicker.DocumentPickerAsset): File | null {
@@ -212,6 +232,7 @@ function PlatformWebFile(asset: DocumentPicker.DocumentPickerAsset): File | null
     ? (asset as DocumentPicker.DocumentPickerAsset & { file?: File }).file!
     : null;
 }
+const s = deckStyles(dark);
 function Action({
   title,
   onPress,
@@ -242,7 +263,7 @@ function Chip({ title, onPress, active }: { title: string; onPress: () => void; 
       onPress={onPress}
       style={[s.chip, active && s.chipActive]}
     >
-      <Text style={[s.chipText, active && { color: '#fff' }]}>{title}</Text>
+      <Text style={[s.chipText, active && { color: dark.accentText }]}>{title}</Text>
     </Pressable>
   );
 }
@@ -251,11 +272,7 @@ function ClaimCard({ claim }: { claim: Claim }) {
     <View style={s.claim}>
       <View style={s.claimTop}>
         <Text style={s.category}>{claim.category}</Text>
-        <Text
-          style={[s.badge, { color: colors[claim.verdict], borderColor: colors[claim.verdict] }]}
-        >
-          {labels[claim.verdict]}
-        </Text>
+        <VerdictBadge verdict={claim.verdict} />
       </View>
       <Text style={s.quote}>“{claim.quote}”</Text>
       <Text style={s.page}>Página {claim.page}</Text>
@@ -280,124 +297,126 @@ function ClaimCard({ claim }: { claim: Claim }) {
     </View>
   );
 }
-const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#0b1020' },
-  content: { padding: 22, paddingBottom: 40, maxWidth: 820, width: '100%', alignSelf: 'center' },
-  eyebrow: {
-    color: '#a78bfa',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-    marginBottom: 10,
-  },
-  title: { color: '#f8fafc', fontSize: 32, fontWeight: '800' },
-  intro: { color: '#9aa6bf', fontSize: 15, lineHeight: 22, marginTop: 8, marginBottom: 22 },
-  actions: { gap: 10, marginBottom: 18 },
-  button: {
-    backgroundColor: '#8b5cf6',
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  secondary: { backgroundColor: '#151c30', borderWidth: 1, borderColor: '#3d4965' },
-  buttonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  secondaryText: { color: '#d7ccff' },
-  card: {
-    backgroundColor: '#151c30',
-    borderColor: '#29324b',
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 16,
-  },
-  white: { color: '#f8fafc', fontSize: 16, fontWeight: '700' },
-  muted: { color: '#9aa6bf', fontSize: 14 },
-  error: {
-    color: '#fecaca',
-    backgroundColor: '#3a1d2a',
-    borderRadius: 12,
-    padding: 14,
-    marginVertical: 10,
-  },
-  hero: {
-    backgroundColor: '#151c30',
-    borderWidth: 1,
-    borderColor: '#29324b',
-    borderRadius: 20,
-    padding: 22,
-    marginTop: 8,
-  },
-  startup: { color: '#f8fafc', fontSize: 22, fontWeight: '700' },
-  score: { color: '#c4b5fd', fontSize: 64, fontWeight: '800', lineHeight: 72, marginTop: 10 },
-  scoreUnit: { fontSize: 20, color: '#9aa6bf', fontWeight: '600' },
-  sectionTitle: {
-    color: '#f8fafc',
-    fontWeight: '700',
-    fontSize: 20,
-    marginTop: 25,
-    marginBottom: 12,
-  },
-  summary: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  count: {
-    flexGrow: 1,
-    minWidth: 92,
-    backgroundColor: '#151c30',
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#29324b',
-  },
-  countNumber: { fontSize: 23, fontWeight: '800' },
-  countLabel: { color: '#cbd5e1', fontSize: 11, marginTop: 3 },
-  chips: { gap: 8, paddingBottom: 12 },
-  chip: {
-    paddingHorizontal: 13,
-    paddingVertical: 8,
-    borderRadius: 18,
-    backgroundColor: '#151c30',
-    borderWidth: 1,
-    borderColor: '#29324b',
-  },
-  chipActive: { backgroundColor: '#6d45cf', borderColor: '#8b5cf6' },
-  chipText: { color: '#cbd5e1', fontSize: 12, fontWeight: '600' },
-  claim: {
-    backgroundColor: '#151c30',
-    borderWidth: 1,
-    borderColor: '#29324b',
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 10,
-  },
-  claimTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 10,
-  },
-  category: {
-    color: '#a78bfa',
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    flexShrink: 1,
-  },
-  badge: {
-    fontSize: 11,
-    fontWeight: '700',
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    overflow: 'hidden',
-  },
-  quote: { color: '#f8fafc', fontSize: 16, fontWeight: '600', lineHeight: 24, marginTop: 14 },
-  page: { color: '#9aa6bf', fontSize: 12, marginTop: 6 },
-  explanation: { color: '#cbd5e1', fontSize: 14, lineHeight: 21, marginTop: 12 },
-  sources: { borderTopColor: '#29324b', borderTopWidth: 1, marginTop: 14, paddingTop: 12, gap: 8 },
-  sourceHeading: { color: '#9aa6bf', fontSize: 12, fontWeight: '700', marginTop: 12 },
-  link: { color: '#c4b5fd', fontSize: 13, textDecorationLine: 'underline' },
-});
+function deckStyles(c: import('../src/theme').Colors) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.bg },
+    content: { padding: 22, paddingBottom: 40, maxWidth: 820, width: '100%', alignSelf: 'center' },
+    eyebrow: {
+      color: c.accent,
+      fontSize: 11,
+      fontWeight: '700',
+      letterSpacing: 1.5,
+      marginBottom: 10,
+    },
+    title: { color: c.text, fontSize: 32, fontWeight: '800' },
+    intro: { color: c.textMuted, fontSize: 15, lineHeight: 22, marginTop: 8, marginBottom: 22 },
+    actions: { gap: 10, marginBottom: 18 },
+    button: {
+      backgroundColor: c.accent,
+      paddingVertical: 14,
+      paddingHorizontal: 18,
+      borderRadius: 12,
+      alignItems: 'center',
+      marginTop: 8,
+    },
+    secondary: { backgroundColor: c.surface, borderWidth: 1, borderColor: c.border },
+    buttonText: { color: c.accentText, fontWeight: '700', fontSize: 15 },
+    secondaryText: { color: dark.accentText },
+    card: {
+      backgroundColor: c.surface,
+      borderColor: c.border,
+      borderWidth: 1,
+      borderRadius: 16,
+      padding: 20,
+      alignItems: 'center',
+      gap: 10,
+      marginBottom: 16,
+    },
+    white: { color: c.text, fontSize: 16, fontWeight: '700' },
+    muted: { color: c.textMuted, fontSize: 14 },
+    error: {
+      color: c.danger,
+      backgroundColor: c.dangerSoft,
+      borderRadius: 12,
+      padding: 14,
+      marginVertical: 10,
+    },
+    hero: {
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 20,
+      padding: 22,
+      marginTop: 8,
+    },
+    startup: { color: c.text, fontSize: 22, fontWeight: '700' },
+    score: { color: c.accent, fontSize: 64, fontWeight: '800', lineHeight: 72, marginTop: 10 },
+    scoreUnit: { fontSize: 20, color: c.textMuted, fontWeight: '600' },
+    sectionTitle: {
+      color: c.text,
+      fontWeight: '700',
+      fontSize: 20,
+      marginTop: 25,
+      marginBottom: 12,
+    },
+    summary: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    count: {
+      flexGrow: 1,
+      minWidth: 92,
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    countNumber: { fontSize: 23, fontWeight: '800' },
+    countLabel: { color: c.textMuted, fontSize: 11, marginTop: 3 },
+    chips: { gap: 8, paddingBottom: 12 },
+    chip: {
+      paddingHorizontal: 13,
+      paddingVertical: 8,
+      borderRadius: 18,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    chipActive: { backgroundColor: c.accent, borderColor: c.accent },
+    chipText: { color: c.textMuted, fontSize: 12, fontWeight: '600' },
+    claim: {
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      padding: 16,
+      marginTop: 10,
+    },
+    claimTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 10,
+    },
+    category: {
+      color: c.accent,
+      fontSize: 12,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      flexShrink: 1,
+    },
+    badge: {
+      fontSize: 11,
+      fontWeight: '700',
+      borderWidth: 1,
+      borderRadius: 14,
+      paddingHorizontal: 9,
+      paddingVertical: 5,
+      overflow: 'hidden',
+    },
+    quote: { color: c.text, fontSize: 16, fontWeight: '600', lineHeight: 24, marginTop: 14 },
+    page: { color: c.textMuted, fontSize: 12, marginTop: 6 },
+    explanation: { color: c.textMuted, fontSize: 14, lineHeight: 21, marginTop: 12 },
+    sources: { borderTopColor: c.border, borderTopWidth: 1, marginTop: 14, paddingTop: 12, gap: 8 },
+    sourceHeading: { color: c.textMuted, fontSize: 12, fontWeight: '700', marginTop: 12 },
+    link: { color: c.accent, fontSize: 13, textDecorationLine: 'underline' },
+  });
+}
