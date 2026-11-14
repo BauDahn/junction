@@ -38,3 +38,19 @@ Misma intención → mismas llamadas a Cala → misma respuesta, sin importar ac
 - `uv run pytest` en verde.
 - `uv run python -m canonizador` responde igual para las 4 variantes de Amenitiz (mismos ids, mismo monto y líder), con una sola tanda de llamadas a Cala.
 - `REPORT.md` generado con datos reales.
+
+## Fase 2 (14/11): consulta con plantilla fija sobre `knowledge_query`
+Medido: con la guía oficial (`docs/CALA-SKILL.md`), un LLM traduce bien las preguntas puntuales (4 variantes de Amenitiz → €38.9M, líder Kfund, correcto), pero escribe una consulta distinta cada vez (cambia `return(...)`), y en filtros las variantes devuelven listas y cifras distintas (~€72M / ~€76M / ~€77M). La misma consulta exacta repetida devuelve exactamente lo mismo. Los endpoints de entidades son estables pero esta ronda tiene el monto mal (3.000 M EUR) y sin inversores.
+
+Cambio: el LLM **solo** extrae la intención; la consulta la arma el código con una plantilla fija por atributo. Misma intención → misma cadena de consulta, byte a byte → misma respuesta y misma entrada de caché.
+- `POST /v1/knowledge/query` con `{"input": "<consulta>"}`; tarda 16–45 s (timeout 200 s).
+- Nombre de la entidad en la consulta: el nombre canónico que devuelve `entity_search` para el id resuelto (no el texto del usuario).
+- Plantillas (campos de `return` en orden fijo), a verificar contra la API con pocas llamadas:
+  - `funding_round` y `lead_investors`: `{Empresa}.funding_round.series={X}.return(amount, lead investor, investors, date)` (SERIES_B → `B`, SEED → `Seed`…; sin `series` si no hay filtro).
+  - `total_funding`, `investors`, `founders`, `executives`, `headcount`, `acquisitions`, `profile`: una plantilla cada uno.
+  - Filtros de lista (nuevo atributo `company_list` con `filters: {location?, sector?, min_funding?, round_label?}`): `startups.location={L}.sector={S}.funding>{N}.return(name, funding, sector, location)`, con valores normalizados (país en inglés, sector en minúsculas en inglés, monto como `10M`).
+  - `other`: respaldo actual.
+- Caché: clave = la cadena de consulta canónica.
+- **Cruce con entidades** (para rondas): además de la respuesta de `knowledge_query`, traer el valor estructurado (`transaction_value`, participantes con `is_lead`) y las fuentes con `source_rank`; devolver `cross_check: {structured_amount, query_amount, match: bool, note}`. Si no coinciden, marcarlo (no elegir en silencio).
+- `result`: `{query, rows, sources, cross_check?}`; salida determinista.
+- Benchmark: tres modos por grupo de variantes: texto directo a `knowledge_search`, y canonizado con plantilla. Métrica principal: ¿todas las variantes devuelven la misma respuesta exacta? (hash), valores clave, nº de llamadas.
