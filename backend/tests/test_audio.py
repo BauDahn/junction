@@ -84,3 +84,73 @@ def test_pista_del_asr_incluye_nombres_del_perfil():
     hint = hint_from_profile({"startup_name": "Stayflow", "competitors": ["Mews", "Cloudbeds"]})
     assert "Stayflow" in hint and "Mews" in hint and "seed" in hint
     assert "Names" not in hint_from_profile(None)
+
+
+def test_pista_incluye_follows():
+    from chat.transcribe import hint_from_profile
+    hint = hint_from_profile({"startup_name": "Acme", "interests": {"follows": {
+        "companies": ["Mews", {"name": "Amenitiz"}, {"name": "Mews"}],
+        "investors": [{"name": "Northzone"}, "Seedcamp"]}}})
+    assert all(name in hint for name in ("Acme", "Mews", "Amenitiz", "Northzone", "Seedcamp"))
+    assert hint.count("Mews") == 1
+
+
+@pytest.mark.parametrize("name,expected", [("a.webm", "audio/webm"), ("a.m4a", "audio/mp4"),
+    ("a.wav", "audio/wav"), ("a.mp3", "audio/mpeg"), ("a.ogg", "audio/ogg")])
+def test_mime_for(name, expected):
+    from chat.transcribe import mime_for
+    assert mime_for(name) == expected
+
+
+def test_audio_message_uses_intent_and_keeps_literal(client):
+    test_client, _ = client
+    intended = "Who led Series B of Amenitiz?"
+    literal = "Who led Series A... no, sorry, Series B of Amenitiz?"
+    class IntentLLM:
+        async def complete_json(self, system, user, schema):
+            assert intended in user
+            return {"parts": [{"type": "chitchat", "text": "ok", "claim": None, "subject": None,
+                               "attribute": None, "user_value": None, "profile_patch": {}}]}
+    async def fake_transcriber(path, hint=None):
+        return {"text": intended, "transcript": literal, "language": "en"}
+    backend_app.app.dependency_overrides[get_llm] = lambda: IntentLLM()
+    backend_app.app.dependency_overrides[get_transcriber] = lambda: fake_transcriber
+    sid = test_client.post("/api/sessions").json()["session_id"]
+    response = test_client.post(f"/api/sessions/{sid}/messages", files={"audio": ("voice.webm", b"audio", "audio/webm")})
+    assert response.status_code == 200
+    message = response.json()["message"]
+    assert message["text"] == intended and message["transcript"] == literal
+    saved = test_client.get(f"/api/sessions/{sid}/messages").json()["messages"]
+    assert saved[0]["text"] == intended and saved[0]["transcript"] == literal
+
+
+def test_gemini_fallbacks(monkeypatch, tmp_path):
+    import asyncio
+    import chat.transcribe as module
+    monkeypatch.setenv("TRANSCRIPTION_PROVIDER", "gemini")
+    monkeypatch.setattr(module, "whisper_available", lambda: True)
+    monkeypatch.setattr(module, "_whisper_transcribe", lambda path, hint=None: {"text": "local", "transcript": "local", "language": "en"})
+    async def broken(*args): raise RuntimeError("offline")
+    monkeypatch.setattr(module, "_gemini_transcribe", broken)
+    assert asyncio.run(module.transcribe(tmp_path / "a.webm"))["transcript"] == "local"
+    async def empty(*args): return {"text": "  ", "transcript": "", "language": "en"}
+    monkeypatch.setattr(module, "_gemini_transcribe", empty)
+    assert asyncio.run(module.transcribe(tmp_path / "a.webm"))["text"] == "local"
+    monkeypatch.setattr(module, "whisper_available", lambda: False)
+    with pytest.raises(RuntimeError): asyncio.run(module.transcribe(tmp_path / "a.webm"))
+
+
+def test_effective_provider_and_health(client, monkeypatch):
+    from chat import transcribe as module
+    from types import SimpleNamespace
+    test_client, _ = client
+    monkeypatch.delenv("TRANSCRIPTION_PROVIDER", raising=False)
+    monkeypatch.setattr(module, "settings", SimpleNamespace(gemini_api_key="key"))
+    assert test_client.get("/api/health").json()["transcription"] == "gemini"
+    monkeypatch.setattr(module, "settings", SimpleNamespace(gemini_api_key=""))
+    monkeypatch.setattr(module, "whisper_available", lambda: True)
+    assert test_client.get("/api/health").json()["transcription"] == "whisper"
+    monkeypatch.setattr(module, "whisper_available", lambda: False)
+    assert test_client.get("/api/health").json()["transcription"] == "none"
+    monkeypatch.setenv("TRANSCRIPTION_PROVIDER", "NVIDIA")
+    assert test_client.get("/api/health").json()["transcription"] == "nvidia"
