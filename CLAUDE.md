@@ -48,22 +48,28 @@ Si hace falta tocar el área del otro, se pide por `equipo avisar` o se hace en 
 
 ## Cómo correr
 - Backend: `cd backend && uv sync && uv run uvicorn app:app --port 8000` (UI de prueba del verificador en `/`). CLI: `LLM_PROVIDER=codex uv run python -m verifier examples/sample_deck.pdf`. Tests: `uv run pytest`.
-- App: `cd app && npm install && npx expo start` (web: tecla `w`). *(se completa cuando exista `app/`)*
+- App: `cd app && npm install && npx expo start` (web: tecla `w`; en Expo Go, `EXPO_PUBLIC_API_URL` con la IP del PC). La app tiene modo simulado si el backend no responde.
+- Todo junto: backend en `:8000` y app web; el chat completo (texto, audio, perfil, recomendaciones con fuentes) ya está en `main`.
 
 ## Reglas técnicas
 - **Secretos**: `CALA_API_KEY`, `NVIDIA_API_KEY` solo en `backend/.env` (ignorado por git; plantilla en `backend/.env.example`). Nunca leerlos, imprimirlos, loguearlos ni ponerlos en prompts o commits.
 - **Cala**: `POST /v1/knowledge/search` (lenguaje natural → respuesta con fuentes) y `/v1/knowledge/query` (filas). **~16 s por llamada**: siempre en paralelo, con caché en disco (`backend/cache/`, ignorada) y pocas llamadas por pantalla. Detalle en `docs/CALA-API.md`.
-- **LLM**: `LLM_PROVIDER` = `nvidia` | `codex` | `claude` (`backend/verifier/llm.py`). NVIDIA: API compatible con OpenAI en `https://integrate.api.nvidia.com/v1`, ~40 req/min por clave, reintentos con backoff.
-- **Transcripción**: proveedor configurable (pendiente de decidir: NVIDIA ASR, Whisper local con faster-whisper, u OpenAI).
+- **LLM**: `LLM_PROVIDER` = `nvidia` | `codex` | `claude` (`backend/verifier/llm.py`). NVIDIA: API compatible con OpenAI; la URL sale de `NVIDIA_BASE_URL`. El endpoint de Nemotron que nos dio NVIDIA está en Verda (`https://containers.datacrunch.io/nemotron-3-5-super-vl-b300/v1`, modelo `nemotron-3.5-super-vl`), pero al 14/11 a las 12:00 acepta la clave y nunca responde; una clave de Verda propia da "no such container deployment" (el contenedor es del proyecto de NVIDIA). Plan B: clave gratis de build.nvidia.com (`https://integrate.api.nvidia.com/v1`). Mientras tanto, `LLM_PROVIDER=codex`.
+- **Transcripción**: `TRANSCRIPTION_PROVIDER` = `whisper` (por defecto: faster-whisper local, modelo `WHISPER_MODEL`, por defecto `small`) | `nvidia` (sin probar) | `none`. Ver `backend/chat/transcribe.py`.
 - No crear repos ni desplegar sin aprobación del usuario. Antes de dar algo por terminado, correr la app o los tests y decir qué se verificó.
 
 ## Documentos
 - `docs/API.md`: contrato backend ↔ app.
 - `docs/SPEC-verificador.md`: diseño del verificador. `docs/CALA-API.md`: qué permite Cala. `docs/IDEAS-CALA.md`: ideas evaluadas. `docs/PROCESO.md`: diario.
 
+## Estado (14/11, mediodía)
+- En `main`: verificador de decks, canonizador + benchmarks (`docs/BENCHMARK-CANONIZADOR.md`, `docs/INFORME-ERROR-CALA.md`), app Expo (#6, #7, #8) y chat completo del backend: sesiones, texto, audio y recomendaciones (#3, #4, #5).
+- Equipo: `bau` (orquestador, Bau), `fabricio` (miembro). Gabriel también está en el equipo (sin máquina registrada todavía).
+
 ## Pendientes
-- [ ] Usuario de GitHub del compañero (acceso al repo) y nombre de su máquina para `equipo init`.
-- [ ] Clave de NVIDIA (mañana) → probar Nemotron y fijar el ID exacto del modelo.
-- [ ] Elegir proveedor de transcripción.
-- [ ] Preguntas al stand de Cala (costo y latencia, cobertura nórdica y española, lead/follow).
+- [ ] Nemotron: que NVIDIA levante el endpoint de Verda, o pasar a build.nvidia.com. Sin eso no entramos al reto de NVIDIA.
+- [ ] Prueba de punta a punta de la app contra el backend en vivo (web y Expo Go).
+- [ ] Recomendaciones y verificador: usar el canonizador para las consultas a Cala (hoy van en lenguaje natural).
+- [ ] Preguntas al stand de Cala (límite de uso, costo, latencia, lead/follow, Slush 2026).
 - [ ] Confirmar hora límite de entrega y formularios de cada reto secundario.
+- [ ] Pitch y video de demo.
