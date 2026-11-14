@@ -12,5 +12,8 @@ dependencies = [
     "uvicorn>=0.54.0",
 ]
 
+[project.optional-dependencies]
+audio = ["faster-whisper>=1.1", "av>=14,<17"]  # av 17+ quitó metadata_errors, que usa faster-whisper
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
