@@ -4,8 +4,8 @@ import asyncio
 import time
 from pathlib import Path
 
-from verifier.config import settings
-from verifier.llm import GeminiProvider
+from core.config import settings
+from core.llm import GeminiProvider
 from . import transcribe
 
 

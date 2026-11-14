@@ -45,7 +45,7 @@ Cala Match. Detalle de cómo se calcula el puntaje en `docs/SPEC-grafo-afinidad.
 - `GET /api/stats` → `{catalog: {investors, startups, total, status}, cala?}`: tamaño y progreso del catálogo y, si el cliente de Cala las expone, sus métricas.
 
 ## Perfil y recomendaciones *(borrador)*
-- `GET /api/sessions/{id}/profile` → `{startup_name?, one_liner?, sector?, stage?, location?, raising?: {amount?, round?}, competitors: [string], target_customers?, role?: founder|investor|other, interests?: {sectors: [string], regions: [string], stages: [string], follows: {companies: [string], investors: [string]}}, facts: [{text, origin: user, verified?: Claim}], updated_at}`
+- `GET /api/sessions/{id}/profile` → `{startup_name?, one_liner?, sector?, stage?, location?, raising?: {amount?, round?}, competitors: [string], target_customers?, role?: founder|investor|other, interests?: {sectors: [string], regions: [string], stages: [string], follows: {companies: [string], investors: [string]}}, facts: [{text, origin: user}], updated_at}`
 - `GET /api/sessions/{id}/recommendations` → `{status: idle|running|ready|error, updated_at, investors: [Card], competitors: [Card], prospects: [Card]}`
 
 ## Journal diario *(borrador, nuevo 14/11)*
@@ -56,14 +56,6 @@ Dos ediciones armadas solo con consultas a Cala. Se genera bajo demanda la prime
 - `Journal`: `{edition: ecosistema|founders, date, status: generating|ready|error, generated_at?, progress?: {done, total}, sections: [Section], error?}`. Mientras `status` es `generating`, la app hace polling cada 2 s.
 - `Section`: `{id, title, description, items: [JournalItem]}`
 - `JournalItem`: `{id, is_new: bool, block: Block}`. `id` sirve para preguntar desde el journal (`context.journal_item_id` en el chat).
-
-## Verificador de decks (fuera del producto desde el 14/11)
-La app no usa estos endpoints. Siguen en el backend, sin mantenimiento.
-- `POST /api/verify` (multipart `file`: PDF ≤ 20 MB) → `{job_id}`
-- `POST /api/verify-sample` → `{job_id}` (deck de ejemplo)
-- `GET /api/jobs/{job_id}` → `{status: queued|extracting|checking|judging|done|error, progress: {done, total}, report?, error?}`
-- `report`: `{startup_name, provider, model, claims: [Claim], summary: {confirmed, partially_confirmed, contradicted, no_data, not_checked}, trust_score: 0-100, timings, dropped_urls}`
-- `Claim`: `{id, page, quote, category, publicly_verifiable, cala_question, verdict: confirmed|partially_confirmed|contradicted|no_data|not_checked|error, explanation, evidence, sources: [Source]}`
 
 ## Reglas
 - Todo dato que venga de Cala viaja con `sources`, y la app siempre las muestra.

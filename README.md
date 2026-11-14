@@ -53,23 +53,23 @@ The whole interface is in English. The design prototype is in [`docs/design/stit
  Cala API: entities, knowledge/query, knowledge/search
 ```
 
-Status: chat, router, canonizer, cache, journal and the Expo app are in `main`. The dual-mode feed, affinity score, context uploads and the local graph are the current work (see [CLAUDE.md](CLAUDE.md#workstreams)).
+Status: chat with voice, router, canonizer, shared cache and rate limit, shared graph, the Slush catalog, and the feed and detail API with the affinity score are in `main`. The minimalist interface and the context upload (PDF and voice) are in review (see [CLAUDE.md](CLAUDE.md#workstreams)).
 
 ## Team
 
 | Machine | Person | Focus |
 |---|---|---|
-| `bau` | Bau | Orchestration, architecture (local graph, affinity score), pitch and documentation |
-| `fabricio` | Fabricio | Backend API, optimizer (rate limit, cache) and the Aiven integration |
-| `gabriel` | Gabriel | Context ingestion (PDF and voice), n8n automations and extra tools |
-| `adrian` | Adrian | Design and the app: the Stitch prototype turned into the Expo app |
+| `bau` | Bau | Orchestration, review, architecture, pitch and documentation |
+| `gabriel` | Gabriel | The app interface, the Slush catalog and the context upload |
+| `fabricio` | Fabricio | Backend, optimizer and Aiven integration (feed API, graph store, shared rate limit) |
+| `adrian` | Adrian | Design review and presentation |
 
 ## Repo layout
 
 | Folder | What is in it |
 |---|---|
 | `app/` | Expo app (React Native + TypeScript) for web, iOS and Android |
-| `backend/` | FastAPI API. `chat/`: sessions, messages, audio, profile. `cala_core/`: router and Cala queries. `journal/`: daily journal. `verifier/`: shared LLM and config modules (the deck verifier is out of the product). See [backend/README.md](backend/README.md) |
+| `backend/` | FastAPI API. `chat/`: sessions, messages, audio, profile. `cala_core/`: router and Cala queries. `api/`: feed, detail and affinity. `graph/`: shared graph on Valkey. `catalog/`: Slush ingestion. `core/`: shared LLM, config and Cala client modules.md) |
 | `canonizador/` | The query canonizer, the cache layers and the benchmarks. See [canonizador/README.md](canonizador/README.md) |
 | `n8n/` | n8n flows against the API |
 | `docs/` | API contract, Cala guides, benchmarks, error report and design (index in [CLAUDE.md](CLAUDE.md#documentos)) |

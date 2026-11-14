@@ -19,8 +19,8 @@ import httpx
 
 from canonizador.cache import load_env
 from canonizador.client import CalaClient
-from verifier.config import settings
-from verifier.llm import make_llm
+from core.config import settings
+from core.llm import make_llm
 
 logger = logging.getLogger(__name__)
 

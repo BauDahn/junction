@@ -7,9 +7,9 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-from verifier.llm import make_llm
-from verifier.config import settings
-from verifier.cala import CalaClient
+from core.llm import make_llm
+from core.config import settings
+from core.cala import CalaClient
 from . import store
 from .engine import handle_text
 from .profile import empty_profile

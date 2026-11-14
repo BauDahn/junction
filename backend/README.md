@@ -2,22 +2,21 @@
 
 API en FastAPI con SQLite. Contrato con la app en [`docs/API.md`](../docs/API.md).
 
-| Módulo | Qué hace | Dueño |
-|---|---|---|
-| `app.py` | Punto de entrada: CORS, formato de errores del contrato, `/api/health`, rutas del verificador y del chat | fabricio |
-| `chat/` | Sesiones, mensajes de texto y audio (`transcribe.py`, Whisper local), perfil de la startup (`profile.py`), recomendaciones en segundo plano (`recommend.py`), persistencia (`store.py`, SQLite en `data/chat.db`) | fabricio |
-| `cala_core/` | Router de mensajes, ejecución de consultas a Cala con canonizador y respaldos, formato de bloques, verificación de afirmaciones del usuario (en curso, ver `docs/PLAN-CALA-CENTRO.md`) | bau |
-| `journal/` | Journal diario (ediciones ecosistema y founders) a partir de consultas a Cala (en curso) | bau |
-| `verifier/` | Módulos compartidos del chat: proveedores de LLM (`llm.py`), configuración y cliente de Cala. El verificador de decks que vive ahí quedó **fuera del producto** (14/11) | bau |
-| `api/` *(nuevo)* | Feed, detalle de una entidad y puntaje de afinidad para Cala Match | fabricio |
-| `graph/` *(nuevo)* | Subgrafo local sobre Cala: nodos y aristas con fuente, BFS, caché en Valkey | bau (diseño) |
-| `context/` *(nuevo)* | Ingesta de contexto: PDF y notas de voz, extracción con Gemini, actualización del perfil | gabriel |
+| Módulo | Qué hace |
+|---|---|
+| `app.py` | Punto de entrada: CORS, formato de errores del contrato, `/api/health` y las rutas del chat y del feed |
+| `chat/` | Sesiones, mensajes de texto y audio (`transcribe.py`: Gemini con respaldo de Whisper local), perfil de la startup (`profile.py`), recomendaciones en segundo plano (`recommend.py`), persistencia (`store.py`, SQLite en `data/chat.db`) |
+| `cala_core/` | Router de mensajes, ejecución de consultas a Cala con canonizador y respaldos, formato de bloques y comprobación de afirmaciones del usuario |
+| `api/` | Feed, detalle de una entidad y puntaje de afinidad para Cala Match (`docs/SPEC-grafo-afinidad.md`) |
+| `graph/` | Grafo compartido sobre Cala: nodos y aristas con fuente, unión de duplicados, lectura por lotes en Valkey |
+| `catalog/` | Ingesta reanudable del catálogo de Slush 2026 al grafo, con etiquetas de Gemini y respaldo a archivo (`python -m catalog run`) |
+| `core/` | Módulos compartidos: proveedores de LLM (`llm.py`), configuración (`config.py`), cliente de Cala (`cala.py`) y lectura de PDF (`pdf.py`) |
 
 ## Correr
 
 ```bash
 uv sync
-uv run uvicorn app:app --port 8000     # UI de prueba del verificador en http://localhost:8000
+uv run uvicorn app:app --port 8000
 uv run pytest
 ```
 
@@ -36,11 +35,8 @@ uv run pytest
 
 Las respuestas de Cala y del LLM se cachean en `cache/` (ignorada por git).
 
-## Verificador de decks por línea de comandos
 
 ```bash
-uv run python examples/make_sample_deck.py                       # genera el deck de ejemplo
-LLM_PROVIDER=codex uv run python -m verifier examples/sample_deck.pdf
 ```
 
 El trust score parte de 50 y suma 50 × `(confirmadas + 0,5 × parciales − contradichas) / afirmaciones puntuadas`, acotado a 0–100.
