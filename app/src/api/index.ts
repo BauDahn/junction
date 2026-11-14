@@ -14,12 +14,7 @@ export type Claim = {
   publicly_verifiable: boolean;
   cala_question: string;
   verdict:
-    | 'confirmed'
-    | 'partially_confirmed'
-    | 'contradicted'
-    | 'no_data'
-    | 'not_checked'
-    | 'error';
+    'confirmed' | 'partially_confirmed' | 'contradicted' | 'no_data' | 'not_checked' | 'error';
   explanation: string;
   evidence?: string;
   sources: Source[];
@@ -82,6 +77,7 @@ export type Message = {
   created_at: string;
   sources?: Source[];
   cards?: Card[];
+  audio?: boolean;
 };
 export type SendTextResponse = {
   message: Message;
@@ -101,6 +97,7 @@ export class ApiError extends Error {
   }
 }
 const baseUrl = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+const mockEnabled = process.env.EXPO_PUBLIC_MOCK === '1';
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${baseUrl}${path}`, init);
   const body: unknown = await response.json().catch(() => null);
@@ -116,16 +113,36 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 export const health = () => request<HealthStatus>('/api/health');
 export async function createSession(): Promise<string> {
+  if (mockEnabled) {
+    const mock = await import('./mock');
+    return mock.createMockSession();
+  }
   return (await request<{ session_id: string }>('/api/sessions', { method: 'POST' })).session_id;
 }
 export function sendText(sessionId: string, text: string): Promise<SendTextResponse> {
+  if (mockEnabled) return import('./mock').then((mock) => mock.sendMockText(sessionId, text));
   return request(`/api/sessions/${encodeURIComponent(sessionId)}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
   });
 }
+export function sendAudio(sessionId: string, audio: Blob | MobileFile): Promise<SendTextResponse> {
+  if (mockEnabled) return import('./mock').then((mock) => mock.sendMockAudio(sessionId));
+  const form = new FormData();
+  if (typeof Blob !== 'undefined' && audio instanceof Blob) {
+    form.append('audio', audio, 'audio.webm');
+  } else {
+    const mobile = audio as MobileFile;
+    form.append('audio', { uri: mobile.uri, name: mobile.name, type: mobile.mimeType } as any);
+  }
+  return request(`/api/sessions/${encodeURIComponent(sessionId)}/messages`, {
+    method: 'POST',
+    body: form,
+  });
+}
 export async function listMessages(sessionId: string): Promise<Message[]> {
+  if (mockEnabled) return (await import('./mock')).listMockMessages(sessionId);
   return (
     await request<{ messages: Message[] }>(
       `/api/sessions/${encodeURIComponent(sessionId)}/messages`,
