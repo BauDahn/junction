@@ -17,16 +17,13 @@ class _ValkeySharedLimiter:
     def __init__(self, remote): self.remote = remote
 
     def increment(self, kind, interval, now):
-        if interval > 1:
-            size = interval
-            window = int(now // size)
-            limit = 1
-        else:
-            size = 1.0
-            window = int(now)
-            limit = max(1, int(1 / interval)) if interval > 0 else 1
+        if interval <= 0:
+            return 1, 1, 0
+        size = interval
+        window = int(now // size)
+        limit = 1
         key = f"ratelimit:v1:cala:{kind}:{window}"
-        ttl = int(size) + 2
+        ttl = int(size * 1000) + 2000
         existing_client = getattr(self.remote, "_client", None)
         if existing_client is not None and not callable(getattr(existing_client, "pipeline", None)):
             raise RuntimeError("Valkey client does not support pipelines")
@@ -35,7 +32,7 @@ class _ValkeySharedLimiter:
                 raise RuntimeError("Valkey client does not support pipelines")
             pipe = client.pipeline()
             pipe.incr(key)
-            pipe.expire(key, ttl)
+            pipe.pexpire(key, ttl)
             result = pipe.execute()
             return result[0]
         ok, value = self.remote._run(operation)
@@ -87,6 +84,7 @@ class CalaClient:
         loop = asyncio.get_running_loop()
         if loop.time() < self._shared_down_until: return
         interval = self.intervals[kind]
+        if interval <= 0: return
         for _ in range(10):
             try:
                 now = time.time()

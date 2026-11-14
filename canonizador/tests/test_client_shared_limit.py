@@ -16,7 +16,7 @@ class Cache:
 class Pipeline:
     def __init__(self, store): self.store, self.key, self.ttl = store, None, None
     def incr(self, key): self.key = key; return self
-    def expire(self, key, ttl): self.key, self.ttl = key, ttl; return self
+    def pexpire(self, key, ttl): self.key, self.ttl = key, ttl; return self
     def execute(self):
         self.store.expirations[self.key] = self.ttl
         self.store.counts[self.key] = self.store.counts.get(self.key, 0) + 1
@@ -45,7 +45,7 @@ async def test_clients_share_endpoint_window_and_expire_keys(monkeypatch):
     clients = [CalaClient("x", client=http, sleep=sleep, knowledge_interval=8, cache=Cache(shared)) for _ in range(2)]
     await asyncio.gather(*(c.knowledge_query(str(i)) for i, c in enumerate(clients)))
     assert starts == [100.0, 104.0]
-    assert list(shared.expirations.values()) == [10, 10]
+    assert list(shared.expirations.values()) == [10000, 10000]
     assert sum(c.stats["shared_limit_waits"] for c in clients) == 1
     assert sum(c.stats["pause_seconds"] for c in clients) >= 4
     await http.aclose()
