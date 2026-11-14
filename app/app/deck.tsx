@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { getJob, verifyDeck, verifySample, type Claim, type JobStatus } from '../src/api';
+import { verdictColors, verdictLabels } from '../src/verdict';
 
 const stages: Record<JobStatus['status'], string> = {
   queued: 'En cola',
@@ -20,18 +21,12 @@ const stages: Record<JobStatus['status'], string> = {
   error: 'Error',
 };
 const labels: Record<Claim['verdict'], string> = {
-  confirmed: 'Confirmada',
-  partially_confirmed: 'Parcial',
-  contradicted: 'Contradicha',
-  no_data: 'Sin datos',
+  ...verdictLabels,
   not_checked: 'No verificada',
   error: 'Error',
 };
 const colors: Record<Claim['verdict'], string> = {
-  confirmed: '#34d399',
-  partially_confirmed: '#fbbf24',
-  contradicted: '#f87171',
-  no_data: '#94a3b8',
+  ...verdictColors,
   not_checked: '#94a3b8',
   error: '#f87171',
 };

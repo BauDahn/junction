@@ -1,4 +1,4 @@
-import type { Card, Message, Profile, Recommendations, SendTextResponse } from './index';
+import type { Block, Card, Message, Profile, Recommendations, SendTextResponse } from './index';
 export const mockProfile: Profile = {
   startup_name: 'Nordleaf',
   one_liner: 'Herramientas de eficiencia energética para edificios',
@@ -84,6 +84,65 @@ export async function listMockMessages(sessionId: string): Promise<Message[]> {
   await wait();
   return [...(histories.get(sessionId) ?? [])];
 }
+function exampleTable() {
+  return {
+    type: 'cala_table' as const,
+    title: 'Ejemplo ficticio: ronda Serie B de Amenitiz',
+    summary: 'Datos de demostración; no representan información real.',
+    call: { tool: 'knowledge_query' as const, query: 'DEMO: ronda Serie B Amenitiz' },
+    columns: ['Empresa', 'Ronda', 'Importe'],
+    rows: [['Amenitiz (ejemplo)', 'Serie B (ejemplo)', null]],
+    sources: [
+      {
+        name: 'Fuente de ejemplo',
+        url: 'https://example.com',
+        date: '2026-11-14',
+        source_rank: 'PRESS' as const,
+      },
+    ],
+    row_sources: [[0]],
+  };
+}
+function exampleBlocks(text: string): Block[] {
+  const lower = text.toLowerCase();
+  if (lower.includes('xyz'))
+    return [
+      {
+        type: 'not_found',
+        title: 'Ejemplo: no se encontró información',
+        tried: [
+          { tool: 'knowledge_query', query: 'DEMO: consulta canónica XYZ' },
+          { tool: 'entity', query: 'DEMO: entidades XYZ' },
+          { tool: 'knowledge_search', query: 'DEMO: búsqueda XYZ' },
+        ],
+      },
+    ];
+  if (lower.includes('levantó') || lower.includes('raised'))
+    return [
+      {
+        type: 'claim_check',
+        claim: text,
+        verdict: 'partially_confirmed',
+        explanation: 'Resultado ficticio para demostrar el bloque.',
+        evidence: exampleTable(),
+        sources: [{ name: 'Fuente de ejemplo', url: 'https://example.com', source_rank: 'PRESS' }],
+      },
+    ];
+  if (lower.includes('somos') || lower.includes('me interesa'))
+    return [{ type: 'profile_update', changes: { intereses: 'Ejemplo: fintech nórdicas' } }];
+  if (text.includes('?') || lower.includes('quién') || lower.includes('who'))
+    return [exampleTable()];
+  return [
+    {
+      type: 'cala_answer',
+      title: 'Respuesta de ejemplo',
+      call: { tool: 'knowledge_search', query: `DEMO: ${text}` },
+      markdown:
+        '**Ejemplo ficticio.** Cala mostraría aquí su respuesta tal cual.\n- Punto de demostración',
+      sources: [{ name: 'Fuente de ejemplo', url: 'https://example.com', source_rank: 'PRIMARY' }],
+    },
+  ];
+}
 function response(sessionId: string, text: string, transcript?: string): SendTextResponse {
   const now = new Date().toISOString();
   const user: Message = {
@@ -96,10 +155,10 @@ function response(sessionId: string, text: string, transcript?: string): SendTex
   const reply: Message = {
     id: `mock-assistant-${Date.now()}`,
     role: 'assistant',
-    text: 'Por lo que me cuentas, estas referencias pueden encajar con tu startup.',
+    text: 'Datos ficticios de demostración; no son resultados reales de Cala.',
     created_at: now,
+    blocks: exampleBlocks(text),
     sources: [{ name: 'Cala · ejemplo', url: 'https://cala.ai' }],
-    cards: [mockRecommendations.investors[0], mockRecommendations.competitors[0]],
   };
   const history = histories.get(sessionId) ?? [];
   histories.set(sessionId, [...history, user, reply]);

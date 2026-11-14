@@ -1,4 +1,51 @@
-export type Source = { name: string; url: string };
+export type Source = {
+  name: string;
+  url: string;
+  date?: string;
+  source_rank?: 'FILING' | 'PRIMARY' | 'PRESS' | 'AGGREGATOR';
+};
+export type CalaCall = { tool: 'knowledge_query' | 'entity' | 'knowledge_search'; query: string };
+export type CalaTableBlock = {
+  type: 'cala_table';
+  title: string;
+  summary?: string;
+  call: CalaCall;
+  columns: string[];
+  rows: (string | number | null)[][];
+  sources: Source[];
+  row_sources?: number[][];
+};
+export type CalaAnswerBlock = {
+  type: 'cala_answer';
+  title: string;
+  call: CalaCall;
+  markdown: string;
+  sources: Source[];
+};
+export type ClaimVerdict = 'confirmed' | 'partially_confirmed' | 'contradicted' | 'no_data';
+export type ClaimCheckBlock = {
+  type: 'claim_check';
+  claim: string;
+  verdict: ClaimVerdict;
+  explanation: string;
+  evidence: CalaTableBlock | CalaAnswerBlock;
+  sources: Source[];
+};
+export type ProfileUpdateBlock = { type: 'profile_update'; changes: Record<string, unknown> };
+export type NotFoundBlock = {
+  type: 'not_found';
+  title: string;
+  tried: CalaCall[];
+  closest?: CalaTableBlock | CalaAnswerBlock;
+};
+export type TextBlock = { type: 'text'; text: string };
+export type Block =
+  | CalaTableBlock
+  | CalaAnswerBlock
+  | ClaimCheckBlock
+  | ProfileUpdateBlock
+  | NotFoundBlock
+  | TextBlock;
 export type Card = {
   type: 'investor' | 'company' | 'competitor' | 'prospect' | 'claim';
   title: string;
@@ -30,6 +77,13 @@ export type Profile = {
   target_customers?: string;
   facts: { text: string; origin: 'user' | 'deck'; verified?: Claim }[];
   updated_at: string;
+  role?: 'founder' | 'investor' | 'other';
+  interests?: {
+    sectors: string[];
+    regions: string[];
+    stages: string[];
+    follows: { companies: string[]; investors: string[] };
+  };
 };
 export type Recommendations = {
   status: 'idle' | 'running' | 'ready' | 'error';
@@ -78,6 +132,7 @@ export type Message = {
   sources?: Source[];
   cards?: Card[];
   audio?: boolean;
+  blocks?: Block[];
 };
 export type SendTextResponse = {
   message: Message;
@@ -119,12 +174,16 @@ export async function createSession(): Promise<string> {
   }
   return (await request<{ session_id: string }>('/api/sessions', { method: 'POST' })).session_id;
 }
-export function sendText(sessionId: string, text: string): Promise<SendTextResponse> {
+export function sendText(
+  sessionId: string,
+  text: string,
+  context?: { journal_item_id: string },
+): Promise<SendTextResponse> {
   if (mockEnabled) return import('./mock').then((mock) => mock.sendMockText(sessionId, text));
   return request(`/api/sessions/${encodeURIComponent(sessionId)}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, ...(context ? { context } : {}) }),
   });
 }
 export function sendAudio(sessionId: string, audio: Blob | MobileFile): Promise<SendTextResponse> {
