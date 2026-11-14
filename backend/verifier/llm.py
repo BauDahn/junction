@@ -209,8 +209,8 @@ class CachedLLM:
         return result
 
 
-def make_llm(provider=None, tier='strong'):
+def make_llm(provider=None, tier='strong', model=None):
     name = provider or settings.llm_provider
-    model = (settings.gemini_fast_model if tier == "fast" else settings.gemini_model) if name == "gemini" else (settings.nvidia_model if name == "nvidia" else ("gpt-6-luna" if name == "codex" else "claude"))
+    model = (model or (settings.gemini_fast_model if tier == "fast" else settings.gemini_model)) if name == "gemini" else (settings.nvidia_model if name == "nvidia" else ("gpt-6-luna" if name == "codex" else "claude"))
     implementation = {"nvidia": NvidiaProvider, "gemini": lambda: GeminiProvider(model=model), "codex": CodexProvider, "claude": ClaudeProvider}[name]()
     return CachedLLM(implementation, f"{name}:{model}", settings.cache_dir), model

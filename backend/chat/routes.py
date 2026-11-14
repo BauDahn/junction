@@ -1,6 +1,7 @@
 import logging
 import os
 import asyncio
+import inspect
 import tempfile
 from pathlib import Path
 
@@ -26,7 +27,7 @@ class MessageInput(BaseModel):
 
 
 def get_llm():
-    return make_llm()[0]
+    return make_llm(tier="fast")[0]
 
 
 def get_transcriber():
@@ -98,7 +99,9 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
                 (keep / f"{store.now_iso().replace(':', '-')}{suffix}").write_bytes(data)
             try:
                 hint = transcription.hint_from_profile(store.get_profile(session_id))
-                result = await transcriber(path, hint=hint)
+                mime = transcription.mime_for(audio.filename, audio.content_type)
+                parameters = inspect.signature(transcriber).parameters
+                result = await transcriber(path, hint=hint, **({"mime": mime} if "mime" in parameters or any(p.kind == p.VAR_KEYWORD for p in parameters.values()) else {}))
             except Exception as exc:
                 if "no configurada" in str(exc).lower():
                     raise HTTPException(503, "Transcripción no configurada") from exc
@@ -109,7 +112,8 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
                 raise HTTPException(422, "No se entendió el audio.")
             if result.get("duration_s", 0) > 120:
                 raise HTTPException(413, "El audio debe durar 2 minutos o menos.")
-            return await _process_text(session_id, text, llm, cala, transcript=text)
+            transcript = result.get("transcript") or text
+            return await _process_text(session_id, text, llm, cala, transcript=transcript)
         finally:
             path.unlink(missing_ok=True)
     try:

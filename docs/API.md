@@ -31,7 +31,7 @@ Una conversación por usuario. Manda texto o audio; el backend transcribe y el *
   - audio: multipart `audio` (m4a, webm, wav, mp3; ≤ 2 min)
   - → `{message: Message, reply: Message, profile_updated: bool, recommendations_status: idle|running|ready|error}`
 - `GET /api/sessions/{id}/messages` → `{messages: [Message]}`
-- `Message`: `{id, role: user|assistant, text, transcript?: string, created_at, blocks?: [Block], sources?: [Source], cards?: [Card]}`. `text` en las respuestas pasa a ser una línea de contexto; el contenido está en `blocks`. `cards` se mantiene por compatibilidad con las recomendaciones.
+- `Message`: `{id, role: user|assistant, text, transcript?: string, created_at, blocks?: [Block], sources?: [Source], cards?: [Card]}`. En mensajes de usuario enviados por audio, `text` es la intención limpia (autocorrecciones aplicadas, sin muletillas) y `transcript` es lo dicho literalmente; en mensajes de texto, `transcript` es null. `text` en las respuestas pasa a ser una línea de contexto; el contenido está en `blocks`. `cards` se mantiene por compatibilidad con las recomendaciones.
 - `Card`: `{type: investor|company|competitor|prospect|claim, title, subtitle?, reason, sources: [Source]}`
 
 ## Feed y detalle *(borrador, nuevo 14/11 noche)*
