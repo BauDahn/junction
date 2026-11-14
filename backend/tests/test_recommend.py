@@ -40,11 +40,11 @@ class FlowLLM:
         self.messages += 1
         if self.messages == 1:
             patch = {"startup_name":"Nube", "one_liner":"SaaS for shops", "sector":"SaaS", "stage":"Seed", "location":"Madrid", "target_customers":"shops"}
-            used = []
+            kind = "profile"
         else:
             patch = {}
-            used = [True] if self.messages == 3 else []
-        return {"reply":"Listo.", "used_cards":used, "profile_patch":patch}
+            kind = "chitchat"
+        return {"parts":[{"type":kind, "text":"gracias", "claim":None, "subject":None, "attribute":None, "user_value":None, "profile_patch":patch}]}
 
 
 class QuickCala(FakeCala):

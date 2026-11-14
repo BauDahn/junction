@@ -6,7 +6,8 @@ from chat.routes import get_llm, get_transcriber
 
 class FakeLLM:
     async def complete_json(self, system, user, schema):
-        return {"reply": "Entendido. ¿En qué ciudad estás?", "profile_patch": {}}
+        assert "parts" in schema.get("properties", {})
+        return {"parts": [{"type":"chitchat", "text":"Busco clientes", "claim":None, "subject":None, "attribute":None, "user_value":None, "profile_patch":{}}]}
 
 
 @pytest.fixture
