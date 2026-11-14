@@ -114,6 +114,42 @@ def test_valkey_bad_url_or_garbage_never_raises():
     assert remote.get("answers", "q") is None
 
 
+def test_valkey_reuses_one_client_and_passes_configured_timeouts(monkeypatch):
+    import redis
+    fake = FakeRedis()
+    created = []
+    def from_url(url, **kwargs):
+        created.append((url, kwargs))
+        return fake
+    monkeypatch.setattr(redis.Redis, "from_url", from_url)
+    monkeypatch.setattr(cache_mod, "load_env", lambda *a, **k: None)
+    monkeypatch.setattr(cache_mod, "_REMOTES", {})
+    monkeypatch.setenv("VALKEY_URL", "rediss://fake")
+    monkeypatch.setenv("VALKEY_CONNECT_TIMEOUT", "8")
+    monkeypatch.setenv("VALKEY_TIMEOUT", "3")
+    remote = cache_mod.remote_from_env()
+    remote.get("n", "one")
+    remote.put("n", "two", {"ok": True})
+    assert len(created) == 1
+    assert created[0][1]["socket_connect_timeout"] == 8
+    assert created[0][1]["socket_timeout"] == 3
+
+
+def test_warmup_swallows_connection_failure(monkeypatch):
+    class Failing:
+        def ping(self): raise ConnectionError("offline")
+    monkeypatch.setattr(cache_mod, "remote_from_env", lambda: Failing())
+    assert cache_mod.warmup() is False
+
+
+def test_warmup_without_url_does_not_connect(monkeypatch):
+    monkeypatch.setattr(cache_mod, "load_env", lambda *a, **k: None)
+    monkeypatch.setattr(cache_mod, "_REMOTES", {})
+    monkeypatch.setenv("VALKEY_URL", "")
+    assert cache_mod.warmup() is False
+    assert cache_mod._REMOTES == {}
+
+
 def test_make_cache_without_valkey_url_is_disk(tmp_path, monkeypatch):
     monkeypatch.delenv("VALKEY_URL", raising=False)
     monkeypatch.setattr(cache_mod, "load_env", lambda *a, **k: None)
