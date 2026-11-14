@@ -46,6 +46,8 @@ Cala es el núcleo (no tocamos cómo funciona: mostramos para qué sirve). Todo 
 | `backend/context/` y `n8n/` | máquina `gabriel` | Ingesta de PDF y voz, flujos y herramientas extra |
 | `docs/API.md` | compartido | Contrato; los cambios fuera de *(borrador)* los revisa `bau` |
 | `CLAUDE.md`, `README.md`, `docs/` (salvo `docs/design/`) | máquina `bau` | Coordinación, plan, informes, pitch; `PROCESO.md`: una línea por hito |
+| `docs/SPEC-grafo-afinidad.md` | Subgrafo local y puntaje de afinidad (qué se guarda y cómo se calcula) |
+| `docs/ARQUITECTURA.md` | Cómo se monta el sistema: catálogo de Slush precalculado, gateway a Cala, grafo en Valkey, presupuesto de latencia |
 | `docs/design/` | máquina `adrian` | Prototipos y sistema de diseño |
 
 **Quién mergea:** cada máquina mergea sus propios PRs cuando sus tests pasan y solo tocan su área. `bau` revisa únicamente lo que cambia `docs/API.md` o cruza áreas. `fabricio` revisa los PRs de `gabriel` y `adrian` que toquen el backend; `adrian` revisa los de la app. Al mergear, avisar en el issue #1.
