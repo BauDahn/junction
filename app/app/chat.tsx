@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { RecordingPresets, requestRecordingPermissionsAsync, useAudioRecorder } from 'expo-audio';
 import { getOrCreateSessionId, resetSessionId } from '../src/session';
 import {
@@ -30,8 +30,11 @@ type ChatMessage = Message & {
   error?: string;
   retryText?: string;
   retryAudio?: Blob | MobileFile;
+  retryContext?: { journal_item_id: string };
 };
 export default function ChatScreen() {
+  const params = useLocalSearchParams<{ journal_item_id?: string; journal_title?: string }>();
+  const [journalContext, setJournalContext] = useState<{ id: string; title: string } | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState('');
   const [draft, setDraft] = useState('');
@@ -44,6 +47,13 @@ export default function ChatScreen() {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const startedAt = useRef(0);
+  useEffect(() => {
+    if (params.journal_item_id)
+      setJournalContext({
+        id: params.journal_item_id,
+        title: params.journal_title || 'ítem del journal',
+      });
+  }, [params.journal_item_id, params.journal_title]);
 
   useEffect(() => {
     let alive = true;
@@ -89,7 +99,12 @@ export default function ChatScreen() {
   }, [recording]);
 
   const transmit = useCallback(
-    async (text?: string, audio?: Blob | MobileFile, optimistic?: ChatMessage) => {
+    async (
+      text?: string,
+      audio?: Blob | MobileFile,
+      optimistic?: ChatMessage,
+      context?: { journal_item_id: string },
+    ) => {
       if (!sessionId || sending) return;
       setSending(true);
       setError('');
@@ -109,7 +124,7 @@ export default function ChatScreen() {
       try {
         const result = audio
           ? await sendAudio(sessionId, audio)
-          : await sendText(sessionId, text ?? '');
+          : await sendText(sessionId, text ?? '', context);
         setMessages((current) => [
           ...current.filter((item) => item.id !== pending.id),
           result.message,
@@ -121,7 +136,14 @@ export default function ChatScreen() {
         setMessages((current) =>
           current.map((item) =>
             item.id === pending.id
-              ? { ...item, pending: false, error: message, retryText: text, retryAudio: audio }
+              ? {
+                  ...item,
+                  pending: false,
+                  error: message,
+                  retryText: text,
+                  retryAudio: audio,
+                  retryContext: context,
+                }
               : item,
           ),
         );
@@ -136,7 +158,9 @@ export default function ChatScreen() {
     const text = draft.trim();
     if (!text || sending) return;
     setDraft('');
-    await transmit(text);
+    const context = journalContext ? { journal_item_id: journalContext.id } : undefined;
+    setJournalContext(null);
+    await transmit(text, undefined, undefined, context);
   }
 
   async function toggleRecording() {
@@ -191,7 +215,7 @@ export default function ChatScreen() {
           ) : (
             <Text style={s.messageText}>{item.text}</Text>
           )}
-          {item.sources?.map((source, index) => (
+          {(item.blocks?.length ? [] : (item.sources ?? [])).map((source, index) => (
             <Pressable
               key={`${source.url}-${index}`}
               accessibilityRole="link"
@@ -214,7 +238,11 @@ export default function ChatScreen() {
               <Text accessibilityRole="alert" style={s.errorText}>
                 {item.error}
               </Text>
-              <Pressable onPress={() => void transmit(item.retryText, item.retryAudio, item)}>
+              <Pressable
+                onPress={() =>
+                  void transmit(item.retryText, item.retryAudio, item, item.retryContext)
+                }
+              >
                 <Text style={s.retry}>Reintentar</Text>
               </Pressable>
             </View>
@@ -234,6 +262,18 @@ export default function ChatScreen() {
         <Text style={s.eyebrow}>JUNCTION · STARTUP INTELLIGENCE</Text>
         <Text style={s.title}>Chat</Text>
       </View>
+      {journalContext ? (
+        <View style={s.contextBanner}>
+          <Text style={s.contextText}>Preguntando sobre: {journalContext.title}</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Quitar contexto"
+            onPress={() => setJournalContext(null)}
+          >
+            <Text style={s.contextText}>×</Text>
+          </Pressable>
+        </View>
+      ) : null}
       {loading ? (
         <View style={s.center}>
           <ActivityIndicator color="#a78bfa" />
@@ -348,6 +388,17 @@ const s = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#1e1b3a',
   },
+  contextBanner: {
+    marginHorizontal: 14,
+    marginBottom: 6,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: '#1e1b3a',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  contextText: { color: '#ddd6fe', fontSize: 13, fontWeight: '600' },
   noticeText: { color: '#ddd6fe', textAlign: 'center' },
   noticeLink: { color: '#c4b5fd', textDecorationLine: 'underline', fontWeight: '700' },
   globalError: { color: '#fecaca', paddingHorizontal: 16, paddingBottom: 6 },

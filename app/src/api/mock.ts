@@ -1,4 +1,12 @@
-import type { Block, Card, Message, Profile, Recommendations, SendTextResponse } from './index';
+import type {
+  Block,
+  Card,
+  Journal,
+  Message,
+  Profile,
+  Recommendations,
+  SendTextResponse,
+} from './index';
 export const mockProfile: Profile = {
   startup_name: 'Nordleaf',
   one_liner: 'Herramientas de eficiencia energética para edificios',
@@ -175,4 +183,83 @@ export async function sendMockAudio(sessionId: string): Promise<SendTextResponse
     'Busco inversores para mi startup de energía en Helsinki.',
     'Busco inversores para mi startup de energía en Helsinki.',
   );
+}
+
+const journalStates = new Map<string, { started: number; done: number }>();
+function mockJournal(edition: Journal['edition'], date: string): Journal {
+  const key = `${edition}:${date}`;
+  const state = journalStates.get(key);
+  const generating = !!state && Date.now() - state.started < 3000;
+  const table = exampleTable();
+  const answer: Block = {
+    type: 'cala_answer',
+    title: 'Ejemplo ficticio: actividad del ecosistema',
+    call: { tool: 'knowledge_search', query: 'DEMO: actividad reciente del ecosistema' },
+    markdown: '**Ejemplo ficticio.** Esta sección muestra cómo se vería una respuesta de Cala.',
+    sources: [{ name: 'Fuente de ejemplo', url: 'https://example.com' }],
+  };
+  const section = (
+    id: string,
+    title: string,
+    description: string,
+    block: Block,
+    isNew: boolean,
+  ) => ({ id, title, description, items: [{ id: `${id}-item`, is_new: isNew, block }] });
+  const sections =
+    edition === 'ecosistema'
+      ? [
+          section('rounds', 'Rondas recientes', 'Rondas destacadas por región.', table, true),
+          section('funds', 'Fondos activos', 'Inversores con actividad reciente.', answer, false),
+          section('slush', 'Slush 2026', 'Empresas y personas del ecosistema.', table, true),
+        ]
+      : [
+          section(
+            'sectors',
+            'Rondas en tus sectores',
+            'Actividad reciente en sectores y regiones de tu interés.',
+            table,
+            true,
+          ),
+          section(
+            'investors',
+            'Inversores que lideran',
+            'Fondos con actividad como lead investor.',
+            answer,
+            false,
+          ),
+          section(
+            'competitors',
+            'Competidores que levantaron',
+            'Rondas recientes de empresas similares.',
+            table,
+            true,
+          ),
+        ];
+  return {
+    edition,
+    date,
+    status: generating ? 'generating' : 'ready',
+    generated_at: generating ? undefined : new Date().toISOString(),
+    progress: generating
+      ? { done: Math.min(2, Math.floor((Date.now() - state!.started) / 1000)), total: 3 }
+      : undefined,
+    sections,
+  };
+}
+export async function getMockJournal(
+  edition: Journal['edition'],
+  date = new Date().toISOString().slice(0, 10),
+  _sessionId?: string,
+): Promise<Journal> {
+  await wait();
+  return mockJournal(edition, date);
+}
+export async function regenerateMockJournal(
+  edition: Journal['edition'],
+  sessionId?: string,
+): Promise<{ status: 'generating' }> {
+  const date = new Date().toISOString().slice(0, 10);
+  journalStates.set(`${edition}:${date}`, { started: Date.now(), done: 0 });
+  void sessionId;
+  return { status: 'generating' };
 }
