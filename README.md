@@ -12,7 +12,6 @@ Hecho en Junction 2026 (Espoo, 13–15 de noviembre de 2026) para el reto de Cal
 | **Contrastar lo que decís** | "Mews levantó 50 millones" → se busca en Cala → confirmado, contradicho o sin datos, con la evidencia |
 | **Perfil y gustos** | "Somos Stayflow, software para hoteles en Barcelona; nos interesan las fintech nórdicas" → se guarda para personalizar |
 | **Journal diario** | Edición del ecosistema y edición personalizada, armadas solo con consultas a Cala |
-| **Verificador de decks** | Subís el PDF del pitch y cada afirmación se contrasta con Cala |
 | **Recomendaciones** | Inversores, competidores y clientes potenciales, cada uno con su fuente |
 
 **Lo que lo hace distinto:** descubrimos que Cala responde distinto a la misma pregunta según cómo se escriba (acentos, idioma, orden) y construimos un **canonizador** que convierte cualquier redacción en la misma consulta. Preguntando directo, por MCP o con la guía oficial de Cala, como mucho 1 de 9 preguntas fue consistente; con el canonizador, 9 de 9. Ver [docs/BENCHMARK-CANONIZADOR.md](docs/BENCHMARK-CANONIZADOR.md) y [docs/INFORME-ERROR-CALA.md](docs/INFORME-ERROR-CALA.md).
@@ -32,8 +31,8 @@ Si la consulta canónica no trae datos, se prueban las otras herramientas de Cal
 
 | Carpeta | Qué hay |
 |---|---|
-| `app/` | App web y móvil (Expo + React Native + TypeScript): chat con audio, perfil, verificador, journal |
-| `backend/` | API (FastAPI + SQLite). `chat/`: sesiones, mensajes, audio, perfil, recomendaciones. `cala_core/`: router y consultas a Cala. `journal/`: journal diario. `verifier/`: verificador de decks. Ver [backend/README.md](backend/README.md) |
+| `app/` | App web y móvil (Expo + React Native + TypeScript): chat con audio, perfil, journal |
+| `backend/` | API (FastAPI + SQLite). `chat/`: sesiones, mensajes, audio, perfil, recomendaciones. `cala_core/`: router y consultas a Cala. `journal/`: journal diario. `verifier/`: módulos compartidos (LLM, configuración, cliente de Cala) y el verificador de decks, que quedó fuera del producto. Ver [backend/README.md](backend/README.md) |
 | `canonizador/` | Canonizador de consultas a Cala, con sus benchmarks. Ver [canonizador/README.md](canonizador/README.md) |
 | `docs/` | Plan, contrato de la API, guías de Cala, benchmarks e informe del error (índice en [CLAUDE.md](CLAUDE.md#documentos)) |
 

@@ -9,13 +9,15 @@ Hackathon Junction 2026, Espoo (Finlandia), del 13 al 15 de noviembre de 2026. S
 3. Las consultas van por el **canonizador** (misma intención → misma consulta) y, si no hay datos, prueban las otras herramientas de Cala (entidades, búsqueda). Nunca "no hay información" sin haber probado todo.
 4. Lo que se muestra son **datos de Cala tal cual**, como tablas con fuentes (`docs/API.md`, bloques). El modelo nunca escribe cifras ni nombres que no vengan de Cala.
 5. **Journal diario** en la app: edición genérica del ecosistema y edición personalizada para founders, armadas solo con consultas a Cala.
-6. Además: **verificador de pitch decks** (cada afirmación del PDF contra Cala) y recomendaciones de inversores, competidores y clientes.
+6. Además: recomendaciones de inversores, competidores y clientes.
+
+**Fuera del producto (decisión del 14/11 por la tarde): el verificador de pitch decks.** Por ahora el producto es solo el chat. No se muestra en la app ni se menciona en el pitch, y no se le dedica más trabajo. El paquete `backend/verifier/` se queda porque el chat usa sus módulos compartidos (`llm.py`, `config.py`, `cala.py`).
 
 Cala es el núcleo (no tocamos cómo funciona: mostramos para qué sirve). Todo dato de Cala se muestra con su fuente.
 
 ## Retos
 - **Principal: Cala** (25% cada uno: necesidad real, ejecución end-to-end, originalidad, Cala como núcleo). Slush empieza justo después: usable al día siguiente.
-- **Google Gemini** (secundario, desde el 14/11): Gemini es la IA del producto (router, audio, intención, juez, lectura de decks). El reto pide un uso significativo e innovador y explicar por qué Gemini importa en la solución.
+- **Google Gemini** (secundario, desde el 14/11): Gemini es la IA del producto (router, audio, intención, juez). El reto pide un uso significativo e innovador y explicar por qué Gemini importa en la solución.
 - **Aiven** (secundario): caché compartida de consultas a Cala en Aiven Valkey (`VALKEY_URL`, ver `canonizador/README.md`).
 - NVIDIA Nemotron: descartado como modelo principal (el endpoint que nos dieron nunca respondió); el proveedor queda en el código como alternativa.
 - **OpenAI Codex** (secundario): construimos con Codex; evidencia en `docs/CODEX.md` (registro de tareas exportado de `cx log` de cada máquina) y `docs/PROCESO.md`.
@@ -36,7 +38,7 @@ Cala es el núcleo (no tocamos cómo funciona: mostramos para qué sirve). Todo 
 ### Dueños de cada área (para no pisarse; reparto del 14/11 por la tarde)
 | Área | Dueño | Notas |
 |---|---|---|
-| `backend/` completo (`chat/`, `cala_core/`, `journal/`, `verifier/`, `app.py`) | máquina `fabricio` | Chat, audio, router y consultas a Cala, journal, verificador de decks |
+| `backend/` completo (`chat/`, `cala_core/`, `journal/`, `verifier/`, `app.py`) | máquina `fabricio` | Chat, audio, router y consultas a Cala, journal (`verifier/` solo por sus módulos compartidos) |
 | `app/` | máquina `fabricio` | Expo (web + iOS + Android), TypeScript |
 | `canonizador/` | máquina `fabricio` | Canonizador, caché (disco + Aiven Valkey) y benchmarks |
 | `n8n/` | máquina `gabriel` | Flujos de n8n contra el contrato de la API |
@@ -60,15 +62,15 @@ Si hace falta tocar el área del otro, se pide por `equipo avisar` o se hace en 
 |---|---|---|---|
 | **Claude** | Orquestador y arquitecto | Diseña (specs, contrato de la API, planes), reparte tareas, revisa diffs y PRs, prueba contra los servicios reales, coordina las máquinas y mantiene la documentación | **No escribe código de la aplicación.** Ni arreglos chicos: todo cambio de código se le pide a Codex |
 | **Codex** | Programador | Escribe y corrige todo el código (backend, app, canonizador, tests) a partir de tareas concretas | No decide arquitectura ni hace commits, push o cambios de rama |
-| **Gemini** | IA dentro del producto | Todos los servicios de IA en tiempo de ejecución: clasificar mensajes (router), extraer intenciones, transcribir y entender audio, elegir filas, juzgar afirmaciones y leer decks | No se usa Codex ni Claude como modelo del producto (quedan solo como respaldo) |
+| **Gemini** | IA dentro del producto | Todos los servicios de IA en tiempo de ejecución: clasificar mensajes (router), extraer intenciones, transcribir y entender audio, elegir filas y juzgar afirmaciones | No se usa Codex ni Claude como modelo del producto (quedan solo como respaldo) |
 
 - Delegar a Codex con `cx` (ver `cx roles`): `cx <rol> -C ~/proyectos/junction -p junction "<tarea concreta con criterio de hecho y cómo verificar>"`. Correcciones con `cx seguir <hilo> "..."` (hilos largos se encarecen: para algo nuevo, hilo nuevo). Si Codex queda colgado sin tocar archivos, cortarlo y relanzar.
 - Claude revisa leyendo solo lo que cambió (`git diff`), corre los tests y las pruebas reales, y hace los commits, push y PRs.
-- **Gemini**: modelo rápido (`GEMINI_FAST_MODEL`, por defecto `gemini-3.5-flash-lite`: ~1 s por llamada, 3/3 en la prueba del router) para router, intención y foco; modelo fuerte (`GEMINI_MODEL`, por defecto `gemini-flash-latest`) para verificador y juez. Medido el 14/11 con la clave del equipo.
+- **Gemini**: modelo rápido (`GEMINI_FAST_MODEL`, por defecto `gemini-3.5-flash-lite`: ~1 s por llamada, 3/3 en la prueba del router) para router, intención y foco; modelo fuerte (`GEMINI_MODEL`, por defecto `gemini-flash-latest`) para el juez. Medido el 14/11 con la clave del equipo.
 - **Tokens:** no leer docs enteros si no hace falta; `rg` y lecturas parciales.
 
 ## Cómo correr
-- Backend: `cd backend && uv sync && uv run uvicorn app:app --port 8000` (UI de prueba del verificador en `/`). CLI: `LLM_PROVIDER=codex uv run python -m verifier examples/sample_deck.pdf`. Tests: `uv run pytest`.
+- Backend: `cd backend && uv sync && uv run uvicorn app:app --port 8000` Tests: `uv run pytest`.
 - App: `cd app && npm install && npx expo start` (web: tecla `w`; en Expo Go, `EXPO_PUBLIC_API_URL` con la IP del PC). La app tiene modo simulado si el backend no responde.
 - Todo junto: backend en `:8000` y app web; el chat completo (texto, audio, perfil, recomendaciones con fuentes) ya está en `main`.
 
@@ -90,17 +92,18 @@ Si hace falta tocar el área del otro, se pide por `equipo avisar` o se hace en 
 | `docs/SPEC-canonizador.md` | Diseño del canonizador de consultas |
 | `docs/BENCHMARK-CANONIZADOR.md` | Benchmark: 5 formas de preguntarle a Cala (0–1 de 9 consistentes contra 9 de 9) |
 | `docs/INFORME-ERROR-CALA.md` | El error de consistencia de Cala, evidencia y recomendaciones para Cala |
-| `docs/SPEC-verificador.md` | Diseño del verificador de decks |
+| `docs/SPEC-verificador.md` | Diseño del verificador de decks (fuera del producto desde el 14/11) |
 | `docs/IDEAS-CALA.md` | Ideas evaluadas al elegir el proyecto |
 | `docs/CODEX.md` | Registro de lo que construyó Codex (reto de Codex) |
 | `docs/PROCESO.md` | Diario de decisiones |
 
 ## Estado (14/11, tarde)
-- En `main`: verificador de decks, canonizador + benchmarks, app Expo (#6, #7, #8) y chat del backend: sesiones, texto, audio y recomendaciones (#3, #4, #5).
+- En `main`: verificador de decks (fuera del producto, ver arriba), canonizador + benchmarks, app Expo (#6, #7, #8) y chat del backend: sesiones, texto, audio y recomendaciones (#3, #4, #5).
 - En curso: enfoque "Cala en el centro" (`docs/PLAN-CALA-CENTRO.md`): router y bloques (bau), journal (bau), conexión al chat y app (fabricio).
 - Equipo: `bau` (orquestador), `fabricio` y `gabriel` (miembros).
 
 ## Pendientes
+- [ ] Quitar el verificador de decks de la app y del contrato (issue de `fabricio`).
 - [ ] Enfoque Cala en el centro: tareas A–F de `docs/PLAN-CALA-CENTRO.md`.
 - [ ] Gemini: proveedor en backend y canonizador (#43), transcripción con Gemini (fabricio) y medir el tiempo por mensaje.
 - [ ] Aiven: crear el servicio Valkey y poner `VALKEY_URL` en `backend/.env` de las dos máquinas.
