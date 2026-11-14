@@ -12,7 +12,13 @@ import glob, json, os, subprocess, sys, tempfile, time
 from pathlib import Path
 
 HERE = Path(__file__).parent
-OUT = HERE / "bench" / "results_mcp.json"
+# --guia: carga la guía oficial de Cala (docs/CALA-SKILL.md, copia de github.com/cala-ai/cala-skill) en el prompt.
+GUIA = "--guia" in sys.argv
+OUT = HERE / "bench" / ("results_mcp_guia.json" if GUIA else "results_mcp.json")
+GUIA_TEXTO = ""
+if GUIA:
+    GUIA_TEXTO = "\n".join(l for l in (HERE.parent / "docs" / "CALA-SKILL.md").read_text().splitlines()
+                           if not l.startswith("<!--"))
 ENV_FILE = HERE.parent / "backend" / ".env"
 MODEL, EFFORT = "gpt-6-luna", "low"
 PAUSA = 20  # segundos entre preguntas: el agente puede hacer varias llamadas y Cala limita (429)
@@ -24,6 +30,9 @@ SCHEMA = {"type": "object", "additionalProperties": False, "required": ["answer"
 PROMPT = ("Use only the Cala MCP tools to answer the user's question. Do not use your own knowledge. "
           "Reply in English. In 'names' list the companies or people that answer the question, and in 'amounts' "
           "the money figures you report, exactly as you write them in 'answer'.\n\nUser question: ")
+if GUIA:
+    PROMPT = ("Follow this official guide for using Cala's tools:\n\n=== CALA GUIDE ===\n" + GUIA_TEXTO
+              + "\n=== END OF GUIDE ===\n\n" + PROMPT)
 
 
 def entorno():
