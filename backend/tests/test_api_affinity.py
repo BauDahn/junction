@@ -73,3 +73,25 @@ def test_rank_and_calibration():
     assert score_candidate(p,good,today=date(2026,1,1))["score"]>=80
     bad={"type":"investor","rounds":[round_(sector="Healthcare",round_type="Series C",location="USA",funding_amount="200M",year="2019")],"distance":None}
     assert score_candidate(p,bad,today=date(2026,1,1))["score"]<40
+
+def test_catalog_features_as_fallback_and_ai_tags():
+    c={"type":"investor","attrs":{"ai_tagged":["sectors"],"industries":["Fintech"],"sources":SRC},"features":{"stages":["Seed"],"amount":{"min":1_000_000,"max":5_000_000},"activity":{"rounds_24m":4,"led_24m":2},"sources":SRC}}
+    p=score_candidate({"sectors":["Fintech"],"stage":"Seed","ticket":{"min":2_000_000,"max":3_000_000}},c,today=date(2026,1,1))
+    assert p["signals"][0]["value"]==1 and p["signals"][0]["text"].endswith("(AI-tagged)")
+    assert p["signals"][1]["value"]==1 and p["signals"][1]["text"]=="Invests at Seed"
+    assert p["signals"][3]["value"]==1
+    assert p["signals"][4]["value"]==.8 and p["signals"][4]["text"]=="Led 2 and joined 2 rounds in the last 24 months"
+
+def test_catalog_stage_miss_and_profile_stage_label_deterministic():
+    c={"type":"investor","features":{"stages":["Series B"],"sources":SRC}}
+    assert score_candidate({"stages":["Seed"]},c)["signals"][1]["text"]=="Stage: Series B, outside your target stage"
+    rounds=[round_(round_type="Seed"),round_(round_type="Series A")]
+    sig=score_candidate({"stages":["Series A","Seed"]},{"type":"investor","rounds":rounds})["signals"][1]
+    assert "Series A" in sig["text"]
+
+def test_feature_stage_ai_tag_and_activity_without_lead():
+    c={'type':'startup','attrs':{'ai_tagged':True,'industries':['SaaS'],'sources':SRC},'features':{'stages':['Seed'],'activity':{'rounds_24m':3},'sources':SRC}}
+    p=score_candidate({'sectors':['SaaS'],'stage':'Seed'},c)
+    assert p['signals'][0]['text'].endswith('(AI-tagged)')
+    assert p['signals'][1]['text'].endswith('(AI-tagged)')
+    assert p['signals'][4]['text']=='3 rounds in the last 24 months'

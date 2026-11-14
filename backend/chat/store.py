@@ -18,6 +18,7 @@ def _connect():
     conn.row_factory = sqlite3.Row
     conn.executescript("""
     CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS session_modes(session_id TEXT PRIMARY KEY, mode TEXT NOT NULL, updated_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS messages(id TEXT PRIMARY KEY, session_id TEXT NOT NULL, role TEXT NOT NULL, text TEXT NOT NULL, transcript TEXT, sources_json TEXT NOT NULL, cards_json TEXT NOT NULL, created_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS messages_session_created ON messages(session_id, created_at, id);
     CREATE TABLE IF NOT EXISTS profiles(session_id TEXT PRIMARY KEY, json TEXT NOT NULL, updated_at TEXT NOT NULL);
@@ -86,3 +87,13 @@ def save_recommendations(session_id, status, data, fingerprint, updated_at=None,
 def mark_notified(session_id):
     with _connect() as db:
         db.execute("UPDATE recommendations SET notified=1 WHERE session_id=?", (session_id,))
+
+
+def get_mode(session_id):
+    with _connect() as db:
+        row = db.execute("SELECT mode FROM session_modes WHERE session_id=?", (session_id,)).fetchone()
+    return row[0] if row else None
+
+def save_mode(session_id, mode):
+    with _connect() as db:
+        db.execute("INSERT INTO session_modes VALUES (?, ?, ?) ON CONFLICT(session_id) DO UPDATE SET mode=excluded.mode, updated_at=excluded.updated_at", (session_id, mode, now_iso()))
