@@ -10,7 +10,11 @@ dependencies = [
     "python-dotenv>=1.2.4",
     "python-multipart>=0.0.33",
     "uvicorn>=0.54.0",
+    "cala-canonizador",
 ]
+
+[tool.uv.sources]
+cala-canonizador = { path = "../canonizador", editable = true }
 
 [project.optional-dependencies]
 audio = ["faster-whisper>=1.1", "av>=14,<17"]  # av 17+ quitó metadata_errors, que usa faster-whisper
