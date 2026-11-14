@@ -2,7 +2,7 @@ import json
 import os
 from pathlib import Path
 
-from .cache import DiskCache
+from .cache import load_env, make_cache
 from .client import CalaClient
 from .intent import IntentParser
 from .normalize import normalize
@@ -99,18 +99,15 @@ async def answer_intent(intent, client):
 
 
 def _env():
-    path = Path(__file__).resolve().parents[2] / "backend" / ".env"
-    if path.exists():
-        for line in path.read_text().splitlines():
-            if line.startswith("CALA_API_KEY=") and not os.getenv("CALA_API_KEY"):
-                os.environ["CALA_API_KEY"] = line.partition("=")[2].strip().strip("\"'")
+    """Carga CALA_API_KEY, VALKEY_URL y CACHE_TTL_S desde backend/.env si no están en el entorno."""
+    load_env()
 
 
 async def answer(question, *, llm=None, client=None, cache_dir=None):
     _env()
     root = Path(cache_dir or os.getenv("CANONIZADOR_CACHE", Path(__file__).resolve().parents[1] / "cache"))
-    cache = DiskCache(root)
-    cala = client or CalaClient(cache_dir=root)
+    cache = make_cache(root)
+    cala = client or CalaClient(cache_dir=root, cache=cache)
     intent = await IntentParser(llm, cache).parse(normalize(question))
     if intent.get("attribute") in ("funding_round", "lead_investors"):
         structured = await answer_intent(intent, cala)

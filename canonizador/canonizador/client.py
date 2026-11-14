@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -6,24 +7,28 @@ from urllib.parse import urlencode
 
 import httpx
 
+from .cache import load_env, make_cache
+
 
 class CalaClient:
     BASE = "https://api.cala.ai/v1"
 
-    def __init__(self, api_key=None, cache_dir="cache", client=None, sleep=asyncio.sleep, min_interval=8):
+    def __init__(self, api_key=None, cache_dir="cache", client=None, sleep=asyncio.sleep, min_interval=8, cache=None):
+        if not api_key: load_env()
         self.api_key = api_key or os.getenv("CALA_API_KEY", "")
         if not self.api_key: raise RuntimeError("Definí CALA_API_KEY en el entorno o backend/.env")
         self.cache_dir, self.client, self.sleep = Path(cache_dir), client, sleep
         self.min_interval, self._last_call = min_interval, None
         self._lock = asyncio.Lock()
         self.calls = 0
-
-    def _cache(self, key): return self.cache_dir / "cala" / (key + ".json")
+        # Respuestas crudas de Cala en el namespace "cala": disco y, si hay VALKEY_URL, Valkey compartido.
+        self.cache = cache or make_cache(self.cache_dir)
 
     async def request(self, method, path, *, params=None, body=None):
         cache_key = json.dumps([method, path, params, body], sort_keys=True, ensure_ascii=False)
-        cp = self._cache(__import__("hashlib").sha256(cache_key.encode()).hexdigest())
-        if cp.exists(): return json.loads(cp.read_text())
+        digest = hashlib.sha256(cache_key.encode()).hexdigest()
+        cached = self.cache.get_key("cala", digest)
+        if cached is not None: return cached
         async with self._lock:
             if self._last_call is not None:
                 remaining = self.min_interval - (asyncio.get_running_loop().time() - self._last_call)
@@ -44,7 +49,7 @@ class CalaClient:
                 response.raise_for_status(); value = response.json()
             finally:
                 if owns: await client.aclose()
-            cp.parent.mkdir(parents=True, exist_ok=True); cp.write_text(json.dumps(value, ensure_ascii=False))
+            self.cache.put_key("cala", digest, value)
             return value
 
     async def entities(self, name, entity_type):

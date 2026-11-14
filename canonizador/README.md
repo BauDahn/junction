@@ -12,3 +12,27 @@ uv run pytest
 ```
 
 La CLI carga `CALA_API_KEY` desde `../backend/.env` si no está en el entorno. Las peticiones Cala son secuenciales y tienen caché cruda. El benchmark directo y canonizado se ejecuta con `bench.py`.
+
+## Caché compartida (Aiven Valkey)
+
+Las consultas a Cala tardan 16–60 s. Por defecto se cachean solo en disco (`cache/`, por máquina). Con `VALKEY_URL` definida, la caché pasa a tener dos capas: disco → Valkey. Lo que consulta una máquina le sale al instante a la otra.
+
+Activarla:
+
+1. En la [consola de Aiven](https://console.aiven.io): *Create service* → **Valkey** → elegir plan y región → esperar a que esté *Running*.
+2. Copiar el **Service URI** (`rediss://default:<password>@<host>:<port>`, con TLS) a `backend/.env`:
+   ```sh
+   VALKEY_URL=rediss://default:<password>@<host>:<port>
+   # CACHE_TTL_S=604800   # opcional: caducidad en segundos (por defecto 7 días; 0 = sin caducidad)
+   ```
+   Es un secreto: va solo en `backend/.env`, igual que `CALA_API_KEY`.
+3. Subir lo que ya está en disco (precalentar la demo): `uv run python -m canonizador.cache_sync` (imprime cuántas entradas subió por namespace; acepta carpetas de caché como argumentos; por defecto `canonizador/cache` y `backend/cache`).
+
+Cómo funciona (`canonizador/cache.py`):
+
+- `make_cache(root)` devuelve `LayeredCache(DiskCache, ValkeyCache)` si hay `VALKEY_URL`, y `DiskCache` si no. La usan `answer()` y `CalaClient` (respuestas crudas, namespace `cala`).
+- Lectura: disco → Valkey (lo que viene de Valkey se copia al disco). Escritura: ambos.
+- Claves `cala:v1:<namespace>:<sha256>`. Las respuestas de Cala caducan a los `CACHE_TTL_S` segundos; las intenciones del LLM (`intents`) no caducan.
+- Valkey es opcional de verdad: tiempos de espera de 2 s y, si falla, se sigue solo con disco y no se reintenta durante 60 s. Nunca rompe una consulta.
+- Ahorro para la demo: `cache.stats` (o `canonizador.cache.STATS`, acumulado del proceso) tiene `local_hits`, `remote_hits` y `misses`.
+- En los tests la caché remota está desactivada (`VALKEY_URL=""` en `tests/conftest.py`).
