@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Block, CalaCall, Source } from '../api';
-import { verdictColors, verdictLabels } from '../verdict';
+import { verdictLabels } from '../verdict';
+import { dark, useTheme } from '../theme';
+import { Card, SourceTable, VerdictBadge } from '../ui';
+const s = makeStyles(dark);
 
 const ranks = ['FILING', 'PRIMARY', 'PRESS', 'AGGREGATOR'] as const;
 function Sources({ sources }: { sources: Source[] }) {
@@ -60,33 +63,14 @@ function TableBlock({ block }: { block: Extract<Block, { type: 'cala_table' }> }
     <>
       <Text style={s.title}>{block.title}</Text>
       {block.summary ? <Text style={s.body}>{block.summary}</Text> : null}
-      <ScrollView horizontal showsHorizontalScrollIndicator>
-        <View>
-          <View style={s.tableRow}>
-            {block.columns.map((c, i) => (
-              <Text key={i} style={[s.cell, s.headerCell]}>
-                {c}
-              </Text>
-            ))}
-          </View>
-          {visible
-            .map((ri) => [ri, block.rows[ri]] as const)
-            .map(([ri, row]) => (
-              <View key={ri} style={s.tableRow}>
-                {row.map((value, ci) => (
-                  <Text key={ci} style={s.cell}>
-                    {value == null ? '—' : String(value)}
-                  </Text>
-                ))}
-                <Text style={s.rowSources}>
-                  {(block.row_sources?.[ri] ?? [])
-                    .map((sourceIndex) => `[${sourceIndex + 1}]`)
-                    .join(' ')}
-                </Text>
-              </View>
-            ))}
-        </View>
-      </ScrollView>
+      <SourceTable
+        columns={[...block.columns, 'Fuentes']}
+        rows={visible.map((ri) => [
+          ...block.rows[ri],
+          (block.row_sources?.[ri] ?? []).map((index) => `[${index + 1}]`).join(' '),
+        ])}
+        minColWidth={100}
+      />
       {focus.length > 0 && focus.length < block.rows.length ? (
         <Pressable accessibilityRole="button" onPress={() => setAll(!all)}>
           <Text style={s.more}>
@@ -126,21 +110,15 @@ function Markdown({ text }: { text: string }) {
 }
 export default function BlockView({ block }: { block: Block }) {
   if (!block || typeof block !== 'object') return null;
+  const { colors } = useTheme();
   return (
-    <View style={s.card}>
+    <Card style={s.card}>
       {block.type === 'cala_table' || block.type === 'cala_answer' ? (
         <DataBlock block={block as Extract<Block, { type: 'cala_table' | 'cala_answer' }>} />
       ) : block.type === 'claim_check' ? (
         <>
           <Text style={s.quote}>“{block.claim}”</Text>
-          <Text
-            style={[
-              s.badge,
-              { color: verdictColors[block.verdict], borderColor: verdictColors[block.verdict] },
-            ]}
-          >
-            {verdictLabels[block.verdict]}
-          </Text>
+          <VerdictBadge verdict={block.verdict} />
           <Text style={s.body}>{block.explanation}</Text>
           <BlockView block={block.evidence} />
           <Sources sources={block.sources} />
@@ -168,57 +146,59 @@ export default function BlockView({ block }: { block: Block }) {
       ) : block.type === 'text' ? (
         <Text style={s.body}>{block.text}</Text>
       ) : null}
-    </View>
+    </Card>
   );
 }
-const s = StyleSheet.create({
-  card: {
-    backgroundColor: '#151c30',
-    borderColor: '#29324b',
-    borderWidth: 1,
-    borderRadius: 15,
-    padding: 16,
-    marginTop: 10,
-    gap: 8,
-  },
-  title: { color: '#f8fafc', fontWeight: '700', fontSize: 16 },
-  body: { color: '#cbd5e1', fontSize: 14, lineHeight: 21 },
-  bold: { fontWeight: '700', color: '#f8fafc' },
-  markdown: { gap: 4 },
-  tableRow: { flexDirection: 'row', alignItems: 'stretch' },
-  cell: {
-    minWidth: 100,
-    maxWidth: 220,
-    color: '#cbd5e1',
-    fontSize: 12,
-    padding: 9,
-    borderBottomWidth: 1,
-    borderColor: '#29324b',
-  },
-  headerCell: { color: '#f8fafc', fontWeight: '700', backgroundColor: '#202943' },
-  rowSources: { color: '#c4b5fd', padding: 9 },
-  sources: { gap: 5 },
-  link: { color: '#c4b5fd', fontSize: 12, textDecorationLine: 'underline' },
-  rank: {
-    color: '#0b1020',
-    backgroundColor: '#c4b5fd',
-    overflow: 'hidden',
-    borderRadius: 5,
-    fontSize: 10,
-  },
-  query: { borderTopWidth: 1, borderColor: '#29324b', paddingTop: 7, marginTop: 4 },
-  queryText: { color: '#9aa6bf', fontSize: 11, marginTop: 5 },
-  muted: { color: '#9aa6bf', fontSize: 12 },
-  more: { color: '#a78bfa', fontSize: 13, fontWeight: '700' },
-  quote: { color: '#f8fafc', fontSize: 16, fontWeight: '600' },
-  badge: {
-    alignSelf: 'flex-start',
-    fontSize: 11,
-    fontWeight: '700',
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    overflow: 'hidden',
-  },
-});
+function makeStyles(c: import('../theme').Colors) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: c.surface,
+      borderColor: c.border,
+      borderWidth: 1,
+      borderRadius: 15,
+      padding: 16,
+      marginTop: 10,
+      gap: 8,
+    },
+    title: { color: c.text, fontWeight: '700', fontSize: 16 },
+    body: { color: c.textMuted, fontSize: 14, lineHeight: 21 },
+    bold: { fontWeight: '700', color: c.text },
+    markdown: { gap: 4 },
+    tableRow: { flexDirection: 'row', alignItems: 'stretch' },
+    cell: {
+      minWidth: 100,
+      maxWidth: 220,
+      color: c.textMuted,
+      fontSize: 12,
+      padding: 9,
+      borderBottomWidth: 1,
+      borderColor: c.border,
+    },
+    headerCell: { color: c.text, fontWeight: '700', backgroundColor: c.surfaceAlt },
+    rowSources: { color: c.accent, padding: 9 },
+    sources: { gap: 5 },
+    link: { color: c.accent, fontSize: 12, textDecorationLine: 'underline' },
+    rank: {
+      color: c.accentText,
+      backgroundColor: c.accent,
+      overflow: 'hidden',
+      borderRadius: 5,
+      fontSize: 10,
+    },
+    query: { borderTopWidth: 1, borderColor: c.border, paddingTop: 7, marginTop: 4 },
+    queryText: { color: c.textMuted, fontSize: 11, marginTop: 5 },
+    muted: { color: c.textMuted, fontSize: 12 },
+    more: { color: c.accent, fontSize: 13, fontWeight: '700' },
+    quote: { color: c.text, fontSize: 16, fontWeight: '600' },
+    badge: {
+      alignSelf: 'flex-start',
+      fontSize: 11,
+      fontWeight: '700',
+      borderWidth: 1,
+      borderRadius: 14,
+      paddingHorizontal: 9,
+      paddingVertical: 5,
+      overflow: 'hidden',
+    },
+  });
+}
