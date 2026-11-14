@@ -101,7 +101,8 @@ async def handle_message(text, profile, llm, cala=None, cache_dir=None):
             _merge_patch(profile_patch, patch)
             return {"type": "profile_update", "changes": patch} if patch else None
         if kind == "chitchat":
-            return {"type": "text", "text": part.get("text", "¡De acuerdo!")}
+            # part["text"] es el texto del usuario: no devolverlo como respuesta (eco).
+            return {"type": "text", "text": "No he encontrado nada que consultar en Cala. Pregúntame por una empresa, un inversor o una ronda, o cuéntame un dato para verificarlo."}
         evidence = await execute(part.get("text", text), cala=cala, llm=llm, cache_dir=cache_dir)
         if kind == "claim":
             return await check(part, evidence, llm)

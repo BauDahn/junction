@@ -16,7 +16,7 @@ Las respuestas del chat y las secciones del journal son listas de `Block`. Todos
 
 | `type` | Campos | Cuándo |
 |---|---|---|
-| `cala_table` | `title`, `summary?`, `call: CalaCall`, `columns: [string]`, `rows: [[string \| number \| null]]`, `sources: [Source]`, `row_sources?: [[int]]` (índices en `sources` por fila) | Resultado de `knowledge_query` (filas) o de una entidad (campo · valor · fuente · fecha · tipo de fuente) |
+| `cala_table` | `title`, `summary?`, `call: CalaCall`, `columns: [string]`, `rows: [[string \| number \| null]]`, `sources: [Source]`, `row_sources?: [[int]]` (índices en `sources` por fila), `focus_rows?: [int]` (filas que responden la pregunta; la app muestra solo esas y "Ver todas"), `answer?: string` (si es una sola fila: sus celdas de Cala unidas con " · ") | Resultado de `knowledge_query` (filas) o de una entidad (campo · valor · fuente · fecha · tipo de fuente) |
 | `cala_answer` | `title`, `call: CalaCall`, `markdown`, `sources: [Source]` | Resultado de `knowledge_search`: la respuesta de Cala tal cual |
 | `claim_check` | `claim` (lo que dijo el usuario), `verdict: confirmed\|partially_confirmed\|contradicted\|no_data`, `explanation` (una línea), `evidence: cala_table \| cala_answer`, `sources: [Source]` | El usuario afirmó un dato y se contrastó con Cala |
 | `profile_update` | `changes: {campo: valor}` | El usuario contó algo de su startup o de sus intereses |

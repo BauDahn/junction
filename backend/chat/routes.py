@@ -92,6 +92,10 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
         try:
             with os.fdopen(fd, "wb") as stream:
                 stream.write(data)
+            if os.getenv("CHAT_KEEP_AUDIO") == "1":  # depuración local de transcripciones
+                keep = Path(store.DB_PATH).parent / "audio" if hasattr(store, "DB_PATH") else Path("data/audio")
+                keep.mkdir(parents=True, exist_ok=True)
+                (keep / f"{store.now_iso().replace(':', '-')}{suffix}").write_bytes(data)
             try:
                 hint = transcription.hint_from_profile(store.get_profile(session_id))
                 result = await transcriber(path, hint=hint)
