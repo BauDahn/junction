@@ -29,6 +29,23 @@ Lo que salió de estas tareas: el verificador de decks completo (backend, CLI, A
 
 *(Pendiente: Fabricio agrega su registro de `cx log`. Su trabajo incluye la app Expo, el chat del backend, el audio con Whisper y las recomendaciones.)*
 
+## Máquina `gabriel`
+
+**8 tareas · 20 min de Codex · 9,597,599 tokens de entrada (95% en caché) · 191,590 tokens de salida.**
+
+| Fecha | Rol | Modelo | Tarea (resumen) | Resultado | Min |
+|---|---|---|---|---|---|
+| 14/11 16:34 | backend | gpt-6-luna | Lee docs/API.md, docs/PLAN-CALA-CENTRO.md y CLAUDE.md (solo las secciones necesarias). Implementa el | LISTO: creados los 3 workflows y la documentación de Issue #47. | 2.5 |
+| 14/11 16:39 | backend | gpt-6-luna | (seguir) Please fix all 4 defects in the three workflow JSON files under n8n/ (n8n/journal_diario_wo | LISTO: corregidos los cuatro defectos en los workflows; todos los nodos Code pasan parseo de JavaScr | 7.5 |
+| 14/11 16:49 | backend | gpt-6-luna | (seguir) Aplica exactamente estos 3 reemplazos UTF-8 precisos en los archivos de `n8n/` usando Pytho | LISTO: aplicados los tres reemplazos UTF-8 solicitados. | 0.4 |
+| 14/11 16:51 | backend | gpt-6-luna | (seguir) Durante la validación final de `n8n/*.json` detectamos 4 detalles funcionales puntuales por | LISTO: aplicados los cuatro ajustes solicitados. | 1.6 |
+| 14/11 21:05 | backend | gpt-6-luna | (seguir) Aplica todas las correcciones de revisión señaladas por `fabricio` en el PR #61 (`Review 59 | LISTO: actualizados los tres workflows y `n8n/README.md`; JSON, conexiones, reintentos, JavaScript y | 4.2 |
+| 14/11 21:20 | backend | gpt-6-luna | Implementa el Issue #66 ("Contexto: subir PDF (pitch) y notas de voz que alimentan el perfil") para | Listo. Espero la tarea concreta. | 0.1 |
+| 14/11 21:20 | backend | gpt-6-luna | (seguir) La tarea concreta ya está en mi mensaje anterior (Issue #66: implementar backend/context/__ | LISTO: Issue #66 implementado; contexto extrae PDF, voz y notas, y actualiza el perfil. | 3.4 |
+| 14/11 21:24 | backend | gpt-6-luna | (seguir) Revisión del diff de Issue #66: corrige 3 detalles concretos sin tocar nada fuera de backen | LISTO: Corregidos los tres detalles y agregada la prueba de persistencia al vaciar `geography`. | 0.8 |
+
+Lo que salió de estas tareas: integración inicial de flujos `n8n/` (#47) y la ingesta de contexto del backend en `backend/context/` para Cala Match (#66: extracción de PDF, notas de voz y notas de texto hacia el perfil y etiquetas editables).
+
 ## Cómo regenerar
 
 Cada máquina tiene su registro en `~/agentes/estado/codex.jsonl` (`cx log` lo resume).

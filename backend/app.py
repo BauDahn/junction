@@ -19,6 +19,7 @@ from verifier.llm import make_llm
 from verifier.pipeline import verify_pdf
 from chat.routes import router as chat_router
 from chat import transcribe
+from context.routes import router as context_router
 
 ROOT = Path(__file__).parent
 MAX_PDF_BYTES = 20 * 1024 * 1024
@@ -38,6 +39,7 @@ async def warmup_valkey():
 
 
 app.include_router(chat_router)
+app.include_router(context_router)
 ERROR_CODES = {
     400: "bad_request",
     404: "not_found",
