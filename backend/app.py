@@ -6,6 +6,7 @@ import uuid
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from verifier.config import settings
@@ -15,6 +16,13 @@ from verifier.pipeline import verify_pdf
 ROOT = Path(__file__).parent
 MAX_PDF_BYTES = 20 * 1024 * 1024
 app = FastAPI(title="Deck Verifier")
+# CORS abierto en desarrollo (docs/API.md); en producción, CORS_ORIGINS con los orígenes separados por comas.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 jobs: dict[str, dict] = {}
 tasks: dict[str, asyncio.Task] = {}
 
