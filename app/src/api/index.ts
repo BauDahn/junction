@@ -14,6 +14,10 @@ export type CalaTableBlock = {
   rows: (string | number | null)[][];
   sources: Source[];
   row_sources?: number[][];
+  /** Índices de las filas que responden la pregunta; el resto se muestra con "Ver todas". */
+  focus_rows?: number[];
+  /** Si la respuesta es una fila: sus celdas de Cala unidas. */
+  answer?: string;
 };
 export type CalaAnswerBlock = {
   type: 'cala_answer';

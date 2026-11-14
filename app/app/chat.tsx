@@ -215,7 +215,7 @@ export default function ChatScreen() {
           ) : (
             <Text style={s.messageText}>{item.text}</Text>
           )}
-          {item.sources?.map((source, index) => (
+          {(item.blocks?.length ? [] : (item.sources ?? [])).map((source, index) => (
             <Pressable
               key={`${source.url}-${index}`}
               accessibilityRole="link"

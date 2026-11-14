@@ -50,6 +50,12 @@ function DataBlock({ block }: { block: Extract<Block, { type: 'cala_table' | 'ca
         <Query call={block.call} />
       </>
     );
+  return <TableBlock block={block} />;
+}
+function TableBlock({ block }: { block: Extract<Block, { type: 'cala_table' }> }) {
+  const [all, setAll] = useState(false);
+  const focus = block.focus_rows?.filter((i) => i >= 0 && i < block.rows.length) ?? [];
+  const visible = all || !focus.length ? block.rows.map((_, i) => i) : focus;
   return (
     <>
       <Text style={s.title}>{block.title}</Text>
@@ -63,22 +69,31 @@ function DataBlock({ block }: { block: Extract<Block, { type: 'cala_table' | 'ca
               </Text>
             ))}
           </View>
-          {block.rows.map((row, ri) => (
-            <View key={ri} style={s.tableRow}>
-              {row.map((value, ci) => (
-                <Text key={ci} style={s.cell}>
-                  {value == null ? '—' : String(value)}
+          {visible
+            .map((ri) => [ri, block.rows[ri]] as const)
+            .map(([ri, row]) => (
+              <View key={ri} style={s.tableRow}>
+                {row.map((value, ci) => (
+                  <Text key={ci} style={s.cell}>
+                    {value == null ? '—' : String(value)}
+                  </Text>
+                ))}
+                <Text style={s.rowSources}>
+                  {(block.row_sources?.[ri] ?? [])
+                    .map((sourceIndex) => `[${sourceIndex + 1}]`)
+                    .join(' ')}
                 </Text>
-              ))}
-              <Text style={s.rowSources}>
-                {(block.row_sources?.[ri] ?? [])
-                  .map((sourceIndex) => `[${sourceIndex + 1}]`)
-                  .join(' ')}
-              </Text>
-            </View>
-          ))}
+              </View>
+            ))}
         </View>
       </ScrollView>
+      {focus.length > 0 && focus.length < block.rows.length ? (
+        <Pressable accessibilityRole="button" onPress={() => setAll(!all)}>
+          <Text style={s.more}>
+            {all ? 'Ver solo la respuesta' : `Ver todas (${block.rows.length})`}
+          </Text>
+        </Pressable>
+      ) : null}
       <Sources sources={block.sources} />
       <Query call={block.call} />
     </>
@@ -194,6 +209,7 @@ const s = StyleSheet.create({
   query: { borderTopWidth: 1, borderColor: '#29324b', paddingTop: 7, marginTop: 4 },
   queryText: { color: '#9aa6bf', fontSize: 11, marginTop: 5 },
   muted: { color: '#9aa6bf', fontSize: 12 },
+  more: { color: '#a78bfa', fontSize: 13, fontWeight: '700' },
   quote: { color: '#f8fafc', fontSize: 16, fontWeight: '600' },
   badge: {
     alignSelf: 'flex-start',
