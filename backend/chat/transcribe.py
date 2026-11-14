@@ -5,8 +5,8 @@ import os
 from pathlib import Path
 
 import httpx
-from verifier.config import settings
-from verifier.llm import make_llm
+from core.config import settings
+from core.llm import make_llm
 
 logger = logging.getLogger(__name__)
 _model = None

@@ -11,7 +11,7 @@ Hackathon Junction 2026, Espoo (Finlandia), del 13 al 15 de noviembre de 2026. S
 5. **Subgrafo local sobre Cala**: el vecindario de cada usuario se carga en local (nodos y aristas con fuente) y se explora con BFS; Cala solo se llama en el borde. Medido el 14/11 (semilla Amenitiz, 185 nodos): la carga son unos 14–18 s de trabajo real de Cala, el BFS local tarda 0,13 ms y el límite de uso salta con unas 10 llamadas seguidas. Los endpoints de entidades responden en ~1 s; los 16–60 s son de `knowledge/query` y `knowledge/search`.
 6. **Puntaje de afinidad (propuesta de `bau`, a validar)**: coincidencia con las restricciones del perfil (sector, etapa, región, ticket) + distancia en el grafo + rondas parecidas compartidas. Siempre explicable: cada punto se justifica con datos de Cala.
 
-El motor (router de mensajes, canonizador, bloques, journal) sigue en `docs/PLAN-CALA-CENTRO.md`. **Fuera del producto (decisión del 14/11): el verificador de pitch decks.** `backend/verifier/` se queda porque el chat usa sus módulos compartidos (`llm.py`, `config.py`, `cala.py`).
+El motor (router de mensajes, canonizador, bloques) sigue en `docs/PLAN-CALA-CENTRO.md`. **Fuera del producto (decisión del 14/11): el verificador de pitch decks y el journal.** Ya no hay código de ninguno de los dos en el repo; el PDF solo alimenta el perfil. Lo compartido que usaba el verificador (LLM, configuración, cliente de Cala, lectura de PDF) vive en `backend/core/`.
 
 Cala es el núcleo (no tocamos cómo funciona: mostramos para qué sirve). Todo dato de Cala se muestra con su fuente.
 
@@ -26,33 +26,24 @@ Cala es el núcleo (no tocamos cómo funciona: mostramos para qué sirve). Todo 
 ## Equipo y coordinación
 | Máquina | Persona | Agentes | Rol |
 |---|---|---|---|
-| `bau` | Bau | Claude (orquestador), Codex, Gemini | **Coordina a todo el equipo**: reparte tareas, revisa y mergea PRs, vigila conflictos y comunica las novedades. Arquitectura, pitch y documentación |
-| `fabricio` | Fabricio | Claude, Codex, Gemini | Miembro: API del backend, optimizador y Aiven |
-| `gabriel` | Gabriel | Agente de Google (Gemini) como principal | Miembro: contexto (PDF y voz), n8n y herramientas extra |
-| `adrian` | Adrian | Agente propio (a confirmar) | Miembro: diseño y app (el prototipo de Stitch llevado a Expo) |
+| `bau` | Bau | Claude (orquestador), Codex, Gemini | **Activo:** revisa y mergea todo, limpia el repo, mantiene la documentación, el pitch y la coordinación |
+| `fabricio` | Fabricio | Claude, Codex, Gemini | **En pausa** (decisión del 14/11 noche): su trabajo (feed, grafo, optimizador) ya está en `main` |
+| `gabriel` | Gabriel | Antigravity y Codex | **Activo:** la interfaz de la app (#80), el catálogo de Slush y el contexto (PDF y voz) |
+| `adrian` | Adrian | Antigravity | **En pausa** (decisión del 14/11 noche) |
 
 - **Todo se coordina por GitHub**, que es lo único que ven las cuatro máquinas: issue fijo #1 "Estado del equipo" (estado de cada máquina y mensajes), issues con label `maquina:<nombre>` (tareas) y PRs.
 - Con [claude-central](https://github.com/BauDahn/claude-central) instalado se usa el comando `equipo` (`equipo mias`, `equipo mensajes`, `equipo avisar bau "..."`, `equipo publicar`). **Sin claude-central** (por ejemplo, con un agente de Google) se hace lo mismo con `gh`: `gh issue list --label maquina:<nombre>` para ver tus tareas, y un comentario en el issue #1 que empiece con `**<nombre> → bau:**` para avisar. El script `equipo` es un solo archivo de Python que solo necesita `gh`; se puede usar suelto.
 - **Antes de empezar algo que no te asignaron, avisá al orquestador** (comentario en #1 o `equipo avisar bau`), para no duplicar trabajo. Ya pasó.
 - El orquestador responde y reparte por el mismo canal. Las claves (`CALA_API_KEY`, `GEMINI_API_KEY`, `VALKEY_URL`) se pasan por privado, nunca por GitHub.
 
-### Dueños de cada área (para no pisarse; reparto del 14/11 por la noche)
-| Área | Dueño | Notas |
-|---|---|---|
-| `app/` | máquina `adrian` | Expo (web + iOS + Android), TypeScript, todo en inglés; sigue `docs/design/stitch/` |
-| `backend/api/` (feed, afinidad, detalle) y `backend/chat/`, `app.py` | máquina `fabricio` | Endpoints nuevos del feed y del detalle; el chat existente |
-| `canonizador/` (cliente de Cala, caché, límites) | máquina `fabricio` | Optimizador: pausa por endpoint, reintentos, Aiven Valkey |
-| `backend/graph/` (subgrafo local) y `backend/cala_core/`, `journal/` | máquina `bau` (diseño) con Codex | Arquitectura del grafo y del puntaje de afinidad |
-| `backend/context/` y `n8n/` | máquina `gabriel` | Ingesta de PDF y voz, flujos y herramientas extra |
-| `docs/API.md` | compartido | Contrato; los cambios fuera de *(borrador)* los revisa `bau` |
-| `CLAUDE.md`, `README.md`, `docs/` (salvo `docs/design/`) | máquina `bau` | Coordinación, plan, informes, pitch; `PROCESO.md`: una línea por hito |
-| `docs/SPEC-grafo-afinidad.md` | Subgrafo local y puntaje de afinidad (qué se guarda y cómo se calcula) |
-| `docs/ARQUITECTURA.md` | Cómo se monta el sistema: catálogo de Slush precalculado, gateway a Cala, grafo en Valkey, presupuesto de latencia |
-| `docs/design/` | máquina `adrian` | Prototipos y sistema de diseño |
+### Dueños de cada área (desde el 14/11 noche: solo `bau` y `gabriel` están activos)
+| Área | Dueño |
+|---|---|
+| `app/` (la interfaz) | `gabriel` |
+| `backend/catalog/` y `backend/context/` | `gabriel` |
+| Todo lo demás (`backend/`, `canonizador/`, `docs/`, `CLAUDE.md`, `README.md`) | `bau`, con Codex |
 
-**Quién mergea:** cada máquina mergea sus propios PRs cuando sus tests pasan y solo tocan su área. `bau` revisa únicamente lo que cambia `docs/API.md` o cruza áreas. `fabricio` revisa los PRs de `gabriel` y `adrian` que toquen el backend; `adrian` revisa los de la app. Al mergear, avisar en el issue #1.
-
-Si hace falta tocar el área del otro, se pide por `equipo avisar` o se hace en un PR que el dueño aprueba.
+**Quién mergea:** `bau` revisa y mergea todos los PRs (squash), después de correr los tests. `gabriel` abre PRs chicos, uno por pantalla, con capturas a 390 px. Al mergear, `bau` avisa en el issue #1.
 
 ### Flujo de Git (obligatorio)
 1. Toda tarea es un **issue** (`equipo asignar <maquina> "título" --cuerpo "qué, criterio de hecho"`).
@@ -78,7 +69,7 @@ Una tarea por persona para cada eje; cada una es un issue con label `maquina:<no
 ## Principios de calidad (decisión del 14/11 noche)
 **Menos cantidad, más calidad. Una app simple que se vea y se sienta bien vale más que muchas funciones a medias.**
 - La app tiene **tres pestañas**: Feed, Ask (el chat) y Context. El perfil es una hoja que se abre desde el avatar, no una pestaña. Más el detalle de una tarjeta.
-- **Fuera de la app:** Deck, Journal y la pantalla de estado. Si el código queda, no se muestra.
+- **Fuera de la app y del repo:** Deck, Journal y la pantalla de estado. Los archivos de esas pantallas se borran, no se esconden.
 - Antes de sumar una función, preguntarse si mejora la primera pantalla de la demo. Si no, no entra; va a la lista "después" de `docs/PITCH.md`.
 - Terminar una pantalla es que se vea bien en teléfono, tenga estados vacío, de carga y de error con texto humano, y esté probada con datos reales. No se mergea una pantalla a medias aunque "ya funcione".
 - **Diseño minimalista y humano.** Las reglas están en el issue de rediseño de la app (un solo acento de color, sin degradados ni brillos, poca sombra, texto específico en lugar de eslóganes, nada de tarjetas dentro de tarjetas). Los PRs de interfaz llevan capturas a 390 px de ancho y Claude las revisa antes de mergear.
@@ -103,14 +94,14 @@ Una tarea por persona para cada eje; cada una es un issue con label `maquina:<no
 ## Reglas técnicas
 - **Secretos**: `CALA_API_KEY`, `NVIDIA_API_KEY` solo en `backend/.env` (ignorado por git; plantilla en `backend/.env.example`). Nunca leerlos, imprimirlos, loguearlos ni ponerlos en prompts o commits.
 - **Cala**: el código nuevo consulta Cala **a través del canonizador** (`canonizador/`), nunca mandando el texto del usuario directo: el texto libre da respuestas distintas para la misma pregunta (`docs/BENCHMARK-CANONIZADOR.md`). Endpoints: `knowledge/query` (filas), entidades (datos con fuentes y `is_lead`), `knowledge/search` (respuesta con fuentes, último recurso). **16–60 s por llamada** y HTTP 429 tras ~7 llamadas seguidas: caché en disco (`backend/cache/`, ignorada), pocas llamadas a la vez y reintentos con espera. Detalle en `docs/CALA-CAMPOS.md` y `docs/CALA-API.md`.
-- **LLM**: `LLM_PROVIDER` = `gemini` (por defecto si hay `GEMINI_API_KEY`) | `nvidia` | `codex` | `claude` (`backend/verifier/llm.py`). Claves solo en `backend/.env`.
+- **LLM**: `LLM_PROVIDER` = `gemini` (por defecto si hay `GEMINI_API_KEY`) | `nvidia` | `codex` | `claude` (`backend/core/llm.py`). Claves solo en `backend/.env`.
 - **Transcripción**: Gemini por defecto si hay `GEMINI_API_KEY` (una llamada para transcripción literal e intención limpia, con respaldo a faster-whisper local, modelo `WHISPER_MODEL`, por defecto `small`); si no, whisper si está instalado, o `none`. `TRANSCRIPTION_PROVIDER` permite elegir `gemini` | `whisper` | `nvidia` | `none`. Ver `backend/chat/transcribe.py`.
 - No crear repos ni desplegar sin aprobación del usuario. Antes de dar algo por terminado, correr la app o los tests y decir qué se verificó.
 
 ## Documentos
 | Documento | Qué tiene |
 |---|---|
-| `docs/PLAN-CALA-CENTRO.md` | El enfoque actual: router, consultas, bloques, journal y reparto |
+| `docs/PLAN-CALA-CENTRO.md` | El motor: router de mensajes, consultas a Cala, bloques y reparto |
 | `docs/API.md` | Contrato backend ↔ app |
 | `docs/CALA-CAMPOS.md` | Guía oficial de campos de Cala (entidades, rondas, `is_lead`, Slush 2026) |
 | `docs/CALA-SKILL.md` | Guía oficial para que un LLM use Cala (lenguaje de consultas) |
@@ -119,24 +110,21 @@ Una tarea por persona para cada eje; cada una es un issue con label `maquina:<no
 | `docs/BENCHMARK-CANONIZADOR.md` | Benchmark: 5 formas de preguntarle a Cala (0–1 de 9 consistentes contra 9 de 9) |
 | `docs/INFORME-ERROR-CALA.md` | El error de consistencia de Cala, evidencia y recomendaciones para Cala |
 | `docs/design/` | Prototipo de Stitch (pantallas y sistema de diseño) |
-| `docs/SPEC-verificador.md` | Diseño del verificador de decks (fuera del producto desde el 14/11) |
 | `docs/IDEAS-CALA.md` | Ideas evaluadas al elegir el proyecto |
 | `docs/CODEX.md` | Registro de lo que construyó Codex (reto de Codex) |
 | `docs/PROCESO.md` | Diario de decisiones |
 
 ## Estado (14/11, noche)
-- En `main`: canonizador + benchmarks, caché Valkey, app Expo (chat, journal, perfil) y chat del backend (sesiones, texto, audio, recomendaciones).
-- Cambio de enfoque: de "chatbot con Cala en el centro" a **Cala Match** (feed con afinidad, detalle, chat, contexto). El diseño demo ya está en `docs/design/stitch/`.
-- Equipo: `bau` (orquestador), `fabricio`, `gabriel` y `adrian` (miembros).
+- En `main`: canonizador con límite de tasa compartido en Valkey, grafo compartido (`backend/graph/`), catálogo de Slush (`backend/catalog/`), feed y detalle con afinidad (`backend/api/`), chat con audio de Gemini y las páginas de cada reto (`docs/AIVEN.md`, `docs/CODEX.md`, `docs/GOOGLE-GEMINI.md`, `docs/PITCH.md`).
+- En revisión: la interfaz minimalista de `gabriel` (#90 a #93) y el contexto por PDF y voz (#73).
+- Equipo activo: `bau` y `gabriel`. `fabricio` y `adrian` en pausa.
 
 ## Pendientes
-- [ ] Un issue por eje de la sección Workstreams (arquitectura, diseño y app, optimizador, Aiven, contexto, utilidades, presentación).
-- [ ] Quitar la pestaña Deck de la app (el contrato y el verificador quedan sin uso).
-- [ ] App en inglés.
-- [ ] Contrato nuevo en `docs/API.md`: feed, detalle de una entidad, afinidad y contexto.
-- [ ] Optimizador del cliente de Cala: pausa por endpoint y espera tras 429 (ver README para los números medidos).
-- [ ] Aiven: grafo compartido en Valkey y precarga de la demo.
-- [ ] Prueba de punta a punta de la app contra el backend en vivo (web y Expo Go).
-- [ ] Preguntas al stand de Cala (límite de uso, costo, latencia, lead/follow, Slush 2026).
-- [ ] Confirmar hora límite de entrega y formularios de cada reto secundario.
-- [ ] Pitch y video de demo.
+- [ ] Interfaz (#80): mergear #90 a #93 tras revisar capturas; sacar los archivos de las pantallas viejas (Deck, Journal, Estado, Perfil como pestaña).
+- [ ] Contexto (#66, PR #73): sacar su cambio de `docs/CODEX.md`, rebasar y mergear.
+- [ ] Correr el catálogo de Slush completo contra Valkey (~55 min) y exportar el respaldo.
+- [ ] Textos del backend en inglés y no perder nombres en las notas de voz (#83).
+- [ ] Prueba de punta a punta de la app contra el backend en vivo (#53).
+- [ ] Preguntas al stand de Cala (`is_lead`, límite de uso, costo, otros eventos).
+- [ ] Confirmar hora límite de entrega y formularios de cada reto.
+- [ ] Slides y video del pitch (#69).

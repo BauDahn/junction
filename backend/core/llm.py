@@ -152,7 +152,7 @@ class CodexProvider:
             binary = candidates[-1] if candidates else None
         if not binary:
             raise RuntimeError("No se encontró el ejecutable codex")
-        with tempfile.TemporaryDirectory(prefix="deck-verifier-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="cala-llm-") as tmp:
             root = Path(tmp)
             schema_path, output = root / "schema.json", root / "out.json"
             schema_path.write_text(json.dumps(strict_schema(schema)))

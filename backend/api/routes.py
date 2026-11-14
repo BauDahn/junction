@@ -20,7 +20,7 @@ def get_cala():
     if _cala is None:
         try:
             from canonizador.client import CalaClient
-            from verifier.config import settings
+            from core.config import settings
             if not settings.cala_api_key:
                 return None
             _cala = CalaClient(settings.cala_api_key, settings.cache_dir)
