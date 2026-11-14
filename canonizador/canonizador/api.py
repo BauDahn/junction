@@ -6,7 +6,7 @@ from .cache import DiskCache
 from .client import CalaClient
 from .intent import IntentParser
 from .normalize import normalize
-from .plan import build_plan
+from .plan import build_plan, build_query
 from .resolve import resolve_entities
 
 ROUND_REL = "PARTICIPATES_IN_FUNDING_ROUND"
@@ -113,16 +113,31 @@ async def answer(question, *, llm=None, client=None, cache_dir=None):
     cala = client or CalaClient(cache_dir=root)
     intent = await IntentParser(llm, cache).parse(normalize(question))
     if intent.get("attribute") in ("funding_round", "lead_investors"):
-        result = await answer_intent(intent, cala)
-        ids = [result["company"]["id"]] if result.get("company") else []
-        canonical = {"entity_ids": ids, "attribute": intent["attribute"], "filters": intent.get("filters", {})}
-        cached = cache.get("answers", canonical)
-        if cached is not None:
-            cached["cache_hit"] = True; cached["cala_calls"] = cala.calls
-            return cached
-        response = {"intent": intent, "entity_ids": ids, "plan": build_plan(intent, ids[0]) if ids else [], "result": result, "cache_hit": False, "cala_calls": cala.calls}
-        cache.put("answers", canonical, response)
+        structured = await answer_intent(intent, cala)
+        company = structured.get("company")
+        query = build_query(intent, company.get("name") if company else None)
+        qresult = cache.get("knowledge_queries", query)
+        query_hit = qresult is not None
+        if qresult is None and query:
+            qresult = await cala.knowledge_query(query)
+            cache.put("knowledge_queries", query, qresult)
+        rows = (qresult or {}).get("results", [])
+        sources = _sources(qresult or {}, structured)
+        query_amount = _find_query_amount(rows)
+        structured_amount = next((r.get("amount") for r in structured.get("rounds", []) if r.get("amount") is not None), None)
+        match = _amount_equal(structured_amount, query_amount)
+        result = {"query": query, "rows": rows, "sources": sources, "cross_check": {"structured_amount": structured_amount, "query_amount": query_amount, "match": match, "note": "Coinciden" if match else "Discrepancia entre knowledge_query y entidades"}, "structured": structured}
+        ids = [company["id"]] if company else []
+        response = {"intent": intent, "entity_ids": ids, "plan": build_plan(intent, ids[0]) if ids else [], "result": result, "cache_hit": query_hit, "cala_calls": cala.calls}
         return response
+    if intent.get("attribute") == "company_list":
+        query = build_query(intent)
+        result = cache.get("knowledge_queries", query)
+        hit = result is not None
+        if not hit:
+            result = await cala.knowledge_query(query)
+            cache.put("knowledge_queries", query, result)
+        return {"intent": intent, "entity_ids": [], "plan": [], "result": {"query": query, "rows": result.get("results", []), "sources": result.get("sources", [])}, "cache_hit": hit, "cala_calls": cala.calls}
     resolved = await resolve_entities(intent, cala)
     ids = sorted(x["chosen"]["id"] for x in resolved if x["chosen"] and x["chosen"].get("id"))
     canonical = {"entity_ids": ids, "attribute": intent["attribute"], "filters": intent.get("filters", {})}
@@ -148,3 +163,28 @@ async def answer(question, *, llm=None, client=None, cache_dir=None):
     response = {"intent": intent, "entity_ids": ids, "plan": plans, "result": results, "cache_hit": False, "cala_calls": cala.calls}
     cache.put("answers", canonical, response)
     return response
+
+
+def _find_query_amount(rows):
+    if isinstance(rows, dict): rows = rows.get("results", [])
+    for row in rows if isinstance(rows, list) else []:
+        if isinstance(row, dict):
+            for key, value in row.items():
+                if "amount" in key.lower() or "funding" in key.lower():
+                    return value.get("value") if isinstance(value, dict) else value
+    return None
+
+
+def _amount_equal(a, b):
+    if a is None or b is None: return a == b
+    def numeric(v):
+        import re
+        s = str(v).upper().replace(",", "").replace("€", "").replace("EUR", "").strip()
+        m = re.search(r"([0-9]+(?:\.[0-9]+)?)\s*(B|M|K)?", s)
+        if not m: return s
+        suffix = m.group(2)
+        if suffix is None and "BILLION" in s: suffix = "B"
+        if suffix is None and "MILLION" in s: suffix = "M"
+        if suffix is None and "THOUSAND" in s: suffix = "K"
+        return float(m.group(1)) * {"B": 1e9, "M": 1e6, "K": 1e3, None: 1}[suffix]
+    return numeric(a) == numeric(b)

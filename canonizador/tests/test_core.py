@@ -4,7 +4,7 @@ from canonizador.cache import DiskCache
 from canonizador.intent import IntentParser, SCHEMA, strict_schema
 from canonizador.api import answer_intent
 from canonizador.normalize import normalize
-from canonizador.plan import build_plan
+from canonizador.plan import build_plan, build_query, effective_attribute, _funding_literal
 from canonizador.resolve import resolve_entities
 
 
@@ -19,7 +19,7 @@ def test_strict_schema_recurses_and_requires_every_property():
     nested = strict["properties"]["entities"]["items"]
     assert nested["additionalProperties"] is False
     assert nested["required"] == ["name", "type"]
-    assert strict["properties"]["filters"]["required"] == ["round_label", "year"]
+    assert strict["properties"]["filters"]["required"] == ["round_label", "year", "location", "sector", "min_funding"]
     assert "additionalProperties" not in SCHEMA
 
 
@@ -43,6 +43,39 @@ def test_funding_plan_filters_issuer_and_leads():
     assert plan[0]["request"]["relationships"]["outgoing"]["PARTICIPATES_IN_FUNDING_ROUND"] == {"limit": 100}
     assert plan[0]["filters"]["issuer_role"] == "ISSUER"
     assert plan[1]["filters"]["is_lead"] is True
+
+
+def test_fixed_queries_for_same_intent_and_templates():
+    intent = {"attribute": "funding_round", "entities": [{"name": "Amenitiz"}], "filters": {"round_label": "SERIES_B"}}
+    assert build_query(intent, "Amenitiz") == build_query(intent, "Amenitiz") == "Amenitiz.funding_round.series=B.return(amount, lead investor, investors, date)"
+    assert build_query({"attribute": "company_list", "filters": {"location": "Finland", "sector": "Climate Tech", "min_funding": 10_000_000}}) == "startups.location=Finland.sector=climate tech.funding>10M.return(name, funding, sector, location)"
+    assert build_query({"attribute": "profile", "entities": [{"name": "X"}], "filters": {}}) == "X.return(name, description, sector, location, funding, employee count)"
+
+
+def test_company_list_filters_normalize_across_languages_and_fallback():
+    expected = "startups.location=Spain.sector=hotel technology.funding>10M.return(name, funding, sector, location)"
+    spanish = {"attribute": "company_list", "entities": [], "filters": {"location": "España", "sector": "tecnología hotelera", "min_funding": 10_000_000}}
+    english = {"attribute": "company_list", "entities": [], "filters": {"location": "Spain", "sector": "hotel tech", "min_funding": 10_000_000}}
+    fallback = {"attribute": "total_funding", "entities": [], "filters": {"location": "Spain", "sector": "hotel tech", "min_funding": 10_000_000}}
+    assert build_query(spanish) == build_query(english) == expected
+    assert effective_attribute(fallback) == "company_list"
+    assert build_query(fallback) == expected
+
+
+def test_funding_literal_compacts_base_currency_and_rejects_text():
+    assert _funding_literal(10_000_000) == "10M"
+    assert _funding_literal(1_500_000) == "1.5M"
+    assert _funding_literal(2_000_000_000) == "2B"
+    with pytest.raises(ValueError):
+        _funding_literal("10MILLONES")
+
+
+def test_amount_cross_check_marks_discrepancy():
+    from canonizador.api import _amount_equal, _find_query_amount
+    rows = [{"amount": {"value": "38.9M EUR"}}]
+    amount = _find_query_amount(rows)
+    assert amount == "38.9M EUR"
+    assert not _amount_equal(3_000_000_000, amount)
 
 
 @pytest.mark.asyncio

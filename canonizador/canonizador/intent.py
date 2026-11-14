@@ -6,8 +6,13 @@ import tempfile
 import glob
 from pathlib import Path
 
-SCHEMA = {"type": "object", "properties": {"entities": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}, "type": {"type": "string", "enum": ["Company", "Person", "Event", "Investor"]}}, "required": ["name", "type"]}}, "attribute": {"type": "string", "enum": ["funding_round", "total_funding", "investors", "lead_investors", "founders", "executives", "headcount", "acquisitions", "profile", "event_attendees", "other"]}, "filters": {"type": "object", "properties": {"round_label": {"type": ["string", "null"]}, "year": {"type": ["integer", "null"]}}}}, "required": ["entities", "attribute", "filters"]}
-SYSTEM = "Convert the user question to the required JSON intent. Preserve proper names exactly as written and never translate names. Use Cala round codes such as SERIES_B. Return only schema-conforming JSON."
+SECTORS = ["hotel technology", "fintech", "healthtech", "climate tech", "saas", "ai", "cybersecurity", "edtech", "proptech", "mobility", "foodtech", "biotech", "ecommerce", "logistics", "gaming", "other"]
+SCHEMA = {"type": "object", "properties": {"entities": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}, "type": {"type": "string", "enum": ["Company", "Person", "Event", "Investor"]}}, "required": ["name", "type"]}}, "attribute": {"type": "string", "enum": ["funding_round", "total_funding", "investors", "lead_investors", "founders", "executives", "headcount", "acquisitions", "profile", "event_attendees", "company_list", "other"]}, "filters": {"type": "object", "properties": {"round_label": {"type": ["string", "null"]}, "year": {"type": ["integer", "null"]}, "location": {"type": ["string", "null"]}, "sector": {"type": ["string", "null"], "enum": [None, *SECTORS]}, "min_funding": {"type": ["integer", "null"]}}}}, "required": ["entities", "attribute", "filters"]}
+SYSTEM = """Convert the user question to the required JSON intent. Preserve proper names exactly as written. Use Cala round codes such as SERIES_B. Return only schema-conforming JSON.
+
+Company discovery rule: if the user asks for a LIST of companies/startups selected by criteria (location, sector, minimum funding, round) and names no specific company, set attribute=company_list and entities=[]. Do not use total_funding for this request. Example: 'List Spanish hotel-tech startups that raised at least 10 million' → company_list, location='Spain', sector='hotel technology', min_funding=10000000.
+
+Always return list filters in canonical English regardless of question language: location is a country/city name in English and Title Case (España → Spain); sector is one lowercase singular enum value; min_funding is an integer in the base currency (10M / 10 millones → 10000000). Examples: 'startups españolas de tecnología hotelera con 10 millones' → location='Spain', sector='hotel technology', min_funding=10000000; 'hotel tech startups in Spain with 10000000 funding' → the same values."""
 
 
 def parse_json(text):
