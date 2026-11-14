@@ -57,7 +57,7 @@ def test_llm_failure_does_not_store_user_message(client):
 def test_query_blocks_context_and_sources(monkeypatch, client):
     from cala_core import handle_message
     async def fake(text, profile, llm, cala=None, cache_dir=None):
-        assert cala is not None
+        assert cala is None  # el canonizador crea su propio cliente
         return {"blocks":[{"type":"cala_table", "title":"Inversores", "columns":["name"], "rows":[["Fondo"]], "sources":[{"name":"Cala", "url":"https://example.test"}]}], "profile_patch":{}}
     monkeypatch.setattr("chat.engine.cala_handle_message", fake)
     sid = client.post("/api/sessions").json()["session_id"]

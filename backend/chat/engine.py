@@ -29,7 +29,9 @@ async def handle_text(session_id, text, llm, transcript=None, cala=None, context
     profile = store.get_profile(session_id) or empty_profile()
     rec = store.get_recommendations(session_id)
     pending_notice = bool(rec and rec["status"] == "ready" and not rec["notified"])
-    result = await cala_handle_message(text, profile, llm, cala=cala, cache_dir=getattr(settings, "cache_dir", None))
+    # cala_core usa el cliente del canonizador (knowledge_query); el CalaClient del verificador no sirve aquí.
+    core_cala = cala if hasattr(cala, "knowledge_query") else None
+    result = await cala_handle_message(text, profile, llm, cala=core_cala, cache_dir=getattr(settings, "cache_dir", None))
     blocks = result.get("blocks", [])
     patch = result.get("profile_patch", {})
     updated, changed = merge(profile, patch)
