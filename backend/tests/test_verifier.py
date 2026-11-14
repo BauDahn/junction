@@ -94,7 +94,8 @@ def test_make_llm_gemini_tier(monkeypatch, tmp_path):
     monkeypatch.setattr(module, "settings", SimpleNamespace(llm_provider="gemini", gemini_api_key="fake", gemini_model="strong-x", gemini_fast_model="fast-x", cache_dir=tmp_path))
     _, strong = make_llm()
     _, fast = make_llm(tier="fast")
-    assert strong == "strong-x" and fast == "fast-x"
+    _, custom = make_llm("gemini", tier="fast", model="x")
+    assert strong == "strong-x" and fast == "fast-x" and custom == "x"
 
 
 def test_pipeline_schemas_are_strict_at_every_object():

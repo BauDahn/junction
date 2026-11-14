@@ -18,6 +18,7 @@ from verifier.config import settings
 from verifier.llm import make_llm
 from verifier.pipeline import verify_pdf
 from chat.routes import router as chat_router
+from chat import transcribe
 
 ROOT = Path(__file__).parent
 MAX_PDF_BYTES = 20 * 1024 * 1024
@@ -125,8 +126,7 @@ async def health():
         "provider": settings.llm_provider,
         "model": model,
         "cala": bool(settings.cala_api_key),
-        # Aún no hay transcripción: "none" hasta elegir proveedor (issue #4).
-        "transcription": os.getenv("TRANSCRIPTION_PROVIDER", "none"),
+        "transcription": transcribe.effective_provider(),
     }
 
 
