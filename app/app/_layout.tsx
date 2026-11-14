@@ -86,6 +86,7 @@ function ModeToggle() {
               justifyContent: 'center',
               borderRadius: radius.pill,
               opacity: pressed ? 0.75 : 1,
+              ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
             })}
           >
             <Text
@@ -125,6 +126,7 @@ function ProfileAvatarButton() {
         alignItems: 'center',
         justifyContent: 'center',
         opacity: pressed ? 0.75 : 1,
+        ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
       })}
     >
       <View style={{ alignItems: 'center', justifyContent: 'center' }}>

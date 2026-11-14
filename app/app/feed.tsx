@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import {
+  FlatList,
+  Platform,
+  Pressable,
+  RefreshControl,
+  Text,
+  View,
+  type PressableStateCallbackType,
+} from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ApiError } from '../src/api';
 import { getFeed, getMockFeed, type FeedCard, type FeedResponse } from '../src/api/feed';
@@ -101,12 +109,13 @@ function FeedRow({ item, onPress }: { item: FeedCard; onPress: () => void }) {
       accessibilityRole="button"
       accessibilityLabel={`${item.name}, affinity score ${score}`}
       onPress={onPress}
-      style={({ pressed }) => ({
+      style={(state: PressableStateCallbackType & { hovered?: boolean }) => ({
         paddingHorizontal: pageMargin,
         paddingVertical: space.lg,
-        backgroundColor: pressed ? colors.surfaceAlt : colors.surface,
+        backgroundColor: state.pressed || state.hovered ? colors.surfaceAlt : colors.surface,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
+        ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
       })}
     >
       <View
@@ -385,10 +394,13 @@ export default function FeedScreen() {
                 onPress={() => void loadInitial(mode)}
                 style={({ pressed }) => ({
                   backgroundColor: colors.accent,
+                  minHeight: 44,
+                  justifyContent: 'center',
                   paddingHorizontal: space.lg,
                   paddingVertical: 10,
                   borderRadius: radius.md,
                   opacity: pressed ? 0.85 : 1,
+                  ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
                 })}
               >
                 <Text style={{ color: colors.accentText, fontSize: font.body, fontWeight: '600' }}>
@@ -426,10 +438,13 @@ export default function FeedScreen() {
                 onPress={() => router.push('/context')}
                 style={({ pressed }) => ({
                   backgroundColor: colors.accent,
+                  minHeight: 44,
+                  justifyContent: 'center',
                   paddingHorizontal: space.lg,
                   paddingVertical: 10,
                   borderRadius: radius.md,
                   opacity: pressed ? 0.85 : 1,
+                  ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
                 })}
               >
                 <Text style={{ color: colors.accentText, fontSize: font.body, fontWeight: '600' }}>
@@ -498,12 +513,15 @@ export default function FeedScreen() {
                       accessibilityRole="button"
                       onPress={() => void handleLoadMore()}
                       style={({ pressed }) => ({
+                        minHeight: 44,
+                        justifyContent: 'center',
                         paddingHorizontal: space.md,
                         paddingVertical: space.sm,
                         borderRadius: radius.md,
                         borderWidth: 1,
                         borderColor: colors.border,
                         opacity: pressed ? 0.75 : 1,
+                        ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
                       })}
                     >
                       <Text style={{ fontSize: font.small, fontWeight: '600', color: colors.accent }}>
@@ -517,12 +535,15 @@ export default function FeedScreen() {
                     onPress={() => void handleLoadMore()}
                     style={({ pressed }) => ({
                       alignSelf: 'center',
+                      minHeight: 44,
+                      justifyContent: 'center',
                       paddingHorizontal: space.lg,
                       paddingVertical: space.sm,
                       borderRadius: radius.md,
                       borderWidth: 1,
                       borderColor: colors.border,
                       opacity: pressed ? 0.75 : 1,
+                      ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
                     })}
                   >
                     <Text style={{ fontSize: font.small, fontWeight: '600', color: colors.accent }}>

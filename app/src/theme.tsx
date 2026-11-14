@@ -84,7 +84,7 @@ export const font = {
   display: 34,
 } as const;
 export const tabularNums: Pick<TextStyle, 'fontVariant'> = { fontVariant: ['tabular-nums'] };
-export const maxWidth = 880;
+export const maxWidth = 760;
 /** Kept for compatibility with existing components; intentionally flat without decorative shadows. */
 export const shadow = {
   shadowColor: 'transparent',
