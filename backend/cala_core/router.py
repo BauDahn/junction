@@ -1,4 +1,6 @@
 import json
+import hashlib
+from pathlib import Path
 from canonizador.intent import SECTORS
 
 
@@ -36,11 +38,23 @@ Para cada query y claim, completa canonical_question_en: pregunta en inglés, au
 Un mensaje con datos del perfil devuelve UNA sola parte profile con todos los campos juntos. Ejemplo: 'Somos Stayflow en Barcelona; nos interesan las fintech nórdicas' → una parte profile, profile_patch con startup_name=Stayflow, location=Barcelona, interests.sectors=[fintech], interests.regions=[Nordics].
 Ejemplo literal: 'Somos Stayflow en Barcelona; nos interesan las fintech nórdicas en etapa seed y quiero saber quién invirtió en Wolt.' → una parte profile con profile_patch={{startup_name: 'Stayflow', location: 'Barcelona', interests: {{sectors: ['fintech'], regions: ['Nordics'], stages: ['SEED']}}}} y una parte query con canonical_question_en='Who invested in Wolt?' y has_entity=true. No omitas location, sector, región ni etapa cuando están mencionados.
 Ejemplo mixto: 'somos Stayflow en Barcelona y quiero saber quién invirtió en Mews' produce profile con startup_name Stayflow/location Barcelona e intereses si se indican, y query sobre inversores de Mews.
-Normaliza interests.sectors a uno de estos valores: {', '.join(SECTORS)}. regions en inglés canónico (Nordics, Spain, Finland). stages en códigos de Cala, por ejemplo SEED, SERIES_A, SERIES_B. Completa todos los campos requeridos, usa null/campo vacío cuando no corresponda."""
+Normaliza interests.sectors a uno de estos valores: {', '.join(SECTORS)}. regions en inglés canónico (Nordics, Spain, Finland). stages en códigos de Cala, por ejemplo SEED, SERIES_A, SERIES_B. En profile_patch incluye solo los datos explícitos; omite campos desconocidos o vacíos. Para campos ajenos a profile usa null/false según el schema. Aunque el mensaje se divida en varias partes profile, no descartes datos: cada parte debe contener los atributos explícitos que le correspondan."""
 
 
-async def route(text, profile, llm):
-    user = json.dumps({"message": text, "current_profile": profile or {}}, ensure_ascii=False)
-    result = await llm.complete_json(SYSTEM, user, SCHEMA)
+async def route(text, profile, llm, cache_dir=None):
+    normalized = " ".join((text or "").casefold().split())
+    relevant_profile = profile or {}
+    key_data = json.dumps({"message": normalized, "profile": relevant_profile}, ensure_ascii=False,
+                          sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(key_data.encode()).hexdigest()
+    cache_path = Path(cache_dir or "cache") / "router" / f"{digest}.json"
+    if cache_path.exists():
+        result = json.loads(cache_path.read_text())
+    else:
+        user = json.dumps({"message": text, "current_profile": relevant_profile}, ensure_ascii=False,
+                          sort_keys=True, separators=(",", ":"))
+        result = await llm.complete_json(SYSTEM, user, SCHEMA)
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(json.dumps(result, ensure_ascii=False))
     parts = result.get("parts", []) if isinstance(result, dict) else []
     return [p for p in parts if isinstance(p, dict) and p.get("type") in {"query", "claim", "profile", "chitchat"}]

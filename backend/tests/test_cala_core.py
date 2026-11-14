@@ -9,8 +9,10 @@ from cala_core.claims import check
 
 
 class FakeLLM:
-    def __init__(self, responses): self.responses = list(responses)
-    async def complete_json(self, system, user, schema): return self.responses.pop(0)
+    def __init__(self, responses): self.responses = list(responses); self.calls = 0
+    async def complete_json(self, system, user, schema):
+        self.calls += 1
+        return self.responses.pop(0)
 
 
 class FakeCala:
@@ -143,3 +145,30 @@ def test_router_prompt_declares_classification_rules():
     assert "Somos Stayflow en Barcelona; nos interesan las fintech nórdicas en etapa seed" in SYSTEM
     assert "canonical_question_en" in SCHEMA["properties"]["parts"]["items"]["required"]
     assert "has_entity" in SCHEMA["properties"]["parts"]["items"]["required"]
+
+
+def test_mixed_profile_parts_keep_location_and_interests(monkeypatch, tmp_path):
+    async def fake_execute(part, **kwargs):
+        return {"type": "cala_answer", "markdown": part["canonical_question_en"], "sources": []}
+    monkeypatch.setattr("cala_core.execute", fake_execute)
+    base = {"claim": None, "subject": None, "attribute": None, "user_value": None,
+            "canonical_question_en": None, "has_entity": False, "profile_patch": {}}
+    llm = FakeLLM([{"parts": [
+        {**base, "type": "profile", "text": "Stayflow en Barcelona", "profile_patch": {"startup_name": "Stayflow", "location": "Barcelona"}},
+        {**base, "type": "profile", "text": "gustos fintech nórdicas seed", "profile_patch": {"interests": {"sectors": ["fintech"], "regions": ["Nordics"], "stages": ["SEED"]}}},
+        {**base, "type": "query", "text": "quién invirtió en Wolt", "canonical_question_en": "Who invested in Wolt?", "has_entity": True},
+    ]}])
+    got = run(handle_message("Somos Stayflow en Barcelona; nos interesan las fintech nórdicas en etapa seed y quiero saber quién invirtió en Wolt.", {}, llm, cache_dir=tmp_path))
+    assert got["profile_patch"] == {"startup_name": "Stayflow", "location": "Barcelona", "interests": {"sectors": ["fintech"], "regions": ["Nordics"], "stages": ["SEED"]}}
+
+
+def test_router_cache_normalizes_message_spacing_and_case(tmp_path):
+    from cala_core.router import route
+    response = {"parts": [{"type": "query", "text": "Who invested in Wolt?", "claim": None,
+                           "subject": None, "attribute": None, "user_value": None, "profile_patch": {},
+                           "canonical_question_en": "Who invested in Wolt?", "has_entity": True}]}
+    llm = FakeLLM([response])
+    first = run(route("Who invested in Wolt?", {"startup_name": "Stayflow"}, llm, cache_dir=tmp_path))
+    second = run(route("  WHO   INVESTED in WOLT? ", {"startup_name": "Stayflow"}, llm, cache_dir=tmp_path))
+    assert first == second
+    assert llm.calls == 1
