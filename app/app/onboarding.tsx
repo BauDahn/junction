@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMode, type MatchMode } from '../src/mode';
 import { font, maxWidth, pageMargin, radius, space, useTheme } from '../src/theme';
+import Logo from '../src/ui/Logo';
 
 export default function OnboardingScreen() {
   const { colors } = useTheme();
@@ -16,7 +17,8 @@ export default function OnboardingScreen() {
     <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: pageMargin, backgroundColor: colors.bg }} keyboardShouldPersistTaps="handled">
       <View style={{ width: '100%', maxWidth: 480, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, padding: space.xl, gap: space.lg }}>
         <View style={{ gap: space.sm }}>
-          <Text accessibilityRole="header" style={{ fontSize: font.h1, fontWeight: '700', color: colors.text }}>Welcome to Cala Match</Text>
+          <Logo size={40} />
+          <Text accessibilityRole="header" style={{ fontSize: font.h2, fontWeight: '600', color: colors.text }}>Meet the right investors at the right event.</Text>
           <Text style={{ fontSize: font.body, color: colors.textMuted, lineHeight: 22 }}>Select how you operate to calibrate your event deal flow and Cala graph.</Text>
         </View>
         <View style={{ gap: space.sm }}>
