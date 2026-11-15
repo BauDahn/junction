@@ -41,7 +41,7 @@ La búsqueda por nombre ya ignora acentos. El problema está en los endpoints de
 
 ### 2.3 `POST /v1/knowledge/query` con la guía oficial y un LLM traduciendo libremente
 
-Usamos la guía oficial de Cala (`docs/CALA-SKILL.md`) y dejamos que un LLM tradujera cada pregunta a una consulta.
+Usamos la guía oficial de Cala (`docs/internal/CALA-SKILL.md`) y dejamos que un LLM tradujera cada pregunta a una consulta.
 
 | Pregunta | Variantes | Consultas generadas | Resultado |
 |---|---|---|---|
@@ -143,7 +143,7 @@ La canonización ataca el problema antes de la llamada: normalizar el texto, res
 
 ## 4. La solución: canonizador (`canonizador/`)
 
-Diseño completo en `docs/SPEC-canonizador.md`. Principio: **el LLM solo extrae la intención; la consulta la arma el código.**
+Diseño completo en `docs/internal/SPEC-canonizador.md`. Principio: **el LLM solo extrae la intención; la consulta la arma el código.**
 
 | Paso | Módulo | Qué hace |
 |---|---|---|

@@ -12,12 +12,12 @@ import glob, json, os, subprocess, sys, tempfile, time
 from pathlib import Path
 
 HERE = Path(__file__).parent
-# --guia: carga la guía oficial de Cala (docs/CALA-SKILL.md, copia de github.com/cala-ai/cala-skill) en el prompt.
+# --guia: carga la guía oficial de Cala (docs/internal/CALA-SKILL.md, copia de github.com/cala-ai/cala-skill) en el prompt.
 GUIA = "--guia" in sys.argv
 OUT = HERE / "bench" / ("results_mcp_guia.json" if GUIA else "results_mcp.json")
 GUIA_TEXTO = ""
 if GUIA:
-    GUIA_TEXTO = "\n".join(l for l in (HERE.parent / "docs" / "CALA-SKILL.md").read_text().splitlines()
+    GUIA_TEXTO = "\n".join(l for l in (HERE.parent / "docs" / "internal" / "CALA-SKILL.md").read_text().splitlines()
                            if not l.startswith("<!--"))
 ENV_FILE = HERE.parent / "backend" / ".env"
 MODEL, EFFORT = "gpt-6-luna", "low"

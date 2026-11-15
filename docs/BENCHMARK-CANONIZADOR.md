@@ -24,7 +24,7 @@ Mandar lenguaje natural sin canonizar es inconsistente en las dos APIs de conoci
 - **Búsqueda directa**: el texto tal cual a `knowledge/search`.
 - **Consulta directa**: el texto tal cual a `knowledge/query`, que según la documentación de Cala acepta lenguaje natural además de su lenguaje de consultas.
 - **Agente por MCP**: Codex CLI (`gpt-6-luna`, esfuerzo bajo) conectado al servidor MCP de Cala (`https://api.cala.ai/mcp/`) como única herramienta, sin la guía de Cala. Recibe la pregunta tal cual y elige solo qué herramientas llamar. Se le pide responder en inglés y listar aparte nombres y cifras, para comparar datos y no idiomas. Script: `canonizador/bench_mcp.py`; resultados en `canonizador/bench/results_mcp.json`.
-- **Agente por MCP con la guía de Cala**: el mismo agente y el mismo prompt, con la guía oficial de uso de Cala (`docs/CALA-SKILL.md`, copia de `github.com/cala-ai/cala-skill`) agregada al comienzo. Sin canonizador. `python3 bench_mcp.py --guia`; resultados en `canonizador/bench/results_mcp_guia.json`.
+- **Agente por MCP con la guía de Cala**: el mismo agente y el mismo prompt, con la guía oficial de uso de Cala (`docs/internal/CALA-SKILL.md`, copia de `github.com/cala-ai/cala-skill`) agregada al comienzo. Sin canonizador. `python3 bench_mcp.py --guia`; resultados en `canonizador/bench/results_mcp_guia.json`.
 - **Canonizador**: `canonizador.api.answer()`, que reduce la pregunta a una intención y arma la consulta de `knowledge_query` con una plantilla fija.
 - Todo secuencial, con caché y reanudable. Los resultados crudos quedan en `canonizador/bench/results.json`.
 

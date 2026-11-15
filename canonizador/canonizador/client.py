@@ -45,12 +45,10 @@ def cala_usage(remote=None, date=None):
             def integer(value):
                 try: return int(value or 0)
                 except (TypeError, ValueError): return 0
-            who_keys_ok, who_keys = remote._run(lambda c: list(c.scan_iter(match=prefix + "who:*")))
+            who_ok, who_values = remote._run(lambda c: c.hgetall(prefix + "by_who"))
             by_who = {}
-            if who_keys_ok and who_keys:
-                who_vals_ok, who_vals = remote._run(lambda c: c.mget(who_keys))
-                if who_vals_ok:
-                    by_who = {key[len(prefix + "who:"):]: integer(value) for key, value in zip(who_keys, who_vals)}
+            if who_ok and who_values:
+                by_who = {str(key): integer(value) for key, value in who_values.items()}
             return {"date": date, "total": integer(vals[0]),
                     "by_class": {"entities": integer(vals[1]), "knowledge": integer(vals[2])}, "by_who": by_who}
     with _usage_lock:
@@ -122,8 +120,8 @@ class CalaClient:
         self.shared_limiter = shared_limiter if shared_limiter is not None else (
             _ValkeySharedLimiter(remote) if enabled and remote is not None else None)
         self._shared_down_until = 0.0
-        raw_cap = os.getenv("CALA_DAILY_CALL_CAP", "").strip()
-        try: self.daily_call_cap = int(raw_cap or 0)
+        raw_cap = os.getenv("CALA_DAILY_CALL_CAP", "2000").strip()
+        try: self.daily_call_cap = int(raw_cap or 2000)
         except ValueError: raise ValueError("CALA_DAILY_CALL_CAP must be an integer")
         self.call_cap = 0
         self._run_start_calls = 0
@@ -143,9 +141,11 @@ class CalaClient:
             local cap = tonumber(ARGV[1])
             if cap > 0 and total >= cap then return 0 end
             for i = 1, 3 do redis.call('INCR', KEYS[i]); redis.call('EXPIRE', KEYS[i], 259200) end
+            redis.call('HINCRBY', KEYS[4], ARGV[2], 1)
+            redis.call('EXPIRE', KEYS[4], 259200)
             return 1
             """
-            keys = [prefix + "total", prefix + "class:" + kind, prefix + "who:" + self.call_label]
+            keys = [prefix + "total", prefix + "class:" + kind, prefix + "who:" + self.call_label, prefix + "by_who"]
             with _usage_lock:
                 if self.call_cap and self._run_reserved >= self.call_cap: raise CalaBudgetExceeded(self.call_cap)
                 self._run_reserved += 1
@@ -154,7 +154,7 @@ class CalaClient:
                 if existing_client is not None and not callable(getattr(existing_client, "pipeline", None)):
                     raise RuntimeError("Valkey client does not support pipelines")
                 if cap:
-                    ok, allowed = remote._run(lambda c: c.eval(script, len(keys), *keys, cap))
+                    ok, allowed = remote._run(lambda c: c.eval(script, len(keys), *keys, cap, self.call_label))
                     if ok:
                         if not allowed:
                             with _usage_lock: self._run_reserved -= 1
@@ -163,11 +163,13 @@ class CalaClient:
                 else:
                     def increment(client):
                         pipe = client.pipeline()
-                        for key in keys:
+                        for key in keys[:3]:
                             pipe.incr(key)
                             if hasattr(pipe, "expire"): pipe.expire(key, 259200)
                             else: pipe.pexpire(key, 259200000)
                         pipe.execute()
+                        client.hincrby(prefix + "by_who", self.call_label, 1)
+                        client.expire(prefix + "by_who", 259200)
                     ok, _ = remote._run(increment)
                     if ok: return
             except CalaBudgetExceeded:

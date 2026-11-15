@@ -48,6 +48,24 @@ def test_search_returns_locals_when_cala_fails(client):
     assert [item["origin"] for item in result["items"]] == ["catalog", "catalog"]
 
 
+@pytest.mark.parametrize(
+    ("query", "expected_ids"),
+    [("Cafe", ["local-1", "local-2"]), ("no local match", [])],
+)
+def test_search_without_auth_skips_cala_and_returns_catalog(client, monkeypatch, query, expected_ids):
+    monkeypatch.setenv("CALA_REQUIRE_AUTH", "1")
+    cala = SearchCala()
+    backend_app.app.dependency_overrides[get_cala] = lambda: cala
+
+    response = client.get("/api/search", params={"q": query, "limit": 8})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["tried"] == ["catalog"]
+    assert [item["id"] for item in data["items"]] == expected_ids
+    assert cala.calls == []
+
+
 @pytest.mark.parametrize("query", ["x", "a" * 81])
 def test_search_validates_query_length(client, query):
     assert client.get("/api/search", params={"q": query}).status_code == 422

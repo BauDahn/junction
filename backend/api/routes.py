@@ -2,11 +2,14 @@
 import asyncio
 import base64
 import json
+import os
+import threading
+import time
 import unicodedata
 from collections import Counter
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Header, Response
+from pydantic import BaseModel, Field, field_validator
 from chat import store as chat_store
 from .affinity import format_amount, rank
 from . import enrich
@@ -16,6 +19,31 @@ from .graph_port import get_graph, neighbors_batch
 
 router = APIRouter()
 _cala = None
+
+
+class FavoritesReportRequest(BaseModel):
+    entity_ids: list[str] = Field(min_length=1, max_length=10)
+    session_id: str | None = None
+    mode: str | None = None
+
+    @field_validator("entity_ids", mode="before")
+    @classmethod
+    def normalize_entity_ids(cls, value):
+        if isinstance(value, list):
+            return list(dict.fromkeys(item.strip() for item in value if isinstance(item, str)))
+        return value
+
+    @field_validator("entity_ids")
+    @classmethod
+    def validate_entity_ids(cls, value):
+        if any(not item or len(item) > 200 for item in value):
+            raise ValueError("entity ids must be non-empty and at most 200 characters")
+        return value
+
+
+def get_report_llm():
+    from core.llm import make_llm
+    return make_llm(tier="fast")[0]
 
 
 def get_cala():
@@ -370,6 +398,7 @@ def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
 
 @router.get("/api/entities/{entity_id}")
 async def entity(entity_id: str, mode: str | None = None, session_id: str | None = None,
+                 request: Request = None, authorization: str | None = Header(default=None),
                  catalog=Depends(get_catalog), graph=Depends(get_graph), cala=Depends(get_cala)):
     current_mode = _mode(mode, session_id)
     if session_id:
@@ -382,6 +411,29 @@ async def entity(entity_id: str, mode: str | None = None, session_id: str | None
             if not catalog.get_features(entity_id) and not cached_node:
                 raise HTTPException(404, "Entity not found in the graph or in Cala.")
         else:
+            from uuid import UUID
+            from core.abuse import account_for, enforce, identity, daily, account_daily, negative_hit, negative_put
+            try:
+                UUID(entity_id)
+            except (ValueError, TypeError):
+                raise HTTPException(422, "Entity id must be a UUID.")
+            user = account_for(authorization)
+            if os.getenv("CALA_REQUIRE_AUTH", "0") == "1" and user is None:
+                raise HTTPException(401, "unauthorized")
+            subject = identity(request, user)
+            enforce(request, "entity", subject, 20, 60)
+            daily(request, "entity", subject, 200)
+            if user:
+                account_daily(request, user)
+            negative = f"neg:v1:{entity_id}"
+            cache_remote = getattr(getattr(cala, "cache", None), "remote", None)
+            try:
+                if negative_hit(negative) or (cache_remote and cache_remote._run(lambda c: c.get(negative))[1]):
+                    raise HTTPException(404, "Entity not found in the graph or in Cala.")
+            except HTTPException:
+                raise
+            except Exception:
+                pass
             from graph.loader import expand_node
             stats = {"nodes": set(), "edges": set(), "cala_calls": 0, "skipped_expanded": 0,
                      "excluded": Counter(), "truncated": [], "errors": [], "levels": []}
@@ -407,22 +459,120 @@ async def entity(entity_id: str, mode: str | None = None, session_id: str | None
                 raise HTTPException(504, "Cala did not answer in time.") from exc
             except Exception as exc:
                 if exc.__class__.__name__ == "CalaBudgetExceeded":
+                    import logging
+                    logging.getLogger("uvicorn.error").warning("Cala call cap reached client=%s route=%s", subject, request.url.path)
                     raise HTTPException(503, "Cala call cap reached.") from exc
                 raise
         if cala is not None and not graph.get_node(entity_id):
             errors = stats.get("errors") or []
             message = " ".join(str(error.get("error", "")) for error in errors if isinstance(error, dict)).casefold()
             if "daily cala call cap reached" in message:
+                import logging
+                logging.getLogger("uvicorn.error").warning("Cala call cap reached client=%s route=%s", subject, request.url.path)
                 raise HTTPException(503, "Cala call cap reached.")
             missing = any(token in message for token in ("not found", "not exist", "unknown entity", "404", "doesn't exist"))
             missing = missing or any(str(error.get("error", "")).strip("'\"") == str(entity_id)
                                      for error in errors if isinstance(error, dict))
             if missing:
+                try:
+                    negative_put(negative)
+                    if cache_remote: cache_remote._run(lambda c: c.set(negative, "1", ex=3600))
+                except Exception: pass
                 raise HTTPException(404, "Entity not found in the graph or in Cala.")
             raise HTTPException(502, "Cala request failed.")
         if not graph.get_node(entity_id) and not catalog.get_features(entity_id):
+            if cala is not None and cache_remote:
+                try:
+                    negative_put(negative)
+                    cache_remote._run(lambda c: c.set(negative, "1", ex=3600))
+                except Exception: pass
             raise HTTPException(404, "Entity not found in the graph or in Cala.")
     return await asyncio.to_thread(_detail_sync, entity_id, session_id, profile, current_mode, catalog, graph)
+
+
+@router.post("/api/favorites/report")
+async def favorites_report(body: FavoritesReportRequest, request: Request,
+                           authorization: str | None = Header(default=None), catalog=Depends(get_catalog),
+                           graph=Depends(get_graph), cala=Depends(get_cala), llm=Depends(get_report_llm)):
+    from .favorites_report import action_plan, render_pdf
+    from core.abuse import account_for, daily, enforce, identity
+
+    user = account_for(authorization)
+    if os.getenv("CALA_REQUIRE_AUTH", "0") == "1" and user is None:
+        raise HTTPException(401, "unauthorized")
+    subject = identity(request, user)
+    enforce(request, "report", subject, 3, 60)
+    daily(request, "report", subject, 30)
+
+    current_mode = _mode(body.mode, body.session_id)
+    if body.session_id:
+        _session(body.session_id)
+    profile = chat_store.get_profile(body.session_id) or {} if body.session_id else {}
+
+    async def create_report():
+        omitted_by_index = [None] * len(body.entity_ids)
+        failure_codes = [None] * len(body.entity_ids)
+        failure_messages = [None] * len(body.entity_ids)
+        failure_headers = [None] * len(body.entity_ids)
+        entries_by_index = [None] * len(body.entity_ids)
+        semaphore = asyncio.Semaphore(2)
+
+        async def load(index, entity_id):
+            async with semaphore:
+                try:
+                    detail = await entity(entity_id=entity_id, mode=current_mode, session_id=body.session_id,
+                                          request=request, authorization=authorization, catalog=catalog,
+                                          graph=graph, cala=cala)
+                    entries_by_index[index] = {"detail": detail, "plan": None}
+                except HTTPException as exc:
+                    failure_codes[index] = exc.status_code
+                    failure_messages[index] = str(exc.detail)
+                    failure_headers[index] = exc.headers
+                    reason = {404: "Not found in the catalog or in Cala", 422: "Invalid id (not a Cala id)",
+                              429: "Request limit reached", 503: "Cala daily call cap reached",
+                              504: "Cala did not answer in time"}.get(exc.status_code, "Cala request failed")
+                    omitted_by_index[index] = {"id": entity_id, "reason": reason}
+                except Exception:
+                    failure_codes[index] = 502
+                    failure_messages[index] = "Cala request failed."
+                    omitted_by_index[index] = {"id": entity_id, "reason": "Cala request failed"}
+
+        await asyncio.gather(*(load(index, entity_id) for index, entity_id in enumerate(body.entity_ids)))
+        entries = [entry for entry in entries_by_index if entry is not None]
+        omitted = [row for row in omitted_by_index if row is not None]
+        if not entries:
+            if failure_codes and all(code == 404 for code in failure_codes):
+                status, message = 404, "No favorites were found in the catalog or Cala."
+            elif failure_codes and all(code == 422 for code in failure_codes):
+                status, message = 422, failure_messages[failure_codes.index(422)]
+            elif 429 in failure_codes:
+                failed_index = failure_codes.index(429)
+                status, message = 429, failure_messages[failed_index]
+            elif 503 in failure_codes:
+                status, message = 503, "Cala's daily call cap was reached."
+            elif 504 in failure_codes:
+                status, message = 504, "Cala did not answer in time."
+            else:
+                status, message = 502, "Cala request failed for all favorites."
+            headers = failure_headers[failure_codes.index(429)] if status == 429 else None
+            raise HTTPException(status, message, headers=headers)
+        plan_semaphore = asyncio.Semaphore(3)
+
+        async def plan(entry):
+            async with plan_semaphore:
+                entry["plan"] = await action_plan(llm, entry["detail"], profile, current_mode)
+
+        await asyncio.gather(*(plan(entry) for entry in entries))
+        pdf = await asyncio.to_thread(render_pdf, entries, omitted, current_mode, datetime.now(timezone.utc))
+        headers = {"Content-Disposition": 'attachment; filename="cala-match-favorites.pdf"'}
+        if omitted:
+            headers["X-Favorites-Not-Included"] = ",".join(row["id"] for row in omitted)
+        return Response(content=pdf, media_type="application/pdf", headers=headers)
+
+    try:
+        return await asyncio.wait_for(create_report(), timeout=90)
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(504, "The report took too long.") from exc
 
 
 def _fold_name(value):
@@ -432,7 +582,9 @@ def _fold_name(value):
 
 @router.get("/api/search")
 async def search(q: str = Query(..., min_length=2, max_length=80), limit: int = Query(8, ge=1, le=50),
-                 catalog=Depends(get_catalog), cala=Depends(get_cala)):
+                 request: Request = None, catalog=Depends(get_catalog), cala=Depends(get_cala)):
+    from core.abuse import enforce, client_ip
+    enforce(request, "search", f"ip:{client_ip(request)}", 30, 60)
     needle = _fold_name(q)
     local, seen = [], set()
     for kind in ("investor", "startup"):
@@ -445,7 +597,22 @@ async def search(q: str = Query(..., min_length=2, max_length=80), limit: int = 
                               **({"one_liner": _one_liner(feature.get("description"))} if feature.get("description") else {})})
     items = local[:limit]
     tried = ["catalog"]
+    user = None
     if len(items) < limit and cala is not None:
+        from core.abuse import account_for
+        authorization = request.headers.get("authorization")
+        user = account_for(authorization)
+        # Local catalog search is public. With auth required, treat the remote
+        # Cala fallback as unavailable when the request has no valid account.
+        if os.getenv("CALA_REQUIRE_AUTH", "0") == "1" and user is None:
+            cala = None
+    if len(items) < limit and cala is not None:
+        from core.abuse import daily, account_daily, account_for, identity
+        subject = identity(request, user)
+        enforce(request, "entity", subject, 20, 60)
+        daily(request, "entity", subject, 200)
+        if user:
+            account_daily(request, user)
         tried.append("cala")
         async def get_entities(kind):
             try:
@@ -486,6 +653,13 @@ async def save_mode(session_id: str, body: ModeInput):
     return {"mode": current_mode}
 
 
+_stats_lock = threading.Lock()
+_stats_refreshing = False
+_stats_local = None
+_stats_local_at = 0.0
+_STATS_KEY = "stats:v1:catalog"
+
+
 def _stats_snapshot(catalog, cala):
     investors = catalog.list_features("investor")
     startups = catalog.list_features("startup")
@@ -509,7 +683,11 @@ def _stats_snapshot(catalog, cala):
         except Exception:
             output["cala_usage"] = {}
     else:
-        output["cala_usage"] = {}
+        try:
+            from canonizador.client import cala_usage
+            output["cala_usage"] = cala_usage(None)
+        except Exception:
+            output["cala_usage"] = {}
     if stats is not None:
         try:
             output["cala"] = stats() if callable(stats) else stats
@@ -518,6 +696,55 @@ def _stats_snapshot(catalog, cala):
     return output
 
 
+def _refresh_stats(catalog, cala, remote):
+    global _stats_refreshing, _stats_local, _stats_local_at
+    try:
+        data = None
+        if remote is not None:
+            try:
+                ok, value = remote._run(lambda c: c.get(_STATS_KEY))
+                if ok and value:
+                    data = json.loads(value)
+            except Exception:
+                pass
+        if not isinstance(data, dict):
+            data = _stats_snapshot(catalog, cala)
+            if remote is not None:
+                remote._run(lambda c: c.set(_STATS_KEY, json.dumps(data), ex=60))
+        with _stats_lock:
+            _stats_local, _stats_local_at = data, time.monotonic()
+    finally:
+        with _stats_lock:
+            _stats_refreshing = False
+
+
 @router.get("/api/stats")
-async def stats(catalog=Depends(get_catalog), cala=Depends(get_cala)):
-    return await asyncio.to_thread(_stats_snapshot, catalog, cala)
+async def stats(authorization: str | None = Header(default=None), x_admin_token: str | None = Header(default=None),
+                catalog=Depends(get_catalog), cala=Depends(get_cala)):
+    global _stats_refreshing
+    remote = getattr(getattr(cala, "cache", None), "remote", None) if cala else None
+    if remote is None:
+        try:
+            from canonizador.cache import remote_from_env
+            remote = remote_from_env()
+        except Exception:
+            pass
+    output = None
+    with _stats_lock:
+        if _stats_local is not None and time.monotonic() - _stats_local_at < 60:
+            output = dict(_stats_local)
+    if not isinstance(output, dict):
+        output = {"catalog": {"investors": 0, "startups": 0, "total": 0, "status": "pending"},
+                  "cala_usage": {"total": 0, "calls": 0, "today": 0}}
+    with _stats_lock:
+        if not _stats_refreshing and (_stats_local is None or time.monotonic() - _stats_local_at >= 60):
+            _stats_refreshing = True
+            threading.Thread(target=_refresh_stats, args=(catalog, cala, remote), daemon=True).start()
+    if cala is None:
+        output.pop("cala", None)
+    admin = os.getenv("ADMIN_TOKEN")
+    if not admin or x_admin_token != admin:
+        output.pop("cala", None)
+        usage = output.get("cala_usage") or {}
+        output["cala_usage"] = {key: value for key, value in usage.items() if key in ("total", "calls", "today")}
+    return output

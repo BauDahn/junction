@@ -65,7 +65,7 @@ Frentes de trabajo en este momento (15/11).
 
 ## Principios de calidad (decisión del 14/11 noche)
 **Menos cantidad, más calidad. Una app simple que se vea y se sienta bien vale más que muchas funciones a medias.**
-- La app tiene **tres pestañas**: Feed, Ask (el chat) y Context. El perfil es una hoja que se abre desde el avatar, no una pestaña. Más el detalle de una tarjeta.
+- La app tiene una **barra inferior con tres pestañas**: Mis eventos, Explorar eventos y Perfil (el contexto vive dentro del perfil). El asistente es una burbuja flotante (solo el ícono) que abre el chat. Más la página del evento y la ficha de la empresa.
 - **Fuera de la app y del repo:** Deck, Journal y la pantalla de estado. Los archivos de esas pantallas se borran, no se esconden.
 - Antes de sumar una función, preguntarse si mejora la primera pantalla de la demo. Si no, no entra; va a la lista "después" de `docs/PITCH.md`.
 - Terminar una pantalla es que se vea bien en teléfono, tenga estados vacío, de carga y de error con texto humano, y esté probada con datos reales. No se mergea una pantalla a medias aunque "ya funcione".
@@ -90,7 +90,7 @@ Frentes de trabajo en este momento (15/11).
 
 ## Reglas técnicas
 - **Secretos**: `CALA_API_KEY`, `NVIDIA_API_KEY` solo en `backend/.env` (ignorado por git; plantilla en `backend/.env.example`). Nunca leerlos, imprimirlos, loguearlos ni ponerlos en prompts o commits.
-- **Cala**: el código nuevo consulta Cala **a través del canonizador** (`canonizador/`), nunca mandando el texto del usuario directo: el texto libre da respuestas distintas para la misma pregunta (`docs/BENCHMARK-CANONIZADOR.md`). Endpoints: `knowledge/query` (filas), entidades (datos con fuentes y `is_lead`), `knowledge/search` (respuesta con fuentes, último recurso). **16–60 s por llamada** y HTTP 429 tras ~7 llamadas seguidas: caché en disco (`backend/cache/`, ignorada), pocas llamadas a la vez y reintentos con espera. Detalle en `docs/CALA-CAMPOS.md` y `docs/CALA-API.md`.
+- **Cala**: el código nuevo consulta Cala **a través del canonizador** (`canonizador/`), nunca mandando el texto del usuario directo: el texto libre da respuestas distintas para la misma pregunta (`docs/BENCHMARK-CANONIZADOR.md`). Endpoints: `knowledge/query` (filas), entidades (datos con fuentes y `is_lead`), `knowledge/search` (respuesta con fuentes, último recurso). **16–60 s por llamada** y HTTP 429 tras ~7 llamadas seguidas: caché en disco (`backend/cache/`, ignorada), pocas llamadas a la vez y reintentos con espera. Detalle en `docs/internal/CALA-CAMPOS.md` y `docs/internal/CALA-API.md`.
 - **LLM**: `LLM_PROVIDER` = `gemini` (por defecto si hay `GEMINI_API_KEY`) | `nvidia` | `codex` | `claude` (`backend/core/llm.py`). Claves solo en `backend/.env`.
 - **Transcripción**: Gemini por defecto si hay `GEMINI_API_KEY` (una llamada para transcripción literal e intención limpia, con respaldo a faster-whisper local, modelo `WHISPER_MODEL`, por defecto `small`); si no, whisper si está instalado, o `none`. `TRANSCRIPTION_PROVIDER` permite elegir `gemini` | `whisper` | `nvidia` | `none`. Ver `backend/chat/transcribe.py`.
 - No crear repos ni desplegar sin aprobación del usuario. Antes de dar algo por terminado, correr la app o los tests y decir qué se verificó.
@@ -98,16 +98,16 @@ Frentes de trabajo en este momento (15/11).
 ## Documentos
 | Documento | Qué tiene |
 |---|---|
-| `docs/PLAN-CALA-CENTRO.md` | El motor: router de mensajes, consultas a Cala, bloques y reparto |
+| `docs/internal/PLAN-CALA-CENTRO.md` | El motor: router de mensajes, consultas a Cala, bloques y reparto |
 | `docs/API.md` | Contrato backend ↔ app |
-| `docs/CALA-CAMPOS.md` | Guía oficial de campos de Cala (entidades, rondas, `is_lead`, Slush 2026) |
-| `docs/CALA-SKILL.md` | Guía oficial para que un LLM use Cala (lenguaje de consultas) |
-| `docs/CALA-API.md` | Primer resumen de la API de Cala |
-| `docs/SPEC-canonizador.md` | Diseño del canonizador de consultas |
+| `docs/internal/CALA-CAMPOS.md` | Guía oficial de campos de Cala (entidades, rondas, `is_lead`, Slush 2026) |
+| `docs/internal/CALA-SKILL.md` | Guía oficial para que un LLM use Cala (lenguaje de consultas) |
+| `docs/internal/CALA-API.md` | Primer resumen de la API de Cala |
+| `docs/internal/SPEC-canonizador.md` | Diseño del canonizador de consultas |
 | `docs/BENCHMARK-CANONIZADOR.md` | Benchmark: 5 formas de preguntarle a Cala (0–1 de 9 consistentes contra 9 de 9) |
 | `docs/INFORME-ERROR-CALA.md` | El error de consistencia de Cala, evidencia y recomendaciones para Cala |
 | `docs/design/` | Prototipo de Stitch (pantallas y sistema de diseño) |
-| `docs/IDEAS-CALA.md` | Ideas evaluadas al elegir el proyecto |
+| `docs/internal/IDEAS-CALA.md` | Ideas evaluadas al elegir el proyecto |
 | `docs/CODEX.md` | Registro de lo que construyó Codex (reto de Codex) |
 | `docs/PROCESO.md` | Diario de decisiones |
 
@@ -117,7 +117,7 @@ Frentes de trabajo en este momento (15/11).
 - Equipo: los cuatro activos; `bau` es la central y reparte.
 
 ## Pendientes
-- [ ] Web nueva (Gemini): registro con rol, eventos, asistente en burbuja, perfil; borrar del `app/` las pantallas viejas (Deck, Journal, Estado, Ask).
+- [x] Web nueva (Gemini): registro con rol, eventos, asistente en burbuja, perfil; pantallas viejas (Deck, Journal, Estado) ya borradas del `app/`.
 - [ ] Parametrizar el catálogo por evento y correr el de Slush 2026 completo contra Valkey (~55 min); exportar el respaldo.
 - [ ] Textos del backend en inglés y no perder nombres en las notas de voz (#83).
 - [ ] Prueba de punta a punta de la web nueva contra el backend en vivo (#53).

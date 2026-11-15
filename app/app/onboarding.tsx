@@ -1,44 +1,119 @@
-﻿import { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMode, type MatchMode } from '../src/mode';
-import { font, maxWidth, pageMargin, radius, space, useTheme } from '../src/theme';
+import { font, pageMargin, radius, space, useTheme } from '../src/theme';
 import Logo from '../src/ui/Logo';
+
+const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const roles: { value: MatchMode; label: string; description: string }[] = [
+  { value: 'raising', label: 'Raiser', description: 'Build investor outreach for your startup.' },
+  { value: 'investing', label: 'Investor', description: 'Discover startups and co-investors.' },
+];
 
 export default function OnboardingScreen() {
   const { colors } = useTheme();
-  const { completeOnboarding } = useMode();
+  const { loginWithCredentials, registerWithCredentials, authLoading } = useMode();
   const router = useRouter();
+  const [tab, setTab] = useState<'register' | 'login'>('register');
   const [role, setRole] = useState<MatchMode>('raising');
-  const [name, setName] = useState('Alex Lindqvist');
-  const [organization, setOrganization] = useState('Nordleaf');
-  const inputStyle = { fontSize: 16, color: colors.text, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: space.md, paddingVertical: space.md, backgroundColor: colors.surface } as const;
+  const [name, setName] = useState('');
+  const [company, setCompany] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const styles = StyleSheet.create({
+    page: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: pageMargin, backgroundColor: colors.bg },
+    panel: { width: '100%', maxWidth: 480, backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.xl, gap: space.lg },
+    headingGroup: { gap: space.sm },
+    heading: { fontSize: 26, lineHeight: 32, fontWeight: '800', letterSpacing: -0.6, color: colors.text },
+    body: { fontSize: font.body, color: colors.textMuted, lineHeight: 22 },
+    tabs: { flexDirection: 'row', backgroundColor: colors.surfaceAlt, borderRadius: radius.pill, padding: 4 },
+    tab: { flex: 1, minWidth: 0, minHeight: 44, padding: space.md, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+    tabText: { fontWeight: '600' },
+    formGroup: { gap: space.md },
+    field: { gap: space.xs, minWidth: 0 },
+    label: { color: colors.text, fontSize: font.small, fontWeight: '600' },
+    input: { minHeight: 44, fontSize: 16, color: colors.text, borderRadius: radius.md, paddingHorizontal: space.md, paddingVertical: space.md, backgroundColor: colors.surfaceAlt },
+    roleGroup: { gap: space.xs },
+    roleMeta: { fontSize: font.small, color: colors.textMuted },
+    roleOptions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
+    roleOption: { flex: 1, minWidth: 120, minHeight: 44, padding: space.md, borderWidth: 1, borderRadius: radius.md, gap: space.xs, justifyContent: 'center' },
+    roleTitle: { color: colors.text, fontWeight: '600' },
+    roleDescription: { color: colors.textMuted, fontSize: font.small, lineHeight: 18 },
+    error: { color: colors.danger, fontSize: font.small },
+    primaryButton: { minHeight: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: radius.pill, paddingVertical: space.md },
+    primaryButtonText: { color: colors.accentText, fontSize: font.body, fontWeight: '600' },
+  });
+
+  async function submit() {
+    setError('');
+    if (!emailRe.test(email.trim())) { setError('Enter a valid email address.'); return; }
+    if (tab === 'register' && (!name.trim() || !company.trim())) { setError('Enter your name and startup or fund name.'); return; }
+    if (tab === 'register' && password.length < 8) { setError('Password must be at least 8 characters.'); return; }
+    if (tab === 'login' && !password) { setError('Enter your password.'); return; }
+    try {
+      if (tab === 'register') {
+        await registerWithCredentials({ email: email.trim(), password, name: name.trim(), company: company.trim(), role: role === 'investing' ? 'investor' : 'raiser' });
+      } else {
+        await loginWithCredentials({ email: email.trim(), password });
+      }
+      router.replace('/feed');
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Could not sign in. Please try again.');
+    }
+  }
+
+  const field = (label: string, value: string, setValue: (next: string) => void, placeholder: string, extra: Record<string, unknown> = {}) => (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput accessibilityLabel={label} value={value} onChangeText={setValue} placeholder={placeholder} placeholderTextColor={colors.textFaint} style={styles.input} {...extra} />
+    </View>
+  );
+
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: pageMargin, backgroundColor: colors.bg }} keyboardShouldPersistTaps="handled">
-      <View style={{ width: '100%', maxWidth: 480, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, padding: space.xl, gap: space.lg }}>
-        <View style={{ gap: space.sm }}>
+    <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
+      <View style={styles.panel}>
+        <View style={styles.headingGroup}>
           <Logo size={40} />
-          <Text accessibilityRole="header" style={{ fontSize: font.h2, fontWeight: '600', color: colors.text }}>Meet the right investors at the right event.</Text>
-          <Text style={{ fontSize: font.body, color: colors.textMuted, lineHeight: 22 }}>Select how you operate to calibrate your event deal flow and Cala graph.</Text>
+          <Text accessibilityRole="header" style={styles.heading}>Meet the right investors at the right event.</Text>
+          <Text style={styles.body}>Create an account or sign in to continue.</Text>
         </View>
-        <View style={{ gap: space.sm }}>
-          <Text style={{ fontSize: font.small, fontWeight: '600', color: colors.text }}>Your role</Text>
-          {([
-            ['raising', 'Raiser', 'I am raising capital for a startup and preparing investor outreach at events.'],
-            ['investing', 'Investor', 'I am scouting verified startups, rounds, and co-investors across events.'],
-          ] as [MatchMode, string, string][]).map(([value, label, description]) => {
-            const selected = role === value;
-            return <Pressable key={value} accessibilityRole="radio" accessibilityState={{ selected }} onPress={() => setRole(value)} style={{ borderWidth: 1, borderColor: selected ? colors.accent : colors.border, backgroundColor: selected ? colors.accentSoft : colors.surface, borderRadius: radius.md, padding: space.md, gap: space.xs }}>
-              <Text style={{ color: colors.text, fontSize: font.body, fontWeight: '600' }}>{label}</Text><Text style={{ color: colors.textMuted, fontSize: font.small, lineHeight: 19 }}>{description}</Text>
-            </Pressable>;
-          })}
+        <View style={styles.tabs}>
+          {(['register', 'login'] as const).map((value) => (
+            <Pressable key={value} accessibilityRole="tab" accessibilityState={{ selected: tab === value }} onPress={() => { setTab(value); setError(''); }} style={[styles.tab, tab === value && { backgroundColor: colors.surface }]}>
+              <Text style={[styles.tabText, { color: tab === value ? colors.accent : colors.textMuted }]}>{value === 'register' ? 'Create account' : 'Sign in'}</Text>
+            </Pressable>
+          ))}
         </View>
-        <View style={{ gap: space.md }}>
-          <View style={{ gap: space.xs }}><Text style={{ color: colors.text, fontSize: font.small, fontWeight: '600' }}>Full name</Text><TextInput accessibilityLabel="Full name" value={name} onChangeText={setName} style={inputStyle} autoCapitalize="words" /></View>
-          <View style={{ gap: space.xs }}><Text style={{ color: colors.text, fontSize: font.small, fontWeight: '600' }}>Startup or fund name</Text><TextInput accessibilityLabel="Startup or fund name" value={organization} onChangeText={setOrganization} style={inputStyle} autoCapitalize="words" /></View>
+        {tab === 'register' ? (
+          <>
+            <View style={styles.roleGroup}>
+              <Text style={styles.label}>Your role</Text>
+              <Text style={styles.roleMeta}>Your role is permanent for this account.</Text>
+              <View style={styles.roleOptions}>
+                {roles.map((option) => (
+                  <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ selected: role === option.value }} onPress={() => setRole(option.value)} style={[styles.roleOption, { borderColor: role === option.value ? colors.accent : 'transparent', backgroundColor: role === option.value ? colors.accentSoft : colors.surfaceAlt }]}>
+                    <Text style={styles.roleTitle}>{option.label}</Text>
+                    <Text style={styles.roleDescription}>{option.description}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+            <View style={styles.formGroup}>
+              {field('Full name', name, setName, 'Your full name', { autoCapitalize: 'words' })}
+              {field('Startup or fund name', company, setCompany, 'Your startup or fund', { autoCapitalize: 'words' })}
+            </View>
+          </>
+        ) : null}
+        <View style={styles.formGroup}>
+          {field('Email', email, setEmail, 'you@company.com', { keyboardType: 'email-address', autoCapitalize: 'none', autoCorrect: false })}
+          {field(tab === 'register' ? 'Password (min. 8 characters)' : 'Password', password, setPassword, tab === 'register' ? 'At least 8 characters' : 'Enter your password', { secureTextEntry: true, autoCapitalize: 'none', onSubmitEditing: () => void submit() })}
         </View>
-        <Pressable accessibilityRole="button" onPress={() => { completeOnboarding({ name: name.trim() || 'Alex Lindqvist', organization: organization.trim() || 'Nordleaf', role }); router.replace('/feed'); }} style={({ pressed }) => ({ alignItems: 'center', backgroundColor: colors.accent, borderRadius: radius.md, paddingVertical: space.md, opacity: pressed ? 0.8 : 1 })}>
-          <Text style={{ color: colors.accentText, fontSize: font.body, fontWeight: '600' }}>Continue to events</Text>
+        {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+        <Pressable accessibilityRole="button" disabled={authLoading} onPress={() => void submit()} style={[styles.primaryButton, { opacity: authLoading ? 0.55 : 1 }]}>
+          <Text style={styles.primaryButtonText}>{authLoading ? (tab === 'register' ? 'Creating account...' : 'Signing in...') : (tab === 'register' ? 'Create account' : 'Sign in')}</Text>
         </Pressable>
       </View>
     </ScrollView>
