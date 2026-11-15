@@ -112,10 +112,12 @@ flowchart TB
 | Piece | Status |
 |---|---|
 | Raw Cala responses, intents and answers in Valkey, disk layer, TTL, warm-up, failure handling, pre-warm script | **In main** |
-| Graph store on Valkey (nodes, edges with sources, duplicate merging, per-user views) | **In progress** (`backend/graph/`, issue #64) |
-| Slush catalog ingestion into the graph, resumable | **In progress** (issue #72) |
-| Rate limit shared through Valkey (one counter per second, so several machines do not add up against one Cala key) | **In progress** |
-| `/api/stats` with hit rate and Cala calls saved | **Planned** |
+| Graph store on Valkey (nodes, edges with sources, duplicate merging, per-user views; `graph:v1:*`) | **In main** (issue #64) |
+| Slush catalog ingestion into the graph, resumable (`cat:v1:*`) | **In main** (issue #72) |
+| Rate limit shared through Valkey (`ratelimit:v1:cala:*`; one counter per second across machines) | **In main** |
+| `/api/stats` with cached summary | **In main** |
+| Shared Valkey accounts (`acct:v1:*`) | **In main** (#139) |
+| Negative cache and abuse limits (`neg:v1:*`, `abuse:v1:*`) | **In main** (#134) |
 
 **Why Valkey fits a graph here:**
 - **Batch reads.** Reading one node costs a ~29 ms round trip, but 200 reads in one pipeline cost **31 ms**. Our traversal reads one level at a time in a pipeline, so a two-level exploration is two round trips.

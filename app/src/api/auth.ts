@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiError, type MobileFile } from './index';
+import { emitContextChanged } from '../contextEvents';
 export type AccountRole = 'raiser' | 'investor';
 export type AuthUser = { id: string; email: string; name: string; company: string; role: AccountRole; session_id: string; created_at: string };
 export type AuthResponse = { token: string; user: AuthUser };
@@ -54,8 +55,8 @@ export async function loginAccount(input:{email:string;password:string}) { const
 export async function logoutAccount() { try { const h=await auth(); await request('/api/auth/logout',{method:'POST',headers:h}); } catch {} finally { await clearAuthToken(); } }
 export async function getMe() { return request<AuthUser>('/api/me',{headers:await auth()},'me'); }
 export async function getRawContext() { return request<RawContextResponse>('/api/me/context/raw',{headers:await auth()},'me'); }
-export async function putRawContext(text:string) { return request<RawContextResponse>('/api/me/context/raw',{method:'PUT',headers:{...(await auth()),'Content-Type':'application/json'},body:JSON.stringify({text})},'raw'); }
-export async function appendRawContext(text:string) { return request<RawContextResponse>('/api/me/context/raw/append',{method:'POST',headers:{...(await auth()),'Content-Type':'application/json'},body:JSON.stringify({text})},'raw'); }
+export async function putRawContext(text:string) { const result = await request<RawContextResponse>('/api/me/context/raw',{method:'PUT',headers:{...(await auth()),'Content-Type':'application/json'},body:JSON.stringify({text})},'raw'); emitContextChanged(); return result; }
+export async function appendRawContext(text:string) { const result = await request<RawContextResponse>('/api/me/context/raw/append',{method:'POST',headers:{...(await auth()),'Content-Type':'application/json'},body:JSON.stringify({text})},'raw'); emitContextChanged(); return result; }
 export async function transcribePreview(audio:Blob|MobileFile,durationSeconds?:number) {
  if(durationSeconds && durationSeconds>120) throw new ApiError('payload_too_large','Audio must be 2 minutes or shorter.',413);
  const form=new FormData();

@@ -406,7 +406,10 @@ async def entity(entity_id: str, mode: str | None = None, session_id: str | None
     profile = chat_store.get_profile(session_id) or {} if session_id else {}
     cached_node = graph.get_node(entity_id)
     expanded = bool(cached_node and getattr(graph, "is_expanded", lambda *_: False)(entity_id, "biz:v1"))
-    if not expanded:
+    local_data = bool(cached_node or catalog.get_features(entity_id))
+    from core.abuse import account_for
+    local_only = os.getenv("CALA_REQUIRE_AUTH", "0") == "1" and account_for(authorization) is None
+    if not expanded and not (local_only and local_data):
         if cala is None:
             if not catalog.get_features(entity_id) and not cached_node:
                 raise HTTPException(404, "Entity not found in the graph or in Cala.")
@@ -563,7 +566,7 @@ async def favorites_report(body: FavoritesReportRequest, request: Request,
                 entry["plan"] = await action_plan(llm, entry["detail"], profile, current_mode)
 
         await asyncio.gather(*(plan(entry) for entry in entries))
-        pdf = await asyncio.to_thread(render_pdf, entries, omitted, current_mode, datetime.now(timezone.utc))
+        pdf = await asyncio.to_thread(render_pdf, entries, omitted, current_mode, datetime.now(timezone.utc), profile)
         headers = {"Content-Disposition": 'attachment; filename="cala-match-favorites.pdf"'}
         if omitted:
             headers["X-Favorites-Not-Included"] = ",".join(row["id"] for row in omitted)

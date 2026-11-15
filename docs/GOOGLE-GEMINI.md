@@ -29,8 +29,9 @@ flowchart LR
 | **Row focus** | Given a table Cala returned, picks which rows answer the question. It returns **row indices only**; the answer is built from Cala's own cells | `backend/chat/focus.py` | In main |
 | **Follow-up** | Rewrites "and their CEO?" into a self-contained question using only what was already said in the conversation, adding no new facts | `backend/chat/followup.py` | In main |
 | **Recommendations** | Turns a Cala research answer into up to five cards, **using only facts stated in the answer**; each card must cite numbered sources, and cards with invalid citations are dropped | `backend/chat/recommend.py` | In main |
-| **Context from PDFs and voice notes** | Reads pitch-deck pages (text and images) and notes, extracts sector, stage, region and ticket | `backend/context/` (#66) | In review |
-| **Catalog tags** | Tags the sector and stage of ~3,000 Slush companies from the descriptions Cala already has, in parallel, without spending Cala's rate limit | `backend/catalog/` (#72) | Planned |
+| **Context from PDFs and voice notes** | Reads pitch-deck pages (text and images) and notes, extracts sector, stage, region and ticket | `backend/context/` (#66) | In main |
+| **Catalog tags** | Tags the sector and stage of ~3,000 Slush companies from the descriptions Cala already has, in parallel, without spending Cala's rate limit | `backend/catalog/` (#72) | In main |
+| **Favorites report action plan** | Proposes 3 to 5 steps per favorite using only Cala facts and drops steps that introduce new figures | `backend/api/favorites_report.py` | In main |
 
 ## 2. Why Gemini, specifically
 

@@ -4,6 +4,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { useRouter } from 'expo-router';
 import { getEventById } from '../src/api/events';
 import { getEntityDetail } from '../src/api/entities';
+import { FavoritesReportButton } from '../src/components/FavoritesReportButton';
 import RawContextVoiceCard from '../src/components/RawContextVoiceCard';
 import { useMode } from '../src/mode';
 import { font, space, tabularNums, useTheme } from '../src/theme';
@@ -111,6 +112,18 @@ export default function PerfilScreen() {
         </View>
         <View style={{ flex: desktop ? 58 : undefined, width: desktop ? undefined : '100%', minWidth: 0 }}>
           <View style={styles.section}>{heading('Context')}<RawContextVoiceCard /></View>
+          <View style={styles.block}>
+            {heading(mode === 'investing' ? 'Favorite startups' : 'Favorite investors')}
+            {favoriteInvestorIds.length ? favoriteInvestorIds.map((id) => {
+              const investor = resolvedInvestors[id];
+              return <View key={id} style={styles.row}>
+                <View style={styles.rowCopy}><Text style={styles.rowTitle}>{investor?.name ?? investorFallbackName(id)}</Text><Text style={styles.muted}>{investor?.subtitle ?? (mode === 'investing' ? 'Saved startup' : 'Saved investor')}</Text></View>
+                <Pressable accessibilityRole="button" style={styles.linkButton} onPress={() => router.push({ pathname: '/entity/[id]', params: { id, session_id: user?.session_id ?? '', mode } })}><Text style={styles.link}>Open dossier</Text></Pressable>
+                <Pressable accessibilityRole="button" style={styles.linkButton} onPress={() => toggleFavoriteInvestor(id)}><Text style={styles.link}>Remove</Text></Pressable>
+              </View>;
+            }) : <Text style={styles.empty}>{mode === 'investing' ? 'No saved startups yet.' : 'No saved investors yet.'}</Text>}
+            <FavoritesReportButton />
+          </View>
           <View style={styles.block}>
             {heading('My events')}
             {myEventIds.length ? myEventIds.map((id) => {

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Pressable, Text, useWindowDimensions, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { getEventById } from '../../src/api/events';
 import { getFeed, type FeedResponse } from '../../src/api/feed';
 import MatchCard from '../../src/components/MatchCard';
 import { getOrCreateSessionId } from '../../src/session';
+import { onContextChanged } from '../../src/contextEvents';
 import { useMode } from '../../src/mode';
 import { font, space, tabularNums, useTheme } from '../../src/theme';
 import { ActionButton, CardGrid, GRID_RADIUS, Page, PageHeader, useDesktop } from '../../src/ui/Shell';
@@ -21,14 +22,20 @@ export default function EventWorkspace() {
   const [response, setResponse] = useState<FeedResponse | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     if (!event || event.participantData !== 'cala') return;
-    setLoading(true); setError('');
+    if (!silent) { setLoading(true); setError(''); }
     try { const sessionId = await getOrCreateSessionId(); setResponse(await getFeed({ sessionId, mode, limit: 10, fallbackOnNetworkError: true })); }
-    catch { setError('Matches could not be loaded. Check your connection and try again.'); }
-    finally { setLoading(false); }
+    catch { if (!silent) setError('Matches could not be loaded. Check your connection and try again.'); }
+    finally { if (!silent) setLoading(false); }
   }, [event, mode]);
   useEffect(() => { setResponse(null); void load(); }, [load]);
+  const firstFocus = useRef(true);
+  useFocusEffect(useCallback(() => {
+    if (firstFocus.current) { firstFocus.current = false; return; }
+    void load(true);
+  }, [load]));
+  useEffect(() => onContextChanged(() => { void load(true); }), [load]);
   const back = (
     <Pressable accessibilityRole="button" onPress={() => router.canGoBack() ? router.back() : router.replace('/feed')} style={{ minHeight: 40, justifyContent: 'center', alignSelf: 'flex-start' }}>
       <Text style={{ color: colors.accent, fontSize: font.small, fontWeight: '600' }}>← Back to events</Text>

@@ -54,6 +54,9 @@ def test_pool_groups_investments_and_excludes_people_and_uncited_edges():
     assert fund["rounds"][0]["year"] == 2024
     assert "round_type" not in fund["rounds"][0]
     assert fund["rounds"][1]["is_lead"] is True
+    assert fund["attrs"]["industries"] == ["Climate", "Fintech", "Payments"]
+    assert fund["attrs"]["hq"] == "Sweden"
+    assert fund["attrs"]["country"] == "Finland"
 
 
 def test_pool_min_deals_and_person_setting(monkeypatch):
@@ -129,3 +132,25 @@ def test_investor_with_features_is_not_evidence_scaled():
     fund = next(item for item in feed["results"] if item["id"] == "fund")
     assert "deals" not in fund["_candidate"]
     assert not any(signal["signal"] == "evidence" for signal in fund["signals"])
+
+
+def test_raiser_seed_sectors_rank_relevant_pool_fund_above_alphabetical_competitor():
+    catalog = MemoryCatalog([
+        {"id": "seed", "name": "My startup", "kinds": ["startup"], "sectors": ["Fintech"],
+         "sources": [SOURCE]},
+        {"id": "fintech-co", "name": "Fintech Co", "kinds": ["startup"], "sectors": ["Fintech"],
+         "sources": [SOURCE]},
+        {"id": "climate-co", "name": "Climate Co", "kinds": ["startup"], "sectors": ["Climate"],
+         "sources": [SOURCE]},
+    ])
+    graph = MemoryGraph()
+    graph.add_node({"id": "zeta", "name": "Zeta", "type": "Company", "props": {}})
+    graph.add_node({"id": "alpha", "name": "Alpha", "type": "Company", "props": {}})
+    graph.add_edge({"id": "z", "src": "zeta", "dst": "fintech-co", "rel": "INVESTED_IN", "sources": [SOURCE]})
+    graph.add_edge({"id": "a", "src": "alpha", "dst": "climate-co", "rel": "INVESTED_IN", "sources": [SOURCE]})
+    graph.set_view("raiser", ["seed"], [])
+
+    feed = build_feed("raiser", {"interests": {"sectors": ["other"]}}, "raising", catalog, graph)
+
+    assert [row["id"] for row in feed["results"][:2]] == ["zeta", "alpha"]
+    assert feed["results"][0]["confidence"] > 0.1

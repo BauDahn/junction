@@ -12,11 +12,10 @@
 | Tokens on that machine | **14.4 M input** (**95% from cache**), **184 k output**, 28 k reasoning |
 | Gabriel's machine (`gabriel`) | **4 tasks, 12 min, 5.2 M input** (96% cached), **115 k output** |
 | Fabricio's machine (`fabricio`) | **30 tasks, 107 min, 34.9 M input** (96% cached), **371 k output** |
-| **Team total (three machines)** | **53 tasks, about 172 min of Codex time, 54.5 M input tokens, 670 k output tokens** |
+| Adrian's machine (`adrian`) | **10 tasks, 17 min, 8.9 M input** (95% cached), **120 k output** |
+| **Team total (four machines)** | **63 tasks, about 189 min of Codex time, 63.4 M input tokens, 790 k output tokens** |
 | Code in `main` | about **7,500 lines** of Python and TypeScript at the time of the first count, and growing (app, backend, canonizer, catalog, graph, feed API) |
 | Tests | **206 passing** on the combined main (backend) plus the canonizer suite |
-
-Adrian's machine is not in these totals (it works with Antigravity). The real figure is slightly higher.
 
 ## 1. How we use Codex
 
@@ -45,9 +44,13 @@ flowchart LR
 | **Chat backend** and **voice** | Sessions, text and audio messages, profile, recommendations; Gemini transcription that returns the literal transcript plus a clean intent in one call | Fabricio's machine |
 | **Cala client optimizer** (#63) | Per-endpoint pacing, `Retry-After`, one request in flight per key; measured up to 1.89 calls/s with zero 429 | Fabricio's machine |
 | **Expo app** (`app/`) | Chat with audio, profile, design system | Fabricio's machine |
-| **Context ingestion** (#66, in review) | PDF and voice notes into the profile with Gemini | Gabriel's machine |
+| **Context ingestion** (#66) | PDF and voice notes into the profile with Gemini | In main |
 | **n8n flows** (#47, in review) | Daily journal and Cala query workflows, validated against the n8n schema | Gabriel's machine |
-| **Shared graph store** (#64) and **feed API** (#65) | Work in progress on open branches | Fabricio's machine |
+| **Shared graph store** (#64) and **feed API** (#65) | Shared graph and feed API | In main |
+| **Accounts, context and voice** (#112/#121) | Email authentication, fixed role, raw context and voice preview | In main |
+| **Favorites PDF report** (#131/#137) | Cala-backed report and action plan | In main |
+| **Abuse protection** (#134) | Shared limits and negative cache | In main |
+| **Vercel SPA** (#133) | Static web export configuration | In main |
 | First prototype: **pitch-deck verifier** | Built end to end in the first hours (backend, CLI, API and UI). We later dropped it from the product, but it is where we learned the pipeline and the rules Cala needs | 6 |
 
 ## 3. Why Codex worked well here
@@ -93,7 +96,7 @@ Each correction was a short task with the failing input attached. The nine follo
 
 - **`gabriel`:** 4 tasks, 12 min, 5,177,047 input tokens (96% cached), 115,061 output, model `gpt-6-luna`. They built the three n8n workflows (#47), validated with `n8n-mcp`, and the context module (#66).
 - **`fabricio`:** 30 tasks, 107 min, 34.9 M input tokens (96% cached), 371 k output. Cala client optimizer and shared rate limit, Gemini audio, feed and detail API with the affinity score, shared graph store on Valkey, journal and chat integration, design system, router fixes, Valkey connection.
-- **`adrian`:** works with Antigravity; no Codex log.
+- **`adrian`:** 10 tasks, 17 min, 8.9 M input tokens (95% cached), 120 k output. Context adaptation; #112/#121 email authentication, fixed role, raw context and voice preview; #133 Vercel SPA configuration.
 
 ## 6. How to regenerate
 

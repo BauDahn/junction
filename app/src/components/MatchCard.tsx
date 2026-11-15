@@ -1,11 +1,9 @@
-import { Linking, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { FeedCard } from '../api/feed';
 import { useMode } from '../mode';
 import { font, space, tabularNums, useTheme } from '../theme';
 import { ActionButton, Card, GRID_RADIUS } from '../ui/Shell';
-
-function host(url: string) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } }
 
 /** One match as a bordered card: name and score, why it fits, sources, actions. */
 export default function MatchCard({ card, eventId, sample = false }: { card: FeedCard; eventId?: string; sample?: boolean }) {
@@ -43,15 +41,7 @@ export default function MatchCard({ card, eventId, sample = false }: { card: Fee
         {card.why_match.slice(0, 3).map((why, i) => <Text key={i} numberOfLines={1} style={{ color: colors.text, fontSize: font.small }}>{why}</Text>)}
       </View>
       {!sample && card.confidence < 0.5 ? <Text style={{ fontSize: font.caption, color: colors.textMuted }}>Partial data</Text> : null}
-      {card.sources.length ? (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-          {card.sources.slice(0, 3).map((source, i) => (
-            <Pressable key={`${source.url}-${i}`} accessibilityRole="link" onPress={() => void Linking.openURL(source.url).catch(() => {})}>
-              <Text style={{ color: colors.accent, textDecorationLine: 'underline', fontSize: font.caption }}>{source.name} · {host(source.url)}</Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
+      {card.sources.length ? <Pressable accessibilityRole="link" accessibilityLabel={`${card.sources.length} sources, open dossier`} onPress={openDossier} style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' }}><Text style={{ color: colors.textMuted, fontSize: font.caption }}>{card.sources.length} sources</Text></Pressable> : null}
       <View style={[rule, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: space.md }]}>
         <ActionButton label={saved ? 'Saved' : 'Save'} onPress={() => toggleFavoriteInvestor(card.id)} selected={saved} />
         <Pressable accessibilityRole="link" onPress={() => openDossier()} style={{ minHeight: 40, justifyContent: 'center' }}>
