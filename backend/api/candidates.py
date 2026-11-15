@@ -3,6 +3,7 @@ import time
 from .affinity import rank, score_candidate, ticket_bounds
 from .enrich import rounds_for
 from .graph_port import neighbors_batch
+from .investor_pool import apply_evidence, portfolio_investors
 
 _BFS = {}
 
@@ -134,6 +135,11 @@ def candidate_for_entity(ident, session_id, profile, mode, catalog, store):
     else:
         kind = "investor" if mode == "raising" else "startup"
     candidate = _feature_candidate(features, kind, graph_data, ident) if features else None
+    from_pool = False
+    if candidate is None and not features and kind == "investor":
+        candidate = next((item for item in portfolio_investors(catalog, store)
+                          if str(item["id"]) == str(ident)), None)
+        from_pool = candidate is not None
     if candidate is None and node:
         edges = neighbors_batch(store, [ident]).get(str(ident), [])
         local_data = {"nodes": {str(ident): node}, "edges": [edge for edge, _ in edges]}
@@ -151,7 +157,10 @@ def candidate_for_entity(ident, session_id, profile, mode, catalog, store):
     candidate["distance"] = distance[0] if distance else None
     candidate["distance_sources"] = distance[1] if distance else []
     candidate["features"] = features or {}
-    return score_candidate(normalize_profile(profile, mode, seeds), candidate) | {
+    result = score_candidate(normalize_profile(profile, mode, seeds), candidate)
+    if from_pool:
+        result = apply_evidence(result, candidate)
+    return result | {
         "_candidate": candidate, "_features": features or {}}
 
 
@@ -194,10 +203,22 @@ def build_feed(session_id, profile, mode, catalog, store, today=None):
             candidate["distance"] = distance
             candidate["distance_sources"] = sources
             candidates.append(candidate)
+            seen.add(ident)
+    if mode == "raising":
+        for candidate in portfolio_investors(catalog, store):
+            ident = str(candidate["id"])
+            if ident in seen or ident in seeds:
+                continue
+            distance = graph_data["distance"].get(ident)
+            candidate["distance"] = distance[0] if distance else None
+            candidate["distance_sources"] = distance[1] if distance else []
+            candidates.append(candidate)
     normalized = normalize_profile(profile, mode, seeds)
     results = []
     for candidate in candidates:
         result = score_candidate(normalized, candidate, today=today)
+        if "deals" in candidate:
+            result = apply_evidence(result, candidate)
         result["_candidate"] = candidate
         result["_features"] = candidate.get("features_record", {})
         results.append(result)
