@@ -264,7 +264,8 @@ def test_stats_catalog_counts_status_and_optional_cala(tmp_path, monkeypatch):
     with TestClient(backend_app.app) as test_client:
         data = test_client.get("/api/stats").json()
         assert data == {"catalog": {"investors": 1, "startups": 1, "total": 1,
-                                    "status": {"done": 2, "total": 8}}, "cala": {"calls": 3}}
+                                    "status": {"done": 2, "total": 8}}, "cala": {"calls": 3}, "cala_usage": {}}
         backend_app.app.dependency_overrides[get_cala] = lambda: None
         assert "cala" not in test_client.get("/api/stats").json()
+        assert test_client.get("/api/stats").json()["cala_usage"] == {}
     backend_app.app.dependency_overrides.clear()

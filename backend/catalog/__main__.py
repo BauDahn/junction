@@ -22,6 +22,7 @@ def build_parser():
     run_p = sub.add_parser("run", help="Ejecuta la ingesta reanudable (etapas 1 a 3)")
     run_p.add_argument("--limit", type=int, default=None, help="Tope máximo de asistentes a procesar")
     run_p.add_argument("--concurrency", type=int, default=2, help="Concurrencia de llamadas a entidades en Cala")
+    run_p.add_argument("--max-calls", type=int, default=150, help="Máximo de llamadas reales a Cala en esta corrida (0 = sin tope)")
 
     exp_p = sub.add_parser("export", help="Exporta catálogo y grafo a un archivo JSON (Plan B)")
     exp_p.add_argument("path", help="Ruta del archivo JSON de salida")
@@ -37,8 +38,12 @@ def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
     if args.command == "run":
+        if args.max_calls < 0:
+            parser.error("--max-calls debe ser 0 o mayor")
+        if args.max_calls == 0:
+            print("Warning: --max-calls 0 disables the per-run Cala call budget.", file=sys.stderr)
         try:
-            result = asyncio.run(run_catalog(limit=args.limit, cala_concurrency=args.concurrency))
+            result = asyncio.run(run_catalog(limit=args.limit, cala_concurrency=args.concurrency, max_calls=args.max_calls))
         except CatalogLockError as exc:
             print(str(exc), file=sys.stderr)
             return 1

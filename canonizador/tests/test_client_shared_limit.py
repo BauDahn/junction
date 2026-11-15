@@ -45,7 +45,7 @@ async def test_clients_share_endpoint_window_and_expire_keys(monkeypatch):
     clients = [CalaClient("x", client=http, sleep=sleep, knowledge_interval=8, cache=Cache(shared)) for _ in range(2)]
     await asyncio.gather(*(c.knowledge_query(str(i)) for i, c in enumerate(clients)))
     assert starts == [100.0, 104.0]
-    assert list(shared.expirations.values()) == [10000, 10000]
+    assert [ttl for key, ttl in shared.expirations.items() if key.startswith("ratelimit:")] == [10000, 10000]
     assert sum(c.stats["shared_limit_waits"] for c in clients) == 1
     assert sum(c.stats["pause_seconds"] for c in clients) >= 4
     await http.aclose()

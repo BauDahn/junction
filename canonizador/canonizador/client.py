@@ -2,6 +2,9 @@ import asyncio
 import hashlib
 import json
 import os
+import socket
+import sys
+import threading
 import time
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -11,6 +14,48 @@ from urllib.parse import urlencode
 import httpx
 
 from .cache import load_env, make_cache
+
+
+class CalaBudgetExceeded(RuntimeError):
+    def __init__(self, cap):
+        super().__init__(f"Daily Cala call cap reached ({cap})")
+        self.cap = int(cap)
+
+
+_usage_lock = threading.Lock()
+_usage_memory = {}
+
+
+def _utc_date():
+    return datetime.now(timezone.utc).date().isoformat()
+
+
+def _default_label():
+    main = sys.modules.get("__main__")
+    module = Path(getattr(main, "__file__", "") or "").stem or "python"
+    return f"{socket.gethostname()}:{module}"
+
+
+def cala_usage(remote=None, date=None):
+    date = date or _utc_date()
+    prefix = f"calls:v1:{date}:"
+    if remote is not None:
+        ok, vals = remote._run(lambda c: c.mget([prefix + "total", prefix + "class:entities", prefix + "class:knowledge"]))
+        if ok:
+            def integer(value):
+                try: return int(value or 0)
+                except (TypeError, ValueError): return 0
+            who_keys_ok, who_keys = remote._run(lambda c: list(c.scan_iter(match=prefix + "who:*")))
+            by_who = {}
+            if who_keys_ok and who_keys:
+                who_vals_ok, who_vals = remote._run(lambda c: c.mget(who_keys))
+                if who_vals_ok:
+                    by_who = {key[len(prefix + "who:"):]: integer(value) for key, value in zip(who_keys, who_vals)}
+            return {"date": date, "total": integer(vals[0]),
+                    "by_class": {"entities": integer(vals[1]), "knowledge": integer(vals[2])}, "by_who": by_who}
+    with _usage_lock:
+        data = _usage_memory.get(date, {"total": 0, "by_class": {"entities": 0, "knowledge": 0}, "by_who": {}})
+        return {"date": date, "total": data["total"], "by_class": dict(data["by_class"]), "by_who": dict(data["by_who"])}
 
 
 class _ValkeySharedLimiter:
@@ -77,6 +122,67 @@ class CalaClient:
         self.shared_limiter = shared_limiter if shared_limiter is not None else (
             _ValkeySharedLimiter(remote) if enabled and remote is not None else None)
         self._shared_down_until = 0.0
+        raw_cap = os.getenv("CALA_DAILY_CALL_CAP", "").strip()
+        try: self.daily_call_cap = int(raw_cap or 0)
+        except ValueError: raise ValueError("CALA_DAILY_CALL_CAP must be an integer")
+        self.call_cap = 0
+        self._run_start_calls = 0
+        self._run_reserved = 0
+        self.call_label = os.getenv("CALA_CLIENT_LABEL") or _default_label()
+
+    def _record_real_call(self, kind):
+        date = _utc_date()
+        prefix = f"calls:v1:{date}:"
+        cap = self.daily_call_cap if self.daily_call_cap > 0 else 0
+        remote = getattr(self.cache, "remote", None)
+        if remote is None and hasattr(self.cache, "_client") and hasattr(self.cache, "_run"):
+            remote = self.cache
+        if remote is not None:
+            script = """
+            local total = tonumber(redis.call('GET', KEYS[1]) or '0')
+            local cap = tonumber(ARGV[1])
+            if cap > 0 and total >= cap then return 0 end
+            for i = 1, 3 do redis.call('INCR', KEYS[i]); redis.call('EXPIRE', KEYS[i], 259200) end
+            return 1
+            """
+            keys = [prefix + "total", prefix + "class:" + kind, prefix + "who:" + self.call_label]
+            with _usage_lock:
+                if self.call_cap and self._run_reserved >= self.call_cap: raise CalaBudgetExceeded(self.call_cap)
+                self._run_reserved += 1
+            try:
+                existing_client = getattr(remote, "_client", None)
+                if existing_client is not None and not callable(getattr(existing_client, "pipeline", None)):
+                    raise RuntimeError("Valkey client does not support pipelines")
+                if cap:
+                    ok, allowed = remote._run(lambda c: c.eval(script, len(keys), *keys, cap))
+                    if ok:
+                        if not allowed:
+                            with _usage_lock: self._run_reserved -= 1
+                            raise CalaBudgetExceeded(cap)
+                        return
+                else:
+                    def increment(client):
+                        pipe = client.pipeline()
+                        for key in keys:
+                            pipe.incr(key)
+                            if hasattr(pipe, "expire"): pipe.expire(key, 259200)
+                            else: pipe.pexpire(key, 259200000)
+                        pipe.execute()
+                    ok, _ = remote._run(increment)
+                    if ok: return
+            except CalaBudgetExceeded:
+                raise
+            except Exception:
+                pass
+            with _usage_lock: self._run_reserved -= 1
+        with _usage_lock:
+            if self.call_cap and self._run_reserved >= self.call_cap: raise CalaBudgetExceeded(self.call_cap)
+            self._run_reserved += 1
+            data = _usage_memory.setdefault(date, {"total": 0, "by_class": {"entities": 0, "knowledge": 0}, "by_who": {}})
+            if cap and data["total"] >= cap: raise CalaBudgetExceeded(cap)
+            data["total"] += 1
+            data["by_class"][kind] += 1
+            data["by_who"][self.call_label] = data["by_who"].get(self.call_label, 0) + 1
 
     async def _wait_shared_slot(self, kind):
         limiter = self.shared_limiter
@@ -159,6 +265,7 @@ class CalaClient:
                 try:
                     for attempt in range(4):
                         await self._wait_for_slot(kind)
+                        self._record_real_call(kind)
                         self.calls += 1
                         self.stats[f"{kind}_calls"] += 1
                         response = await client.request(method, self.BASE + path, params=params, json=body,
