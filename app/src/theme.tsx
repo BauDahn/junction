@@ -1,4 +1,5 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useColorScheme, type TextStyle } from 'react-native';
 
 /** calado design tokens: corporate colors are white and #006CFF. Single blue accent, hairline 1px borders, zero decorative shadows. */
@@ -102,24 +103,30 @@ export const shadow = {
   elevation: 0,
 } as const;
 
-export type Theme = { mode: 'dark' | 'light'; colors: Colors };
+export type ThemePreference = 'system' | 'light' | 'dark';
+export type Theme = { mode: 'dark' | 'light'; colors: Colors; preference: ThemePreference; setPreference: (next: ThemePreference) => void };
 
-const ThemeContext = createContext<Theme>({ mode: 'light', colors: light });
+const THEME_KEY = 'calado_theme_preference';
+const ThemeContext = createContext<Theme>({ mode: 'light', colors: light, preference: 'system', setPreference: () => {} });
 
 /**
- * Provides theme colors across the app. Defaults to light mode.
+ * Provides theme colors across the app. The user's choice (system, light or dark) is persisted.
  */
-export function ThemeProvider({
-  mode = 'light',
-  children,
-}: {
-  mode?: 'dark' | 'light' | 'system';
-  children: ReactNode;
-}) {
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const scheme = useColorScheme();
-  const resolved = mode === 'system' ? (scheme === 'dark' ? 'dark' : 'light') : mode;
+  const [preference, setPreferenceState] = useState<ThemePreference>('system');
+  useEffect(() => {
+    AsyncStorage.getItem(THEME_KEY).then((saved) => {
+      if (saved === 'light' || saved === 'dark' || saved === 'system') setPreferenceState(saved);
+    }).catch(() => {});
+  }, []);
+  const setPreference = (next: ThemePreference) => {
+    setPreferenceState(next);
+    void AsyncStorage.setItem(THEME_KEY, next).catch(() => {});
+  };
+  const resolved = preference === 'system' ? (scheme === 'dark' ? 'dark' : 'light') : preference;
   return (
-    <ThemeContext.Provider value={{ mode: resolved, colors: resolved === 'light' ? light : dark }}>
+    <ThemeContext.Provider value={{ mode: resolved, colors: resolved === 'light' ? light : dark, preference, setPreference }}>
       {children}
     </ThemeContext.Provider>
   );

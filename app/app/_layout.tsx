@@ -9,7 +9,7 @@ import OnboardingScreen from './onboarding';
 import Logo from '../src/ui/Logo';
 
 export default function RootLayout() {
-  return <ThemeProvider mode="system"><ModeProvider><ThemedTabs /></ModeProvider></ThemeProvider>;
+  return <ThemeProvider><ModeProvider><ThemedTabs /></ModeProvider></ThemeProvider>;
 }
 
 function ThemedTabs() {
