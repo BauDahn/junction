@@ -2,6 +2,9 @@
 import asyncio
 import base64
 import json
+import unicodedata
+from collections import Counter
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from chat import store as chat_store
@@ -145,20 +148,21 @@ def _entity_type(features, node, edges, mode):
     if len(kinds) > 1:
         return "investor" if mode == "raising" else "startup"
     if node:
-        has_incoming = any(edge.get("rel") == "INVESTED_IN"
-                           and str(edge.get("dst")) == str(node.get("id")) for edge, _ in edges)
-        has_outgoing = any(edge.get("rel") == "INVESTED_IN"
-                           and str(edge.get("src")) == str(node.get("id")) for edge, _ in edges)
-        if has_incoming and has_outgoing:
+        ident = str(node.get("id"))
+        is_investor = any(edge.get("rel") == "INVESTED_IN" and str(edge.get("src")) == ident
+                          for edge, _ in edges)
+        is_startup = any(
+            (edge.get("rel") == "INVESTED_IN" and str(edge.get("dst")) == ident)
+            or (edge.get("rel") == "PARTICIPATES_IN_FUNDING_ROUND"
+                and str(edge.get("src")) == ident and edge.get("role") == "ISSUER")
+            for edge, _ in edges)
+        if is_investor and is_startup:
             return "investor" if mode == "raising" else "startup"
-        for edge, _ in edges:
-            if edge.get("rel") != "INVESTED_IN":
-                continue
-            if str(edge.get("src")) == str(node.get("id")):
-                return "investor"
-            if str(edge.get("dst")) == str(node.get("id")):
-                return "startup"
-    return "startup"
+        if is_investor:
+            return "investor"
+        if is_startup:
+            return "startup"
+    return "investor" if mode == "raising" else "startup"
 
 
 def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
@@ -171,12 +175,16 @@ def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
     name = features.get("name") if features else node.get("name")
     props = node.get("props") or {} if node else {}
     node_sources = props.get("sources") or node.get("sources", []) if node else []
+    if not node_sources and props:
+        node_sources = _union(*(value.get("sources", []) for value in props.values() if isinstance(value, dict)))
     feature_sources = features.get("sources", []) if features else []
     sources = feature_sources or node_sources
     detail = {"id": entity_id, "type": entity_type, "name": name, "why_match": [], "facts": [],
               "rounds": [], "portfolio": [], "people": [],
               "loaded_at": features.get("loaded_at") if features else node.get("loaded_at")}
     description = features.get("description") if features else props.get("description")
+    if isinstance(description, dict):
+        description = description.get("value")
     if description and sources:
         detail["description"] = description
 
@@ -283,12 +291,80 @@ def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
 
 @router.get("/api/entities/{entity_id}")
 async def entity(entity_id: str, mode: str | None = None, session_id: str | None = None,
-                 catalog=Depends(get_catalog), graph=Depends(get_graph)):
+                 catalog=Depends(get_catalog), graph=Depends(get_graph), cala=Depends(get_cala)):
     current_mode = _mode(mode, session_id)
     if session_id:
         _session(session_id)
     profile = chat_store.get_profile(session_id) or {} if session_id else {}
+    if not catalog.get_features(entity_id) and not graph.get_node(entity_id):
+        if cala is None:
+            raise HTTPException(404, "Entity not found in the graph or in Cala.")
+        from graph.loader import expand_node
+        stats = {"nodes": set(), "edges": set(), "cala_calls": 0, "skipped_expanded": 0,
+                 "excluded": Counter(), "truncated": [], "errors": [], "levels": []}
+        try:
+            expanded = await asyncio.wait_for(expand_node(graph, cala, entity_id, stats), timeout=25)
+        except asyncio.TimeoutError as exc:
+            raise HTTPException(504, "Cala did not answer in time.") from exc
+        if expanded is None:
+            errors = stats.get("errors") or []
+            message = " ".join(str(error.get("error", "")) for error in errors if isinstance(error, dict)).casefold()
+            missing = any(token in message for token in ("not found", "not exist", "unknown entity", "404", "doesn't exist"))
+            missing = missing or any(str(error.get("error", "")).strip("'\"") == str(entity_id)
+                                     for error in errors if isinstance(error, dict))
+            if missing:
+                raise HTTPException(404, "Entity not found in the graph or in Cala.")
+            raise HTTPException(502, "Cala request failed.")
+        if not graph.get_node(entity_id):
+            raise HTTPException(404, "Entity not found in the graph or in Cala.")
+        node = graph.get_node(entity_id)
+        node["loaded_at"] = datetime.now(timezone.utc).isoformat()
     return await asyncio.to_thread(_detail_sync, entity_id, session_id, profile, current_mode, catalog, graph)
+
+
+def _fold_name(value):
+    return "".join(ch for ch in unicodedata.normalize("NFD", str(value or "").casefold())
+                   if unicodedata.category(ch) != "Mn")
+
+
+@router.get("/api/search")
+async def search(q: str = Query(..., min_length=2, max_length=80), limit: int = Query(8, ge=1, le=50),
+                 catalog=Depends(get_catalog), cala=Depends(get_cala)):
+    needle = _fold_name(q)
+    local, seen = [], set()
+    for kind in ("investor", "startup"):
+        for feature in catalog.list_features(kind):
+            ident = str(feature.get("id", ""))
+            name = feature.get("name", "")
+            if ident and ident not in seen and needle in _fold_name(name):
+                seen.add(ident)
+                local.append({"id": ident, "name": name, "type": kind, "origin": "catalog",
+                              **({"one_liner": _one_liner(feature.get("description"))} if feature.get("description") else {})})
+    items = local[:limit]
+    tried = ["catalog"]
+    if len(items) < limit and cala is not None:
+        tried.append("cala")
+        async def get_entities(kind):
+            try:
+                result = await cala.entities(q, kind)
+                return result if isinstance(result, list) else result.get("entities", []) if isinstance(result, dict) else []
+            except Exception:
+                return []
+        results = await asyncio.gather(get_entities("Company"), get_entities("Organization"))
+        for group in results:
+            for entity_data in group:
+                if not isinstance(entity_data, dict):
+                    continue
+                ident, name = entity_data.get("id"), entity_data.get("name")
+                if not ident or not name or str(ident) in seen:
+                    continue
+                seen.add(str(ident))
+                items.append({"id": str(ident), "name": name, "type": "other", "origin": "cala"})
+                if len(items) >= limit:
+                    break
+            if len(items) >= limit:
+                break
+    return {"query": q, "items": items[:limit], "tried": tried}
 
 
 class ModeInput(BaseModel):

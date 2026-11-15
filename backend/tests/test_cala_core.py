@@ -51,7 +51,51 @@ def test_empty_fallback_visits_entities_then_search_then_not_found(monkeypatch, 
     block = run(executor.execute({"text": "Mews", "canonical_question_en": "Who invested in Mews?", "has_entity": True}, cala=cala, llm=FakeLLM([]), cache_dir=tmp_path))
     assert block["type"] == "not_found"
     assert [call[0] for call in cala.calls] == ["entity", "search"]
-    assert [x["tool"] for x in block["tried"]] == ["knowledge_query", "entity", "knowledge_search"]
+    assert [x["tool"] for x in block["tried"]] == ["canonizer", "knowledge_query", "entity", "knowledge_search"]
+
+
+def test_empty_canonizer_rows_fall_back_to_entity_table(monkeypatch, tmp_path):
+    async def empty(*args, **kwargs):
+        return {"intent": {"entities": [{"name": "Mews"}]}, "result": {"query": "Mews investors", "rows": []}}
+    monkeypatch.setattr(executor, "answer", empty)
+    cala = FakeCala(entities=[{"id": "mews", "name": "Mews"}],
+                    intro={"properties": ["name"], "relationships": {}},
+                    retrieved={"id": "mews", "name": "Mews", "properties": {"name": {"value": "Mews", "sources": [{"name": "Cala"}]}}})
+    block = run(executor.execute({"text": "Mews", "canonical_question_en": "Who invested in Mews?", "has_entity": True}, cala=cala, cache_dir=tmp_path))
+    assert block["type"] == "cala_table"
+
+
+def test_canonizer_exception_falls_back_to_entity_retrieve(monkeypatch, tmp_path):
+    async def broken(*args, **kwargs): raise TimeoutError("secret details")
+    monkeypatch.setattr(executor, "answer", broken)
+    cala = FakeCala(entities=[{"id": "mews", "name": "Mews"}],
+                    intro={"properties": ["name"], "relationships": {}},
+                    retrieved={"id": "mews", "name": "Mews", "properties": {"name": {"value": "Mews", "sources": [{"name": "Cala"}]}}})
+    block = run(executor.execute({"text": "Mews", "canonical_question_en": "Who invested in Mews?", "has_entity": True}, cala=cala, cache_dir=tmp_path))
+    assert block["type"] == "cala_table"
+    assert block["call"]["tool"] == "entity"
+
+
+def test_canonizer_exception_falls_back_to_cala_search(monkeypatch, tmp_path):
+    async def broken(*args, **kwargs): raise TimeoutError("private error")
+    monkeypatch.setattr(executor, "answer", broken)
+    cala = FakeCala(search={"answer": "Cala result", "sources": [{"name": "Cala"}]})
+    block = run(executor.execute({"text": "Mews", "canonical_question_en": "Who invested in Mews?", "has_entity": True}, cala=cala, cache_dir=tmp_path))
+    assert block["type"] == "cala_answer" and block["markdown"] == "Cala result"
+    assert block["call"]["tool"] == "knowledge_search"
+
+
+def test_all_fallbacks_catch_errors_and_report_complete_attempts(monkeypatch, tmp_path):
+    async def broken(*args, **kwargs): raise RuntimeError("secret")
+    monkeypatch.setattr(executor, "answer", broken)
+    class BrokenCala(FakeCala):
+        async def entities(self, *args): self.calls.append(("entity", args[0])); raise RuntimeError("hidden")
+        async def search(self, *args): self.calls.append(("search", args[0])); raise TimeoutError("hidden")
+    block = run(executor.execute({"text": "Mews", "canonical_question_en": "Who invested in Mews?", "has_entity": True}, cala=BrokenCala(), cache_dir=tmp_path))
+    assert block["type"] == "not_found"
+    assert [entry["tool"] for entry in block["tried"]] == ["canonizer", "knowledge_query", "entity", "knowledge_search"]
+    assert block["tried"][0] == {"tool": "canonizer", "error": "RuntimeError"}
+    assert "secret" not in str(block)
 
 
 def test_claim_verdicts():

@@ -117,7 +117,14 @@ async def _safe(call, default):
         return default
 
 
-async def execute(part, *, cala=None, llm=None, cache_dir=None):
+async def _safe_call(method, *args, default=None, **kwargs):
+    try:
+        return await method(*args, **kwargs)
+    except Exception:
+        return default
+
+
+async def _execute(part, *, cala=None, llm=None, cache_dir=None):
     legacy_input = not isinstance(part, dict)
     if isinstance(part, dict):
         text = part.get("text", "")
@@ -130,15 +137,26 @@ async def execute(part, *, cala=None, llm=None, cache_dir=None):
     if not has_entity:
         return await _search_block(client, canonical, text)
 
-    result = await answer(canonical, llm=llm, client=client, cache_dir=cache_dir)
+    canonizer_error = None
+    try:
+        result = await answer(canonical, llm=llm, client=client, cache_dir=cache_dir)
+        if not isinstance(result, dict):
+            result = {}
+        elif not isinstance(result.get("result"), list) and not ((result.get("result") or {}).get("rows") or (result.get("result") or {}).get("properties")):
+            canonizer_error = "NoUsefulData"
+    except Exception as exc:
+        # No exception details or user data in the public diagnostics.
+        result = {}
+        canonizer_error = type(exc).__name__
     data = result.get("result") or {}
     intent = result.get("intent") or {}
     intent_entities = intent.get("entities") or []
     filters = intent.get("filters") or {}
     list_filter = any(filters.get(k) not in (None, "", [], {}) for k in ("location", "sector", "min_funding", "round_label", "year"))
-    should_search = not legacy_input and (not intent_entities or (intent.get("attribute") == "other" and not list_filter))
+    should_search = canonizer_error is None and not legacy_input and (not intent_entities or (intent.get("attribute") == "other" and not list_filter))
     if should_search:
-        return await _search_block(client, canonical, text, title=_title({"text": text}, intent))
+        tried = ([{"tool": "canonizer", "error": canonizer_error}] if canonizer_error else [])
+        return await _search_block(client, canonical, text, title=_title({"text": text}, intent), tried=tried)
     if isinstance(data, list):
         # Camino de entidades del canonizador: lista de retrieve/search, no filas de knowledge_query.
         ids = ",".join(result.get("entity_ids") or []) or text
@@ -148,7 +166,7 @@ async def execute(part, *, cala=None, llm=None, cache_dir=None):
             return _normalize_block_sources(table)
         data = {}
     query = data.get("query", text)
-    tried = [_call("knowledge_query", query)]
+    tried = ([{"tool": "canonizer", "error": canonizer_error}] if canonizer_error else []) + [_call("knowledge_query", query)]
     rows = data.get("rows") or []
     title = _title({"text": text}, result.get("intent") or {})
     if rows:
@@ -165,19 +183,19 @@ async def execute(part, *, cala=None, llm=None, cache_dir=None):
         entity_type = "COMPANY"
         entities = intent.get("entities") or []
         if entities and isinstance(entities[0], dict): entity_type = entities[0].get("type") or entity_type
-        found = await _safe(client.entities(subject, entity_type), [])
+        found = await _safe_call(client.entities, subject, entity_type, default=[])
         candidates = found if isinstance(found, list) else found.get("entities", []) if isinstance(found, dict) else []
         if candidates:
             entity = next((x for x in candidates if str(x.get("name", "")).casefold() == subject.casefold()), candidates[0])
             entity_id = entity.get("id")
             if entity_id:
                 tried.append(_call("entity", f"introspection:{entity_id}"))
-                intro = await _safe(client.introspection(entity_id), {})
+                intro = await _safe_call(client.introspection, entity_id, default={})
                 props = intro.get("properties", [])
                 rels = intro.get("relationships", {})
                 requested_rels = {d: {name: {"limit": 100} for name in names} for d, names in rels.items() if names}
                 tried.append(_call("entity", f"retrieve:{entity_id} properties={props} relationships={requested_rels}"))
-                retrieved = await _safe(client.retrieve(entity_id, properties=props, relationships=requested_rels), {})
+                retrieved = await _safe_call(client.retrieve, entity_id, properties=props, relationships=requested_rels, default={})
                 closest = _table_from_entity(retrieved, tried[-1])
                 if closest:
                     closest["title"] = title
@@ -186,7 +204,7 @@ async def execute(part, *, cala=None, llm=None, cache_dir=None):
     search_query = canonical
     tried.append(_call("knowledge_search", search_query))
     if client is not None:
-        searched = await _safe(client.search(search_query), {})
+        searched = await _safe_call(client.search, search_query, default={})
         markdown = searched.get("answer") or searched.get("markdown") or searched.get("content") or "" if isinstance(searched, dict) else ""
         if markdown:
             return _normalize_block_sources({"type": "cala_answer", "title": canonical[:80], "call": tried[-1], "markdown": markdown,
@@ -194,10 +212,20 @@ async def execute(part, *, cala=None, llm=None, cache_dir=None):
     return _normalize_block_sources({"type": "not_found", "title": title, "tried": tried, **({"closest": closest} if closest else {})})
 
 
+async def execute(part, *, cala=None, llm=None, cache_dir=None):
+    """Public executor boundary: chat blocks must survive any upstream failure."""
+    try:
+        return await _execute(part, cala=cala, llm=llm, cache_dir=cache_dir)
+    except Exception as exc:
+        text = part.get("text", "") if isinstance(part, dict) else str(part or "")
+        return {"type": "not_found", "title": text[:80] or "Data", "tried": [
+            {"tool": "executor", "error": type(exc).__name__}]}
+
+
 async def _search_block(client, canonical, text, *, title="Datos", tried=None, closest=None):
     tried = list(tried or [])
     tried.append(_call("knowledge_search", canonical))
-    searched = await _safe(client.search(canonical), {}) if client is not None else {}
+    searched = await _safe_call(client.search, canonical, default={}) if client is not None else {}
     markdown = (searched.get("answer") or searched.get("markdown") or searched.get("content") or "") if isinstance(searched, dict) else ""
     if markdown:
         return _normalize_block_sources({"type": "cala_answer", "title": canonical[:80], "call": tried[-1], "markdown": markdown, "sources": _sources(searched)})
