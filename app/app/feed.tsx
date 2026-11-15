@@ -32,7 +32,7 @@ export function EventsList({ scope }: { scope: 'mine' | 'explore' }) {
   const source = scope === 'mine' ? myEvents : EVENTS_CATALOG;
   const filtered = source.filter((event) => `${event.name} ${event.city} ${event.id}`.toLowerCase().includes(query.trim().toLowerCase()));
   return <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ alignItems: 'center', paddingBottom: space.xxl }} keyboardShouldPersistTaps="handled">
-    <View style={{ width: '100%', maxWidth, backgroundColor: colors.surface, minHeight: '100%' }}>
+    <View style={{ width: '100%', maxWidth, minHeight: '100%' }}>
       <View style={{ paddingHorizontal: pageMargin, paddingTop: space.lg, paddingBottom: space.md, borderBottomWidth: 1, borderBottomColor: colors.border, gap: space.md }}>
         <TextInput accessibilityLabel="Filter events by name or city" value={query} onChangeText={setQuery} placeholder="Filter events by name or city…" placeholderTextColor={colors.textFaint} style={{ fontSize: 16, color: colors.text, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: space.md, paddingVertical: space.sm, backgroundColor: colors.surface }} />
       </View>
