@@ -71,7 +71,7 @@ Registro real con correo. El rol se elige al registrarse y **no se puede cambiar
 - `User`: `{id, email, name, company, role: raiser|investor, session_id, created_at}`. `session_id` es la sesión de chat, contexto y feed de ese usuario: la app la usa en lugar de crear una sesión anónima.
 - Autenticación: cabecera `Authorization: Bearer <token>` en `/api/me/*` y `/api/auth/logout`; sin token o con uno vencido, `401`.
 - **Rol fijo:** ningún endpoint lo cambia. `POST /api/sessions/{id}/mode` con un modo distinto del rol del usuario dueño de la sesión responde `409 role_locked`.
-- Almacenamiento: tabla de usuarios en `DATABASE_URL` (Aiven for PostgreSQL) o, si no está definida, en SQLite (`backend/data/app.db`). Contraseñas con scrypt; tokens aleatorios guardados como hash, con 30 días de vida. No se envían correos (sin verificación por ahora).
+- Almacenamiento: `ACCOUNTS_STORE=valkey|postgres|sqlite`; por defecto usa Valkey compartido si `VALKEY_URL` está definido, si no `DATABASE_URL` o SQLite (`backend/data/app.db`). Si Valkey falla, registro e inicio de sesión responden `503`. Contraseñas con scrypt; tokens aleatorios guardados como hash, con 30 días de vida. No se envían correos (sin verificación por ahora).
 
 ## Contexto en texto *(borrador, 15/11)*
 El perfil muestra el contexto como **el texto del usuario, tal cual**, no como etiquetas. Las etiquetas siguen existiendo por debajo para el motor de recomendación.
