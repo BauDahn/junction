@@ -9,7 +9,7 @@ import { addContextNote, getContext, type ContextPayload } from '../api/context'
 import { sendAudio, sendText, type Message } from '../api';
 import { getOrCreateSessionId } from '../session';
 import BlockView from './BlockView';
-import { font, maxWidth, radius, space, useTheme } from '../theme';
+import { font, maxWidth, radius, space, tabBarHeight, useTheme } from '../theme';
 
 type LocalItem = { id: string; kind: 'message' | 'action'; text?: string; message?: Message; eventId?: string; investorId?: string };
 const investors = [
@@ -135,7 +135,7 @@ export default function FloatingMascotBubble() {
 }
 
 const styles = (c: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
-  anchor: { position: 'absolute', right: 16, bottom: 64 + 16, // TODO: cambiar 64 por tabBarHeight (theme.tsx) cuando se fusione la barra; más el safe area (marginBottom)
+  anchor: { position: 'absolute', right: 16, bottom: tabBarHeight + 16, // más el safe area (marginBottom)
     zIndex: 100, alignItems: 'flex-end' },
   trigger: { width: 48, height: 48, borderRadius: radius.pill, backgroundColor: c.accent, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' },
   panel: { height: 540, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: radius.lg, overflow: 'hidden' },

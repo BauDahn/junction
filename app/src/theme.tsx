@@ -13,6 +13,8 @@ export type Colors = {
   accent: string;
   accentText: string;
   accentSoft: string;
+  secondary: string;
+  secondarySoft: string;
   danger: string;
   dangerSoft: string;
   confirmed: string;
@@ -36,6 +38,8 @@ export const light: Colors = {
   accent: '#3730A3',
   accentText: '#ffffff',
   accentSoft: '#eef2ff',
+  secondary: '#006CFF',
+  secondarySoft: '#eaf2ff',
   danger: '#b42318',
   dangerSoft: '#fef2f2',
   confirmed: '#166534',
@@ -55,10 +59,12 @@ export const dark: Colors = {
   border: '#273449',
   text: '#f1f5f9',
   textMuted: '#94a3b8',
-  textFaint: '#64748b',
+  textFaint: '#94a3b8',
   accent: '#818cf8',
   accentText: '#0b1120',
   accentSoft: '#1e1b4b',
+  secondary: '#5AA2FF',
+  secondarySoft: '#132b4a',
   danger: '#fca5a5',
   dangerSoft: '#3a1b25',
   confirmed: '#6ee7b7',
@@ -84,6 +90,8 @@ export const font = {
 } as const;
 export const tabularNums: Pick<TextStyle, 'fontVariant'> = { fontVariant: ['tabular-nums'] };
 export const maxWidth = 760;
+/** Altura de la barra inferior: el boton flotante debe usar bottom >= tabBarHeight + space.md para no tapar pestanas. */
+export const tabBarHeight = 64;
 /** Kept for compatibility with existing components; intentionally flat without decorative shadows. */
 export const shadow = {
   shadowColor: 'transparent',

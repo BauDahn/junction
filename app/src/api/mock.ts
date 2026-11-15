@@ -66,11 +66,11 @@ export async function listMockMessages(sessionId: string): Promise<Message[]> {
 function exampleTable() {
   return {
     type: 'cala_table' as const,
-    title: 'Sample data: Amenitiz Series B round',
+    title: 'Sample data: placeholder funding round',
     summary: 'Demo data; this does not represent real information.',
-    call: { tool: 'knowledge_query' as const, query: 'DEMO: Amenitiz Series B round' },
+    call: { tool: 'knowledge_query' as const, query: 'DEMO: sample funding round' },
     columns: ['Company', 'Round', 'Amount'],
-    rows: [['Amenitiz (example)', 'Series B (example)', null]],
+    rows: [['Sample company', 'Sample round', null]],
     sources: [
       {
         name: 'Example source',
