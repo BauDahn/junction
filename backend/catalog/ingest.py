@@ -11,6 +11,7 @@ import re
 import threading
 import time
 import uuid
+from email.utils import parsedate_to_datetime
 from datetime import date, datetime, timezone
 from pathlib import Path
 from statistics import quantiles
@@ -32,7 +33,26 @@ STATUS_KEY = "cat:v1:status"
 TODO_KEY = "cat:v1:todo"
 ATTENDEES_KEY = "cat:v1:attendees"
 FEAT_PREFIX = "cat:v1:feat:"
+FAILED_PREFIX = "cat:v1:failed:"
 GRAPH_PREFIX = "graph:v1:"
+
+
+async def _sleep(seconds):
+    await asyncio.sleep(seconds)
+
+
+def _retry_after_seconds(exc):
+    value = exc.response.headers.get("Retry-After")
+    if not value:
+        return None
+    try:
+        seconds = float(value)
+        return seconds if seconds >= 0 else None
+    except (TypeError, ValueError):
+        try:
+            return max(0.0, (parsedate_to_datetime(value) - datetime.now(timezone.utc)).total_seconds())
+        except (TypeError, ValueError, OverflowError):
+            return None
 
 STAGE2_PROPERTIES = [
     "name", "description", "funding_stage", "total_funding",
@@ -1128,6 +1148,7 @@ async def run_catalog(
         status, todo, attendees = await _fetch_stage1(
             cala, kv, limit=limit, page_size=page_size, lock_token=token, lock_ttl=effective_lock_ttl,
         )
+        status.pop("stopped", None)
         existing_done = int(status.get("done") or 0)
         if limit is not None:
             remaining_cap = max(0, int(limit) - existing_done)
@@ -1151,6 +1172,8 @@ async def run_catalog(
 
         todo_set = set(todo)
         state_lock = asyncio.Lock()
+        payment_breaker = {"consecutive": 0, "tripped": False}
+        payment_trip = max(1, int(os.getenv("CATALOG_402_TRIP", "5")))
         cala_sem = asyncio.Semaphore(max(1, int(cala_concurrency)))
         llm_sem = asyncio.Semaphore(max(1, int(llm_concurrency)))
 
@@ -1175,6 +1198,7 @@ async def run_catalog(
                     raise lock_lost_error[0]
                 _refresh_lock(kv, token, lock_ttl=effective_lock_ttl)
                 kv.set(f"{FEAT_PREFIX}{eid}", _json_dump(final), TTL_S)
+                kv.delete(f"{FAILED_PREFIX}{eid}")
                 if eid in todo_set:
                     todo_set.remove(eid)
                     todo[:] = [x for x in todo if x != eid]
@@ -1184,16 +1208,75 @@ async def run_catalog(
                 _save_state(kv, status, todo)
 
         async def process_one(eid):
+            async with state_lock:
+                if payment_breaker["tripped"] or lock_lost_error[0] is not None:
+                    return
             attendee = attendees.get(eid) or {"id": eid, "name": eid, "type": "Company"}
+            data = None
+            error_status = None
+            error_exc = None
             try:
-                async with cala_sem:
-                    data = await cala.retrieve(eid, properties=STAGE2_PROPERTIES, relationships=STAGE2_RELATIONSHIPS)
+                for attempt in range(5):
+                    try:
+                        async with cala_sem:
+                            async with state_lock:
+                                if payment_breaker["tripped"] or lock_lost_error[0] is not None:
+                                    if lock_lost_error[0] is not None:
+                                        raise lock_lost_error[0]
+                                    return
+                            data = await cala.retrieve(eid, properties=STAGE2_PROPERTIES, relationships=STAGE2_RELATIONSHIPS)
+                        break
+                    except httpx.HTTPStatusError as exc:
+                        code = exc.response.status_code
+                        if code == 402 and attempt < 4:
+                            base = min(300.0, max(0.0, float(os.getenv("CATALOG_402_WAIT", "30"))))
+                            wait = _retry_after_seconds(exc)
+                            remaining = min(300.0, wait if wait is not None else base * (2 ** attempt))
+                            chunk = max(0.01, float(effective_lock_ttl) / 3.0 - 0.01)
+                            while remaining > 0:
+                                delay = min(chunk, remaining)
+                                await _sleep(delay)
+                                remaining -= delay
+                                async with state_lock:
+                                    if lock_lost_error[0] is not None:
+                                        raise lock_lost_error[0]
+                                    if payment_breaker["tripped"]:
+                                        return
+                                    _refresh_lock(kv, token, lock_ttl=effective_lock_ttl)
+                            continue
+                        if code in (402, 404):
+                            error_status = code
+                            error_exc = exc
+                            break
+                        raise
             except Exception as exc:
                 logger.warning("Fallo Stage 2 en Cala para %s: %s", eid, exc)
                 async with state_lock:
                     status["errors"] = int(status.get("errors") or 0) + 1
                     _save_state(kv, status, todo, lock_token=token, lock_ttl=effective_lock_ttl)
                 return
+            if error_status is not None:
+                error = str(error_exc)
+                async with state_lock:
+                    if payment_breaker["tripped"]:
+                        return
+                    if error_status == 402:
+                        payment_breaker["consecutive"] += 1
+                        if payment_breaker["consecutive"] >= payment_trip:
+                            payment_breaker["tripped"] = True
+                            status["stopped"] = "payment_required"
+                            status["stage"] = "paused"
+                            logger.error("Catálogo pausado: %s entidades consecutivas devolvieron 402; quedan %s pendientes.", payment_trip, len(todo))
+                    kv.set(f"{FAILED_PREFIX}{eid}", _json_dump({"status": error_status, "error": error, "at": datetime.now(timezone.utc).isoformat()}), TTL_S)
+                    status["errors"] = int(status.get("errors") or 0) + 1
+                    counter = "payment_required" if error_status == 402 else "not_found"
+                    status[counter] = int(status.get(counter) or 0) + 1
+                    _save_state(kv, status, todo, lock_token=token, lock_ttl=effective_lock_ttl)
+                return
+            async with state_lock:
+                if payment_breaker["tripped"]:
+                    return
+                payment_breaker["consecutive"] = 0
             center_node, edges, neighbor_nodes, truncated, base_feat = _extract_attendee_artifacts(
                 attendee, data or {}, today=today,
             )
@@ -1203,6 +1286,7 @@ async def run_catalog(
                 _refresh_lock(kv, token, lock_ttl=effective_lock_ttl)
                 _save_expansion(store, center_node, edges, neighbor_nodes, rels=STAGE2_RELS, truncated=truncated)
                 kv.set(f"{FEAT_PREFIX}{eid}", _json_dump(base_feat), TTL_S)
+                kv.delete(f"{FAILED_PREFIX}{eid}")
                 if base_feat.get("description") and resolved_llm is not None:
                     tag_tasks.append(asyncio.create_task(finalize_feature(eid, base_feat)))
                     return
@@ -1220,6 +1304,10 @@ async def run_catalog(
 
         if lock_lost_error[0] is not None:
             raise lock_lost_error[0]
+        if payment_breaker["tripped"]:
+            status["stage"] = "paused"
+            _save_state(kv, status, todo, lock_token=token, lock_ttl=effective_lock_ttl)
+            return status
         counts = _count_stats(kv)
         status.update(counts)
         status["total"] = len(attendees)
