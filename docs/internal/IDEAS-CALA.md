@@ -1,231 +1,230 @@
-# IDEAS-CALA: opciones para el reto de Cala
+# IDEAS-CALA: options for the Cala challenge
 
-> Agente IDEAS · vie 2026-11-13 · Base: RETOS.md (sección 3) y CALA-VS-MARIADB.md. **Son propuestas: la elección es del usuario.**
-> Criterios del jurado: necesidad real 25% · ejecución 25% · originalidad 25% · uso de Cala 25%. "Focus beats breadth". Tiene que poder usarse al día siguiente, en Slush.
-> **[verificar]** = depende de qué datos tenga Cala realmente (preguntar en el stand: lead/follow, personas y roles, fechas, adquisiciones, cobertura europea).
+> IDEAS agent · Fri 2026-11-13 · Based on: RETOS.md (section 3) and CALA-VS-MARIADB.md. **These are proposals: the user makes the choice.**
+> Jury criteria: real need 25% · execution 25% · originality 25% · use of Cala 25%. "Focus beats breadth." It must be usable the next day, at Slush.
+> **[verify]** = depends on what data Cala actually has (ask at the booth: lead/follow, people and roles, dates, acquisitions, European coverage).
 
-## Por qué el grafo de Cala y no una búsqueda web (el argumento común)
-La búsqueda web da **documentos**; Cala da **relaciones estructuradas con fuente**: quién invirtió en qué, cuándo, en qué rol, quién trabaja dónde. Las ideas de abajo dependen de **consultas sobre el grafo**: recorridos de varios saltos, agregados temporales, comparables y caminos entre nodos. Con Google eso implica leer 200 páginas a mano. Cada idea explica qué consulta del grafo es la que la hace imposible sin Cala.
-
----
-
-## Para founders
-
-### 1. ★ Radar de primeros clientes ("First 10 customers")
-- **Usuario y dolor**: founder B2B en etapa seed que no sabe a quién venderle primero y prospecta en frío.
-- **Qué hace**: lista las empresas de tu segmento que **acaban de levantar plata**, rankeadas por timing, fit y una persona de contacto, cada una con la ronda que funciona como señal.
-- **Por qué Cala**: necesita el filtro "ronda en las últimas N semanas × sector × tamaño × país" + las personas de cada empresa + los inversores en común. Es un join sobre el grafo; con búsqueda web serían horas.
-- **Wow**: escribís "vendo compliance para fintechs" y en 5 s aparecen "12 fintechs que levantaron en los últimos 60 días, quién decide la compra en cada una y qué inversor tenés en común con ellas".
-- **En Slush**: "estas empresas recién financiadas están en Slush: buscalas hoy". Una lista exportable para el celular.
-- **Riesgo**: la cobertura de datos de personas y roles **[verificar]**. **Dificultad**: media.
-
-### 2. Who actually leads: quién lidera hoy rondas como la tuya
-- **Usuario y dolor**: un founder que va a levantar su ronda y pierde meses con fondos que solo siguen, o que ya no invierten.
-- **Qué hace**: un ranking de **leads activos** para tu perfil (etapa, sector, país), con el partner que hizo cada deal y la evidencia.
-- **Por qué Cala**: necesita distinguir **lead vs follow** y la recencia por inversor y partner, que son agregados sobre rondas. **[verificar]** si existe el rol de lead.
-- **Wow**: muestra "fondos que te dirían que sí pero nunca lideran", tachados en rojo, frente a los 5 que sí lideraron 3 rondas parecidas este año.
-- **En Slush**: tu lista de 10 inversores para cazar en el evento, con el nombre del partner.
-- **Riesgo**: es **la idea que más equipos van a hacer**. **Dificultad**: baja-media.
-
-### 3. ★ Escalera de inversores ("Investor pathways")
-- **Usuario y dolor**: un founder pre-seed que elige su inversor seed sin saber **qué puertas le abre para la Series A**.
-- **Qué hace**: para cada inversor seed, muestra **qué pasó después con sus empresas**: qué porcentaje llegó a la Serie A, en cuánto tiempo y **qué fondos lideraron esa A**.
-- **Por qué Cala**: es un recorrido de varios saltos (inversor seed → sus empresas → rondas siguientes → leads de esas rondas) con tiempos. No sale de una búsqueda web.
-- **Wow**: un diagrama Sankey: "las empresas que levantaron seed con el fondo X llegaron a Serie A en el 41% de los casos, 70% de ellas con estos 3 fondos". Comparás dos term sheets por el camino que abren.
-- **En Slush**: "¿con qué ángel o fondo me conviene cerrar la seed?". Sirve para decidir entre ofertas.
-- **Riesgo**: requiere historial de varias rondas por empresa **[verificar la profundidad]**. **Dificultad**: media.
-
-### 4. Camino de introducción ("Warm intro path")
-- **Usuario y dolor**: un founder sin red de contactos; los intros en frío no funcionan.
-- **Qué hace**: el camino más corto y "más cálido" desde tu equipo (empresas previas, inversores actuales) hasta un inversor o cliente objetivo.
-- **Por qué Cala**: es un shortest path en el grafo de personas, empresas y fondos con la fuente de cada arista.
-- **Wow**: "tu CTO trabajó en Y con la partner de Z: pedile el intro a ella".
-- **En Slush**: los intros para pedir esa misma noche.
-- **Riesgo**: depende de los datos de historial laboral **[verificar]** y es parecido a LinkedIn. **Dificultad**: media.
-
-### 5. "Termómetro de mercado": ¿es buen momento para levantar en mi vertical?
-- **Usuario y dolor**: un founder que no sabe si su sector está "caliente" o "frío" ahora.
-- **Qué hace**: muestra el flujo de rondas por mes en tu vertical y país: cantidad, tamaño, fondos que entran y fondos que dejaron de invertir.
-- **Por qué Cala**: series temporales sobre las rondas, segmentadas por sector e inversor.
-- **Wow**: "3 fondos que eran activos en tu vertical no invirtieron nada en 9 meses: no pierdas tiempo con ellos".
-- **En Slush**: el contexto para tu pitch ("el mercado está creciendo X%").
-- **Riesgo**: es algo que hacen Dealroom/Crunchbase (poco original). **Dificultad**: baja.
+## Why Cala's graph instead of a web search (the common argument)
+Web search returns **documents**; Cala provides **sourced structured relationships**: who invested in what, when, in what role, who works where. The ideas below depend on **queries over the graph**: multi-hop traversals, temporal aggregates, comparables, and paths between nodes. With Google, that means reading 200 pages by hand. Each idea explains which graph query makes it impossible without Cala.
 
 ---
 
-## Para inversores
+## For founders
 
-### 6. ★ Verificador de decks ("Deck fact-check")
-- **Usuario y dolor**: un business angel o analista que recibe 50 decks en Slush y no tiene tiempo de verificar lo que dicen ("respaldados por X", "ex-Google", "levantamos €2M").
-- **Qué hace**: subís el PDF del deck, el producto extrae las afirmaciones verificables y las contrasta con Cala: ✔ confirmada, ⚠ difiere o ? sin dato, cada una con su fuente.
-- **Por qué Cala**: necesita datos **estructurados y con fuente** para confirmar o refutar rondas, inversores y trayectorias. La web da ruido; Cala da evidencia citable.
-- **Wow**: subís un deck en vivo y en 10 segundos aparece "Inversor X en la ronda seed: ✔ (fuente). Ronda de €2M: ⚠, Cala registra €1.2M".
-- **En Slush**: **es el caso perfecto**: el angel recibe un deck en el celular y lo verifica antes de la reunión.
-- **Riesgo**: el tono de "acusar" al founder (mejor enmarcarlo como "due diligence rápida") y extraer afirmaciones de PDFs variados. **Dificultad**: media.
+### 1. ★ First-customer radar ("First 10 customers")
+- **User and pain point**: a seed-stage B2B founder who does not know whom to sell to first and is prospecting cold.
+- **What it does**: lists companies in your segment that **have just raised money**, ranked by timing, fit, and a contact person, each with the round that serves as a signal.
+- **Why Cala**: it needs the filter "round in the last N weeks × sector × size × country" + people at each company + investors in common. This is a graph join; doing it with web search would take hours.
+- **Wow**: you type "I sell compliance for fintechs" and in 5 s see "12 fintechs that raised in the last 60 days, who makes the buying decision at each one, and which investor you have in common with them".
+- **At Slush**: "these newly funded companies are at Slush: find them today". An exportable list for your phone.
+- **Risk**: coverage of people and roles data **[verify]**. **Difficulty**: medium.
 
-### 7. Radar de rondas atrasadas ("Overdue for a round")
-- **Usuario y dolor**: un inversor de follow-on o de secundario, o un comprador corporativo, que busca empresas que **ya deberían haber levantado** según lo típico de su etapa y sector y no lo hicieron (puede ser una oportunidad o una alerta).
-- **Qué hace**: el tiempo desde la última ronda contra la mediana de su cohorte; marca las que se pasaron del percentil 75.
-- **Por qué Cala**: necesita cohortes (sector × etapa × año) y los tiempos entre rondas, agregados sobre todo el grafo.
-- **Wow**: "estas 20 startups de Serie A no levantan hace 30 meses, cuando la mediana es 20: posibles bridge rounds o adquisiciones".
-- **En Slush**: una lista de conversaciones "¿cómo están de runway?" para inversores de secundarios o M&A.
-- **Riesgo**: que una ronda falte en los datos genera falsos positivos. **Dificultad**: media.
+### 2. Who actually leads: who is leading rounds like yours today
+- **User and pain point**: a founder about to raise a round who loses months with funds that only follow or no longer invest.
+- **What it does**: ranks **active leads** for your profile (stage, sector, country), with the partner who made each deal and the evidence.
+- **Why Cala**: it needs to distinguish **lead vs follow** and recency by investor and partner, which are aggregates over rounds. **[verify]** whether the lead role exists.
+- **Wow**: shows "funds that would say yes to you but never lead", crossed out in red, alongside the 5 that led 3 similar rounds this year.
+- **At Slush**: your list of 10 investors to track down at the event, with the partner's name.
+- **Risk**: this is **the idea most teams will build**. **Difficulty**: low-medium.
 
-### 8. Armador de sindicatos ("Syndicate builder")
-- **Usuario y dolor**: un fondo que lidera y tiene que **completar la ronda** con co-inversores compatibles.
-- **Qué hace**: recomienda co-inversores según el historial de co-inversión con vos y la actividad reciente en el sector y la etapa.
-- **Por qué Cala**: es un grafo de co-inversión (proyección inversor–inversor a través de las rondas compartidas).
-- **Wow**: un grafo interactivo: "estos 4 fondos co-invirtieron con vos 3 veces y están activos en climate tech".
-- **En Slush**: a quién buscar para cerrar la ronda.
-- **Riesgo**: es un nicho (son pocos usuarios). **Dificultad**: baja-media.
+### 3. ★ Investor pathways ("Investor pathways")
+- **User and pain point**: a pre-seed founder choosing a seed investor without knowing **which doors they will open for Series A**.
+- **What it does**: for each seed investor, shows **what happened next to its companies**: what percentage reached Series A, how long it took, and **which funds led that Series A**.
+- **Why Cala**: it is a multi-hop traversal (seed investor → its companies → later rounds → leads of those rounds) with timing. A web search cannot provide it.
+- **Wow**: a Sankey diagram: "companies that raised seed with fund X reached Series A in 41% of cases; 70% of them did so with these 3 funds." You compare two term sheets by the paths they open.
+- **At Slush**: "which angel or fund should I close my seed with?" It helps decide between offers.
+- **Risk**: requires a history of multiple rounds per company **[verify depth]**. **Difficulty**: medium.
 
-### 9. Mapa de compradores ("Acquirer map")
-- **Usuario y dolor**: un founder o inversor que piensa en la salida: ¿quién compra empresas como esta?
-- **Qué hace**: lista los adquirentes probables según sus compras previas de empresas parecidas, los inversores en común y el solapamiento de sector.
-- **Por qué Cala**: depende de que Cala tenga **adquisiciones** como aristas **[verificar, es crítico]**.
-- **Wow**: "3 de los últimos 5 compradores de startups de logística nórdicas comparten un inversor con vos".
-- **Riesgo**: sin datos de adquisiciones, la idea no existe. **Dificultad**: media.
+### 4. Warm introduction path ("Warm intro path")
+- **User and pain point**: a founder without a network; cold introductions do not work.
+- **What it does**: finds the shortest and "warmest" path from your team (previous companies, current investors) to a target investor or customer.
+- **Why Cala**: it is a shortest path in the graph of people, companies, and funds, with the source for each edge.
+- **Wow**: "your CTO worked at Y with Z's partner: ask her for the introduction."
+- **At Slush**: introductions to request that same night.
+- **Risk**: depends on employment history data **[verify]** and is similar to LinkedIn. **Difficulty**: medium.
 
----
-
-## Fuera del menú
-
-### 10. Radar de carreras para estudiantes ("¿quién va a contratar?")
-- **Usuario y dolor**: estudiantes (como nosotros) que buscan prácticas o un primer empleo en startups y no saben **cuáles tienen plata fresca y van a contratar**.
-- **Qué hace**: muestra las startups que levantaron en los últimos 90 días en tu ciudad y tu área, con el tamaño de la ronda, los founders y su trayectoria (por ejemplo, "founders ex-Supercell").
-- **Por qué Cala**: ronda reciente × ciudad × sector × personas.
-- **Wow**: "Helsinki, ML, levantaron en los últimos 90 días: 14 startups. Este es el CTO de cada una".
-- **En Slush**: Slush está lleno de estudiantes voluntarios y buscando trabajo: es una historia auténtica (somos el usuario).
-- **Riesgo**: el jurado puede verlo fuera del público "founders o investors". Se puede reencuadrar como "founders que necesitan contratar se cruzan con talento". **Dificultad**: baja.
-
-### 11. Pulso de ecosistemas para agencias públicas ("Ecosystem pulse")
-- **Usuario y dolor**: agencias como ACCIÓ (Catalunya) o Business Finland que quieren medir qué capital extranjero entra a su ecosistema y qué fondos atraer.
-- **Qué hace**: compara flujos de capital entre ecosistemas (por ejemplo, Barcelona vs. Helsinki): qué fondos extranjeros invierten en cada uno, en qué sectores, y las tendencias.
-- **Por qué Cala**: agregados por geografía de la empresa × geografía del inversor a lo largo del tiempo.
-- **Wow**: "los 10 fondos que invierten en Helsinki y nunca en Barcelona: ACCIÓ, estos son tus objetivos para Slush".
-- **En Slush**: las agencias están ahí con stands. **Encaja con el ángulo catalán** y se puede validar con los fundadores de Cala.
-- **Riesgo**: está fuera del público principal y es un nicho B2G. **Dificultad**: baja-media.
-
-### 12. Planificador de agenda para Slush ("Slush planner")
-- **Usuario y dolor**: un founder con 2 días de Slush y miles de asistentes; no sabe a quién priorizar.
-- **Qué hace**: cruza la lista pública de oradores y expositores de Slush **[verificar que exista y se pueda usar]** con el grafo de Cala y arma una agenda priorizada ("estos 8 inversores que hablan o tienen stand lideraron rondas como la tuya").
-- **Por qué Cala**: el valor está en enriquecer y rankear según el grafo; la lista sola no sirve.
-- **Wow**: tu agenda de Slush personalizada en 30 segundos.
-- **En Slush**: **es literalmente para el lunes**.
-- **Riesgo**: depende de los datos de Slush y es efímero (sirve para un evento). Se puede combinar como "modo Slush" de las ideas 1 o 2. **Dificultad**: baja.
+### 5. "Market thermometer": is it a good time to raise in my vertical?
+- **User and pain point**: a founder who does not know whether their sector is "hot" or "cold" right now.
+- **What it does**: shows the monthly flow of rounds in your vertical and country: count, size, funds entering, and funds that have stopped investing.
+- **Why Cala**: time series over rounds, segmented by sector and investor.
+- **Wow**: "3 funds that were active in your vertical have not invested at all in 9 months: do not waste time on them."
+- **At Slush**: context for your pitch ("the market is growing X%").
+- **Risk**: Dealroom/Crunchbase do this (not very original). **Difficulty**: low.
 
 ---
 
-## Tabla de puntuación (1–5 por criterio; total ponderado sobre 5)
+## For investors
 
-| # | Idea | Público | Necesidad | Ejecución (factib. ~36h) | Originalidad | Uso de Cala | **Total /5** | Competencia esperada |
+### 6. ★ Deck fact-checker ("Deck fact-check")
+- **User and pain point**: an angel investor or analyst who receives 50 decks at Slush and has no time to verify their claims ("backed by X", "ex-Google", "we raised €2M").
+- **What it does**: you upload the deck PDF; the product extracts verifiable claims and checks them against Cala: ✔ confirmed, ⚠ differs, or ? no data, each with its source.
+- **Why Cala**: it needs **structured, sourced data** to confirm or refute rounds, investors, and career histories. The web is noisy; Cala provides citable evidence.
+- **Wow**: you upload a deck live and in 10 seconds see "Investor X in the seed round: ✔ (source). €2M round: ⚠, Cala records €1.2M".
+- **At Slush**: **it is the perfect use case**: an angel receives a deck on their phone and checks it before the meeting.
+- **Risk**: the tone of "accusing" the founder (better framed as "quick due diligence") and extracting claims from varied PDFs. **Difficulty**: medium.
+
+### 7. Overdue-round radar ("Overdue for a round")
+- **User and pain point**: a follow-on or secondary investor, or a corporate buyer, looking for companies that **should already have raised** based on what is typical for their stage and sector but have not (this could be an opportunity or a warning).
+- **What it does**: compares time since the last round against the cohort median; flags companies past the 75th percentile.
+- **Why Cala**: it needs cohorts (sector × stage × year) and the time between rounds, aggregated across the whole graph.
+- **Wow**: "these 20 Series A startups have not raised in 30 months, while the median is 20: possible bridge rounds or acquisitions".
+- **At Slush**: a list of "how is your runway?" conversations for secondary or M&A investors.
+- **Risk**: a missing round in the data creates false positives. **Difficulty**: medium.
+
+### 8. Syndicate builder ("Syndicate builder")
+- **User and pain point**: a lead fund that needs to **fill out the round** with compatible co-investors.
+- **What it does**: recommends co-investors based on your co-investment history and recent activity in the sector and stage.
+- **Why Cala**: it is a co-investment graph (an investor–investor projection through shared rounds).
+- **Wow**: an interactive graph: "these 4 funds co-invested with you 3 times and are active in climate tech".
+- **At Slush**: whom to find to close the round.
+- **Risk**: it is a niche (few users). **Difficulty**: low-medium.
+
+### 9. Acquirer map ("Acquirer map")
+- **User and pain point**: a founder or investor thinking about an exit: who buys companies like this?
+- **What it does**: lists likely acquirers based on their past purchases of similar companies, shared investors, and sector overlap.
+- **Why Cala**: it depends on Cala having **acquisitions** as edges **[verify, critical]**.
+- **Wow**: "3 of the last 5 buyers of Nordic logistics startups share an investor with you".
+- **Risk**: without acquisition data, the idea does not exist. **Difficulty**: medium.
+
+---
+
+## Off the shortlist
+
+### 10. Student career radar ("Who's hiring?")
+- **User and pain point**: students (like us) looking for internships or a first job at startups who do not know **which ones have fresh funding and are about to hire**.
+- **What it does**: shows startups that raised in the last 90 days in your city and field, with round size, founders, and their background (for example, "founders ex-Supercell").
+- **Why Cala**: recent round × city × sector × people.
+- **Wow**: "Helsinki, ML, raised in the last 90 days: 14 startups. Here is each one's CTO."
+- **At Slush**: Slush is full of student volunteers looking for work: it is an authentic story (we are the user).
+- **Risk**: the jury may see it as outside the "founders or investors" audience. It can be reframed as "founders who need to hire meet talent". **Difficulty**: low.
+
+### 11. Ecosystem pulse for public agencies ("Ecosystem pulse")
+- **User and pain point**: agencies such as ACCIÓ (Catalonia) or Business Finland that want to measure what foreign capital enters their ecosystem and which funds to attract.
+- **What it does**: compares capital flows between ecosystems (for example, Barcelona vs. Helsinki): which foreign funds invest in each, in what sectors, and the trends.
+- **Why Cala**: aggregates by company geography × investor geography over time.
+- **Wow**: "the 10 funds that invest in Helsinki and never in Barcelona: ACCIÓ, these are your targets for Slush".
+- **At Slush**: the agencies are there with booths. **It fits the Catalan angle** and can be validated with Cala's founders.
+- **Risk**: outside the main audience and a B2G niche. **Difficulty**: low-medium.
+
+### 12. Slush schedule planner ("Slush planner")
+- **User and pain point**: a founder with 2 days at Slush and thousands of attendees who does not know whom to prioritize.
+- **What it does**: cross-references Slush's public list of speakers and exhibitors **[verify that it exists and can be used]** with Cala's graph and builds a prioritized schedule ("these 8 investors who speak or have a booth led rounds like yours").
+- **Why Cala**: the value is in enriching and ranking according to the graph; the list alone is not useful.
+- **Wow**: your personalized Slush schedule in 30 seconds.
+- **At Slush**: **it is literally for Monday**.
+- **Risk**: depends on Slush data and is temporary (useful for one event). It can be combined as "Slush mode" for ideas 1 or 2. **Difficulty**: low.
+
+---
+
+## Scoring table (1–5 per criterion; weighted total out of 5)
+
+| # | Idea | Audience | Need | Execution (feasibility ~36h) | Originality | Use of Cala | **Total /5** | Expected competition |
 |---|------|---------|-----------|--------------------------|--------------|-------------|--------------|----------------------|
-| 1 | ★ Radar de primeros clientes | Founders | 5 | 4 | 4 | 5 | **4.50** | Media-baja |
-| 3 | ★ Escalera de inversores | Founders | 4 | 4 | 5 | 5 | **4.50** | Baja |
-| 6 | ★ Verificador de decks | Inversores | 5 | 3 | 5 | 4 | **4.25** | Baja |
-| 2 | Who actually leads | Founders | 5 | 5 | 2 | 5 | 4.25 | **Muy alta** |
-| 7 | Rondas atrasadas | Inversores | 4 | 4 | 4 | 5 | 4.25 | Baja |
-| 12 | Slush planner | Founders | 4 | 4 | 4 | 3 | 3.75 | Media |
-| 4 | Camino de introducción | Founders | 4 | 3 | 3 | 4 | 3.50 | Media |
-| 8 | Armador de sindicatos | Inversores | 3 | 4 | 3 | 4 | 3.50 | Baja |
-| 11 | Pulso de ecosistemas | Agencias | 3 | 4 | 4 | 4 | 3.75 | Muy baja |
-| 10 | Radar de carreras | Estudiantes | 3 | 5 | 3 | 4 | 3.75 | Media |
-| 9 | Mapa de compradores | Founders/inv. | 4 | 2 | 4 | 4 | 3.50 (si hay datos de M&A) | Baja |
-| 5 | Termómetro de mercado | Founders | 3 | 5 | 1 | 4 | 3.25 | Alta |
+| 1 | ★ First-customer radar | Founders | 5 | 4 | 4 | 5 | **4.50** | Medium-low |
+| 3 | ★ Investor pathways | Founders | 4 | 4 | 5 | 5 | **4.50** | Low |
+| 6 | ★ Deck fact-checker | Investors | 5 | 3 | 5 | 4 | **4.25** | Low |
+| 2 | Who actually leads | Founders | 5 | 5 | 2 | 5 | 4.25 | **Very high** |
+| 7 | Overdue rounds | Investors | 4 | 4 | 4 | 5 | 4.25 | Low |
+| 12 | Slush planner | Founders | 4 | 4 | 4 | 3 | 3.75 | Medium |
+| 4 | Warm introduction path | Founders | 4 | 3 | 3 | 4 | 3.50 | Medium |
+| 8 | Syndicate builder | Investors | 3 | 4 | 3 | 4 | 3.50 | Low |
+| 11 | Ecosystem pulse | Agencies | 3 | 4 | 4 | 4 | 3.75 | Very low |
+| 10 | Career radar | Students | 3 | 5 | 3 | 4 | 3.75 | Medium |
+| 9 | Acquirer map | Founders/inv. | 4 | 2 | 4 | 4 | 3.50 (if M&A data exists) | Low |
+| 5 | Market thermometer | Founders | 3 | 5 | 1 | 4 | 3.25 | High |
 
-Los puntajes son mi estimación. Dependen mucho de la cobertura de datos que confirme el stand.
+These scores are my estimate. They depend heavily on the data coverage confirmed at the booth.
 
-**Mis 3 favoritas** (la decisión queda en manos del usuario):
-1. **Radar de primeros clientes**: es la más útil al día siguiente, el uso de Cala es central y es un ángulo que los demás no van a tomar.
-2. **Escalera de inversores**: es la más original. Responde una pregunta que nadie más puede responder sin un grafo de varios saltos.
-3. **Verificador de decks**: es la demo más memorable y encaja perfecto con Slush, pero tiene el mayor riesgo de ejecución (parsear PDFs).
+**My 3 favorites** (the user makes the decision):
+1. **First-customer radar**: the most useful the next day, Cala is central to it, and it is an angle other teams are unlikely to take.
+2. **Investor pathways**: the most original. It answers a question no one else can answer without a multi-hop graph.
+3. **Deck fact-checker**: the most memorable demo and a perfect fit for Slush, but it has the greatest execution risk (parsing PDFs).
 
-**Combinaciones posibles**: 1 + "modo Slush" (12) · 3 + 2 (la escalera con un ranking de leads activos como segunda pestaña) · 6 + 7 (una suite de due diligence). Ojo: el jurado pide **foco**, así que combinar solo si la segunda parte es una pestaña chica.
-
----
-
-## Stitch (Google) en el flujo: ¿sirve?
-**Sí, para la parte visual, no para la lógica.** Stitch genera pantallas a partir de un prompt o un boceto y exporta HTML/CSS o a Figma **[verificar el formato de exportación actual]**.
-- **Para qué ideas**: pesa más en las que tienen una **UI vistosa como "wow"**: el verificador de decks (pantalla de carga + tarjetas ✔/⚠), la escalera de inversores (pantalla con Sankey y comparación de inversores) y el Slush planner (agenda mobile-first). En el radar de clientes también sirve para la tabla y la ficha de cada empresa.
-- **Cómo encaja**: (1) el sábado a la mañana se generan 3–4 pantallas en Stitch (input, resultados, detalle con fuentes, versión móvil para Slush); (2) se exportan y Claude Code las convierte en componentes conectados a la API de Cala; (3) las mismas pantallas sirven como **mockups del deck** si alguna parte no llega a estar funcional.
-- **No conviene**: depender de Stitch para gráficos interactivos (el Sankey y los grafos van con una librería de gráficos) ni tocar la UI generada a último momento. Hay que fijar el diseño temprano.
-- **Ahorro estimado**: 2–4 horas de diseño y un look más profesional, que suma en "ejecución".
-
-## Preguntas para el stand de Cala (para elegir entre las 3)
-1. ¿Distinguen **lead vs follow** en las rondas? (es clave para las ideas 2 y 3)
-2. ¿Qué profundidad tiene el historial de rondas por empresa (seed → A → B)? (idea 3)
-3. ¿Hay **personas con roles** en las empresas, y su historial laboral? (ideas 1 y 4)
-4. ¿Tienen **adquisiciones**? (idea 9)
-5. ¿Cuánta cobertura tienen de Europa y los nórdicos en 2025–2026, y con qué frescura (cuántos días de retraso)?
-6. Si les contamos las ideas 1, 3 y 6, ¿cuál les entusiasma más? **Esta es la validación del ángulo catalán**: usarla.
-7. ¿Límites de la API, uso de MCP y créditos durante la hackatón?
-
+**Possible combinations**: 1 + "Slush mode" (12) · 3 + 2 (pathways with a ranking of active leads as a second tab) · 6 + 7 (a due diligence suite). Note: the jury asks for **focus**, so combine only if the second part is a small tab.
 
 ---
 
-## Ajuste según la API (sáb 2026-11-14, base: CALA-API.md)
+## Stitch (Google) in the workflow: is it useful?
+**Yes, for the visuals, not the logic.** Stitch generates screens from a prompt or sketch and exports HTML/CSS or to Figma **[verify current export format]**.
+- **Best ideas for it**: it matters most for ideas with a **visually striking "wow" UI**: the deck fact-checker (loading screen + ✔/⚠ cards), investor pathways (screen with a Sankey and investor comparison), and Slush planner (mobile-first schedule). It also helps with the table and company profile for the customer radar.
+- **How it fits**: (1) on Saturday morning, generate 3–4 screens in Stitch (input, results, detail with sources, mobile version for Slush); (2) export them and have Claude Code turn them into components connected to the Cala API; (3) the same screens serve as **deck mockups** if any part is not fully functional in time.
+- **Not recommended**: relying on Stitch for interactive charts (the Sankey and graphs need a charting library) or changing the generated UI at the last minute. The design needs to be settled early.
+- **Estimated savings**: 2–4 hours of design and a more professional look, which adds to "execution".
 
-### Qué cambia con lo que sabemos de la API
-- **A favor**: (a) `knowledge/search` ya devuelve **respuestas con fuentes** (explainability + origins con URL), así que la verificación con citas viene "de fábrica"; (b) `knowledge/query` devuelve **filas estructuradas** que se pueden filtrar y ordenar (sirve para rankear); (c) existen **Person con rol** y **relaciones con `valid_since`/`valid_until`** (historial laboral con fechas); (d) existe **CorporateEvent (M&A)**, así que el mapa de compradores deja de ser hipotético.
-- **En contra**: (a) **no hay tipo Investor** y **no está documentado lead vs follow**; (b) no se sabe el costo por llamada, la latencia ni los límites (solo un 429), así que hay que diseñar con **caché y pocas llamadas por pantalla**; (c) no se sabe la cobertura nórdica ni española ni la frescura de los datos.
-- **Encaje con la postura del usuario** ("no tocar Cala, mostrar para qué sirve"): las ideas que **ponen a Cala en un flujo de trabajo concreto** (preparar ventas, revisar un deck) se lucen más que las que exigen análisis profundos del grafo, que la API puede no soportar bien.
+## Questions for the Cala booth (to choose among the 3)
+1. Do you distinguish **lead vs follow** in rounds? (key for ideas 2 and 3)
+2. How deep is the round history for each company (seed → A → B)? (idea 3)
+3. Are there **people with roles** at companies, and do you have their employment history? (ideas 1 and 4)
+4. Do you have **acquisitions**? (idea 9)
+5. How much coverage do you have for Europe and the Nordics in 2025–2026, and how fresh is it (how many days of delay)?
+6. If we tell you about ideas 1, 3, and 6, which excites you most? **This validates the Catalan angle**: use it.
+7. What are the API limits, MCP usage rules, and hackathon credits?
 
-### Revisión de las 12 ideas
+---
 
-| # | Idea | Estado | Por qué | Nuevo total /5 (antes) |
+## Adjustment based on the API (Sat 2026-11-14, based on: CALA-API.md)
+
+### What changes based on what we know about the API
+- **In favor**: (a) `knowledge/search` already returns **answers with sources** (explainability + origins with URL), so cited verification comes "out of the box"; (b) `knowledge/query` returns **structured rows** that can be filtered and sorted (useful for ranking); (c) **Person with role** exists, as do relationships with `valid_since`/`valid_until` (employment history with dates); (d) **CorporateEvent (M&A)** exists, so the acquirer map is no longer hypothetical.
+- **Against**: (a) there is **no Investor type** and **lead vs follow is not documented**; (b) call cost, latency, and limits are unknown (only a 429 is known), so the design needs **caching and few calls per screen**; (c) Nordic and Spanish coverage and data freshness are unknown.
+- **Fit with the user's position** ("don't change Cala, show what it can do"): ideas that **put Cala in a concrete workflow** (preparing sales, reviewing a deck) stand out more than those requiring deep graph analysis, which the API may not support well.
+
+### Review of the 12 ideas
+
+| # | Idea | Status | Why | New total /5 (before) |
 |---|------|--------|---------|------------------------|
-| 1 | Radar de primeros clientes | ✅ **Mejora** | Solo necesita rondas recientes + sector + personas con rol, todo documentado. `query` da filas para rankear | **4.50** (4.50) |
-| 6 | Verificador de decks | ✅ **Mejora mucho** | Nemotron VL lee el PDF y `search` con explainability devuelve evidencia citada: es exactamente para lo que Cala está hecha | **4.50** (4.25) |
-| 9 | Mapa de compradores | ⬆ **Sube** | CorporateEvent (M&A) existe. Falta ver su cobertura | **3.75** (3.50) |
-| 4 | Camino de introducción | ⬆ Sube un poco | Las relaciones persona–empresa con fechas permiten "trabajaron juntos en X entre tal y tal año" | 3.75 (3.50) |
-| 10 | Radar de carreras | = | Igual que la 1, pero con un público fuera del foco | 3.75 |
-| 12 | Slush planner | = | Cala aporta el enriquecimiento, pero la lista de asistentes de Slush es externa | 3.75 |
-| 11 | Pulso de ecosistemas | ⚠ Baja un poco | Necesita la geografía del inversor: sin el tipo Investor, se infiere a partir de Company | 3.50 (3.75) |
-| 7 | Rondas atrasadas | ⚠ Riesgo | Depende de fechas exactas de las rondas (`year` en las filas puede quedarse corto) y de la completitud | 3.75 (4.25) |
-| 3 | Escalera de inversores | ⚠ **Riesgo** | Sin lead/follow, se convierte en "qué fondos aparecen en la Serie A de las empresas de este fondo" (participantes, no leads). Pierde precisión, sigue siendo original | **3.75** (4.50) |
-| 8 | Armador de sindicatos | ⚠ Riesgo | Co-inversión vía `investors=A AND B`: funciona, pero sin el tipo Investor el grafo es más pobre | 3.25 (3.50) |
-| 2 | Who actually leads | ❌ **En riesgo alto** | Toda la idea depende de lead/follow. Si no está, se vuelve "inversores activos" genérico (lo que hace todo el mundo) | **3.00** (4.25) |
-| 5 | Termómetro de mercado | = | Factible, poco original | 3.25 |
+| 1 | First-customer radar | ✅ **Improves** | It only needs recent rounds + sector + people with roles, all documented. `query` returns rows for ranking | **4.50** (4.50) |
+| 6 | Deck fact-checker | ✅ **Improves a lot** | Nemotron VL reads the PDF and `search` with explainability returns cited evidence: this is exactly what Cala is built for | **4.50** (4.25) |
+| 9 | Acquirer map | ⬆ **Moves up** | CorporateEvent (M&A) exists. Its coverage still needs checking | **3.75** (3.50) |
+| 4 | Warm introduction path | ⬆ Moves up slightly | Person–company relationships with dates allow "worked together at X between these years" | 3.75 (3.50) |
+| 10 | Career radar | = | Same as 1, but for an audience outside the focus | 3.75 |
+| 12 | Slush planner | = | Cala provides enrichment, but Slush's attendee list is external | 3.75 |
+| 11 | Ecosystem pulse | ⚠ Moves down slightly | It needs investor geography: without the Investor type, it must be inferred from Company | 3.50 (3.75) |
+| 7 | Overdue rounds | ⚠ Risk | It depends on exact round dates (`year` in the rows may not be precise enough) and completeness | 3.75 (4.25) |
+| 3 | Investor pathways | ⚠ **Risk** | Without lead/follow, it becomes "which funds appear in Series A rounds for this fund's companies" (participants, not leads). It loses precision but remains original | **3.75** (4.50) |
+| 8 | Syndicate builder | ⚠ Risk | Co-investment via `investors=A AND B`: it works, but without the Investor type the graph is poorer | 3.25 (3.50) |
+| 2 | Who actually leads | ❌ **High risk** | The whole idea depends on lead/follow. Without it, it becomes generic "active investors" (what everyone does) | **3.00** (4.25) |
+| 5 | Market thermometer | = | Feasible, not very original | 3.25 |
 
-### Top 3 actualizado (el usuario decide)
-1. **★ Verificador de decks**: sube al 1°. Es el uso más "Cala tal cual" (preguntas con respuesta citada) en un contexto concreto (el angel en Slush), con la demo más memorable y el modelo VL justificado.
-2. **★ Radar de primeros clientes**: es la más sólida en datos y útil al día siguiente.
-3. **★ Mapa de compradores** (reemplaza a la escalera **si** el stand confirma que hay buena cobertura de CorporateEvent). Si no, queda la **escalera de inversores en versión "participantes"**.
+### Updated top 3 (the user decides)
+1. **★ Deck fact-checker**: moves up to #1. It is the most "Cala as-is" use (questions with cited answers) in a concrete context (the angel at Slush), with the most memorable demo and a justified VL model.
+2. **★ First-customer radar**: the strongest on data and useful the next day.
+3. **★ Acquirer map** (replaces investor pathways **if** the booth confirms good CorporateEvent coverage). Otherwise, use **investor pathways in a "participants" version**.
 
-### Consultas concretas y papel de Nemotron
+### Specific queries and Nemotron's role
 
-#### 1. Verificador de decks
-**Nemotron (VL)**: lee el PDF/imágenes del deck → extrae las **afirmaciones verificables** como una lista estructurada (empresa, founders, rondas pasadas, inversores mencionados, clientes o logos, métricas de tracción) → genera una consulta por afirmación → al final clasifica cada una como ✔ confirmada / ⚠ difiere / ? sin dato, con explicación y fuente. **Cala**: es la fuente de verdad citada.
-- `entities?name=Acme Robotics&entity_types=Company` → id → `entities/{id}` con relaciones de rondas y personas (una sola llamada por perfil).
+#### 1. Deck fact-checker
+**Nemotron (VL)**: reads the PDF/images of the deck → extracts **verifiable claims** as a structured list (company, founders, past rounds, named investors, customers or logos, traction metrics) → generates one query per claim → finally classifies each as ✔ confirmed / ⚠ differs / ? no data, with an explanation and source. **Cala**: the cited source of truth.
+- `entities?name=Acme Robotics&entity_types=Company` → id → `entities/{id}` with round and people relationships (one call per profile).
 - `knowledge/query`: `startups.name=Acme Robotics.funding_rounds return(round_type, funding_amount, year, investors)`
-- `knowledge/search`: "Did Lifeline Ventures invest in Acme Robotics? In which round and when?" (con explainability → URL de la fuente)
+- `knowledge/search`: "Did Lifeline Ventures invest in Acme Robotics? In which round and when?" (with explainability → source URL)
 - `knowledge/search`: "Did Jane Doe previously work at Google, and in what role and years?"
-- `knowledge/search`: "Is Kesko a customer or partner of Acme Robotics?" (los logos de clientes del deck)
-- **Wow**: el PDF a la izquierda con cada afirmación resaltada; a la derecha, las tarjetas ✔/⚠/? con el link a la fuente.
+- `knowledge/search`: "Is Kesko a customer or partner of Acme Robotics?" (deck customer logos)
+- **Wow**: the PDF on the left with each claim highlighted; on the right, ✔/⚠/? cards with a link to the source.
 
-#### 2. Radar de primeros clientes
-**Nemotron**: convierte la descripción del producto ("compliance para fintechs de 20–200 personas en el norte de Europa") en filtros (sector, país, tamaño, etapa) → arma las consultas → **rankea** las filas según timing, fit y acceso → escribe un "por qué ahora" de una línea y un primer mensaje de contacto por empresa. **Cala**: las filas de empresas con rondas recientes y las personas con rol.
-- `knowledge/query`: `startups.industry=Fintech.location=Finland.funding>1M order_by=funding_date limit=50 return(company, round_type, funding_amount, year, investors)`. Repetir para Sweden, Norway y Denmark, o en lenguaje natural: "Fintech startups in the Nordics that raised a funding round in the last 3 months".
-- `knowledge/query`: `people.role=Head of Compliance.company.name=<empresa>` (y CFO o COO como fallback) → la persona que decide la compra.
-- `knowledge/search`: "Which investors does <mi startup> share with <empresa>?" o `investors=<inv1> AND <inv2>` → un intro en común.
-- **Wow**: 5 segundos desde la descripción del producto hasta "12 empresas, la persona que decide y el intro en común", cada una con la ronda citada.
+#### 2. First-customer radar
+**Nemotron**: turns the product description ("compliance for fintechs with 20–200 people in Northern Europe") into filters (sector, country, size, stage) → builds the queries → **ranks** rows by timing, fit, and access → writes a one-line "why now" and an initial outreach message for each company. **Cala**: company rows with recent rounds and people with roles.
+- `knowledge/query`: `startups.industry=Fintech.location=Finland.funding>1M order_by=funding_date limit=50 return(company, round_type, funding_amount, year, investors)`. Repeat for Sweden, Norway, and Denmark, or in natural language: "Fintech startups in the Nordics that raised a funding round in the last 3 months".
+- `knowledge/query`: `people.role=Head of Compliance.company.name=<empresa>` (and CFO or COO as fallback) → the person who makes the buying decision.
+- `knowledge/search`: "Which investors does <mi startup> share with <empresa>?" or `investors=<inv1> AND <inv2>` → a shared introduction.
+- **Wow**: 5 seconds from product description to "12 companies, the decision-maker, and a shared introduction", each with its round cited.
 
-#### 3a. Mapa de compradores (si hay datos de M&A)
-**Nemotron**: define "empresas parecidas" a partir de la descripción, agrupa los compradores y explica el patrón ("compra startups de logística nórdicas en etapa Serie A"). **Cala**: los CorporateEvent con comprador, objetivo y fecha.
+#### 3a. Acquirer map (if M&A data exists)
+**Nemotron**: defines "similar companies" based on the description, groups buyers, and explains the pattern ("buys Nordic logistics startups at Series A stage"). **Cala**: CorporateEvents with buyer, target, and date.
 - `knowledge/search`: "Acquisitions of Nordic logistics software startups since 2020: acquirer, target, date"
-- `entities/{id_comprador}` → relaciones CorporateEvent salientes (todas sus compras).
-- `knowledge/query`: `investors=<inversor del founder> AND <comprador>` → un camino de acceso.
+- `entities/{id_comprador}` → outgoing CorporateEvent relationships (all its acquisitions).
+- `knowledge/query`: `investors=<founder's investor> AND <buyer>` → a path of access.
 
-#### 3b. Escalera de inversores en versión "participantes" (alternativa)
-- `knowledge/query`: `startups.investors=Lifeline Ventures.round_type=Seed return(company, year)` → la cohorte.
-- Por cada empresa: `knowledge/query`: `startups.name=<empresa>.funding_rounds.round_type=Series A return(investors, year)`
-- **Nemotron**: agrega, calcula porcentajes y tiempos y redacta la comparación entre dos fondos. **Costo**: 1 + N llamadas por fondo → hace falta caché.
+#### 3b. Investor pathways in a "participants" version (alternative)
+- `knowledge/query`: `startups.investors=Lifeline Ventures.round_type=Seed return(company, year)` → the cohort.
+- For each company: `knowledge/query`: `startups.name=<empresa>.funding_rounds.round_type=Series A return(investors, year)`
+- **Nemotron**: aggregates, calculates percentages and timing, and writes the comparison between two funds. **Cost**: 1 + N calls per fund → caching is needed.
 
-### Preguntas para el stand de Cala (ordenadas por cuánto cambian la decisión)
-1. **¿Cuántas llamadas y créditos tenemos, y con qué latencia?** Define si las ideas de "1 + N consultas" (escalera, radar) son viables en vivo.
-2. **¿Qué cobertura tienen de rondas 2025–2026 en los nórdicos y en España, y con qué frescura?** Si es floja, el radar de clientes y el verificador se ven vacíos con startups locales (mitigación: usar startups conocidas de la UE o de EE. UU.).
-3. **¿Qué tan completos están los CorporateEvent (M&A)?** Decide entre el mapa de compradores y la escalera para el 3° lugar.
-4. **¿Se puede distinguir el lead de una ronda (en alguna propiedad o relación de FundingRound)?** Si sí, "who actually leads" y la escalera vuelven al nivel ~4.5.
-5. **¿Las fechas de las rondas son exactas (día/mes) o solo el año?** Afecta el "levantó hace N semanas" (radar) y las rondas atrasadas.
-6. **¿Hay personas con rol para empresas medianas, no solo founders o el CEO?** Afecta "la persona que decide" en el radar.
-7. **De las ideas verificador / radar / compradores, ¿cuál les entusiasma más?** Es la validación con los fundadores (el ángulo catalán).
+### Questions for the Cala booth (ordered by how much they affect the decision)
+1. **How many calls and credits do we have, and what is the latency?** This determines whether ideas with "1 + N queries" (pathways, radar) are viable live.
+2. **What coverage do you have for 2025–2026 rounds in the Nordics and Spain, and how fresh is it?** If coverage is weak, the customer radar and fact-checker will look empty with local startups (mitigation: use known EU or US startups).
+3. **How complete is CorporateEvent (M&A) data?** This decides between the acquirer map and investor pathways for third place.
+4. **Can a round's lead be distinguished (in any FundingRound property or relationship)?** If so, "who actually leads" and investor pathways return to around 4.5.
+5. **Are round dates exact (day/month) or only the year?** This affects "raised N weeks ago" (radar) and overdue rounds.
+6. **Are people with roles available for mid-sized companies, not just founders or the CEO?** This affects "the decision-maker" in the radar.
+7. **Of the fact-checker / radar / acquirer ideas, which excites you most?** This is validation with the founders (the Catalan angle).

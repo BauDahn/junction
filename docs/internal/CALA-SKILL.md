@@ -1,4 +1,4 @@
-<!-- Copia de github.com/cala-ai/cala-skill (SKILL.md v1.1.1), guía oficial de Cala para pasar de lenguaje natural a consultas. Referencia para el canonizador. -->
+<!-- Copy of github.com/cala-ai/cala-skill (SKILL.md v1.1.1), Cala's official guide for turning natural language into queries. Reference for the canonizer. -->
 ---
 name: cala
 description: >-

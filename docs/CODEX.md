@@ -70,29 +70,29 @@ Each correction was a short task with the failing input attached. The nine follo
 
 ## 4. Task log, `bau` machine (from `cx log`)
 
-Task summaries are quoted as logged, in Spanish. The first six rows are the pitch-deck verifier prototype, which is no longer in the repository.
+Task summaries are translated from the log. The first six rows are the pitch-deck verifier prototype, which is no longer in the repository.
 
 | Date | Role | Model | Task (summary) | Result | Min |
 |---|---|---|---|---|---|
-| 14/11 02:20 | backend | gpt-6-luna | Implementá la parte backend del verificador de decks según docs/SPEC-verificador.md: secciones Stack, Módulos… | LISTO: Backend del verificador, deck de ejemplo, CLI y tests implementados; no incluye `app.py… | 3.2 |
-| 14/11 02:25 | backend | gpt-6-luna | (seguir) Probé la CLI real con Cala + Codex: funciona (59 s), pero corregí esto en pipeline.py y el deck de e… | LISTO: Ajusté la extracción para excluir marketing, forcé la consulta de afirmaciones públicas… | 1.5 |
-| 14/11 02:25 | frontend | gpt-6-luna | Implementá app.py (en demo/) y la UI demo/static/index.html del verificador de decks según docs/SPEC-verifica… | LISTO: Implementé la API de jobs y la UI responsive del verificador. | 1.9 |
-| 14/11 02:29 | backend | gpt-6-luna | (seguir) La corrida real falló: 'Codex excedió el timeout de 180 segundos' (ahora hay más claims). Cambios: 1… | LISTO: `CODEX_TIMEOUT` configura el timeout de Codex (default 420 s); los errores indican si f… | 1.6 |
-| 14/11 02:31 | frontend | gpt-6-luna | (seguir) El pipeline ya expone progreso: verify_pdf acepta on_progress(stage, done, total) (leé demo/verifier… | LISTO: Conecté el progreso por etapas y el tiempo transcurrido. | 1.0 |
-| 14/11 02:32 | backend | gpt-6-luna | En demo/verifier/pipeline.py, el prompt del juez marca 'contradicted' cuando Cala dice 'I was unable to find … | LISTO: el juez distingue ausencia de evidencia de una contradicción y extrae métricas internas… | 0.8 |
-| 14/11 03:13 | backend | gpt-6-luna | Implementá el canonizador de consultas a Cala según docs/internal/SPEC-canonizador.md (leé también docs/internal/CALA-CAMPOS.md… | LISTO: Implementé el paquete independiente en `canonizador/`, con normalización, proveedor LLM… | 3.2 |
-| 14/11 03:27 | backend | gpt-6-luna | (seguir) La corrida real falló en canonizador/canonizador/intent.py (CodexProvider). Dos arreglos: (1) el sch… | LISTO: CodexProvider ahora genera schemas estrictos, cierra stdin, usa timeout de 120 s con st… | 0.6 |
-| 14/11 03:28 | backend | gpt-6-luna | (seguir) El intent ya funciona (las 3 variantes resuelven a Amenitiz db95edaa-058f-494d-a4f4-5f56bf81afd9), p… | LISTO: El retrieval de rondas filtra localmente, envía a Cala solo claves admitidas y pide pro… | 2.6 |
-| 14/11 03:49 | backend | gpt-6-luna | Implementá la 'Fase 2' de docs/internal/SPEC-canonizador.md en canonizador/ (leé esa sección, docs/internal/CALA-SKILL.md y el … | LISTO: Fase 2 implementada en `canonizador/`; la consulta de Amenitiz marcó la discrepancia en… | 3.6 |
-| 14/11 03:54 | backend | gpt-6-luna | (seguir) Probé con el LLM real. Amenitiz: las 4 variantes dan la misma cadena y la misma respuesta (bien). Fi… | LISTO: filtros normalizados de forma determinista; ambos casos generan la misma consulta y el … | 1.7 |
-| 14/11 04:04 | backend | gpt-6-luna | Bug en canonizador/ (leé canonizador/canonizador/api.py, plan.py, client.py). Con el LLM real, las listas (co… | LISTO: separé la respuesta principal del enriquecimiento y ajusté el cuerpo de retrieval al co… | 2.2 |
-| 14/11 13:48 | backend | gpt-6-luna | Issue #30: implementá backend/cala_core/ según docs/internal/PLAN-CALA-CENTRO.md (secciones 1–5) y el contrato de bloq… | LISTO: Implementé `backend/cala_core/` y la dependencia editable local de Cala Canonizador. Aj… | 5.8 |
-| 14/11 14:00 | backend | gpt-6-luna | (seguir) Probé cala_core con Codex y Cala reales: anda bien (consulta, claim contradicted, mensaje mixto). Co… | LISTO: Normalicé las fuentes, limpié los parches de perfil, canonizé intereses y generé título… | 2.8 |
-| 14/11 15:59 | rapido | gpt-5.6-luna | Respondé solo: LISTO: ok | LISTO: ok | 0.7 |
-| 14/11 15:59 | backend | gpt-6-luna | Issue #43: agregá Gemini como proveedor de LLM. Leé backend/verifier/llm.py (proveedores con complete_json(sy… | LISTO: Gemini agregado como proveedor de LLM, con soporte de texto, imágenes y audio en el bac… | 5.2 |
-| 14/11 16:05 | backend | gpt-6-luna | (seguir) Probé con la clave real: Gemini devuelve HTTP 400 'Unknown name "type" … Proto field is not repeatin… | LISTO: Ambos conversores normalizan listas de tipos y recorren `properties`, `items`, `anyOf` … | 2.5 |
-| 14/11 16:10 | backend | gpt-6-luna | Issue #49 (rama actual). Leé backend/cala_core/router.py y executor.py (ya en main con los arreglos de respal… | LISTO: Router, executor y fusión de perfiles actualizados para Issue #49. | 4.6 |
-| 14/11 16:16 | backend | gpt-6-luna | (seguir) Probé con Gemini y Cala reales. Las preguntas abiertas ya van a knowledge_search (bien). Dos fallas:… | LISTO: fuentes de búsqueda extraídas de `context[].origins[]`, título de `cala_answer` basado … | 7.8 |
+| 14/11 02:20 | backend | gpt-6-luna | Implement the deck verifier backend according to docs/SPEC-verificador.md: Stack, Modules… | READY: Verifier backend, sample deck, CLI, and tests implemented; does not include `app.py… | 3.2 |
+| 14/11 02:25 | backend | gpt-6-luna | (follow-up) I tested the real CLI with Cala + Codex: it works (59 s), but I fixed this in pipeline.py and the d… | READY: Adjusted extraction to exclude marketing, forced queries for public claims… | 1.5 |
+| 14/11 02:25 | frontend | gpt-6-luna | Implement app.py (in demo/) and the deck verifier UI in demo/static/index.html according to docs/SPEC-verifica… | READY: Implemented the jobs API and responsive verifier UI. | 1.9 |
+| 14/11 02:29 | backend | gpt-6-luna | (follow-up) The real run failed: 'Codex exceeded the 180-second timeout' (there are more claims now). Changes: 1… | READY: `CODEX_TIMEOUT` configures the Codex timeout (default 420 s); errors indicate whether f… | 1.6 |
+| 14/11 02:31 | frontend | gpt-6-luna | (follow-up) The pipeline now exposes progress: verify_pdf accepts on_progress(stage, done, total) (read demo/verifier… | READY: Connected stage-by-stage progress and elapsed time. | 1.0 |
+| 14/11 02:32 | backend | gpt-6-luna | In demo/verifier/pipeline.py, the judge prompt marks 'contradicted' when Cala says 'I was unable to find … | READY: The judge distinguishes absence of evidence from a contradiction and extracts internal metrics… | 0.8 |
+| 14/11 03:13 | backend | gpt-6-luna | Implement the Cala query canonizer according to docs/internal/SPEC-canonizador.md (also read docs/internal/CALA-CAMPOS.md… | READY: Implemented the standalone package in `canonizador/`, with normalization, an LLM provider… | 3.2 |
+| 14/11 03:27 | backend | gpt-6-luna | (follow-up) The real run failed in canonizador/canonizador/intent.py (CodexProvider). Two fixes: (1) the sch… | READY: CodexProvider now generates strict schemas, closes stdin, and uses a 120 s timeout with st… | 0.6 |
+| 14/11 03:28 | backend | gpt-6-luna | (follow-up) Intent now works (all 3 variants resolve to Amenitiz db95edaa-058f-494d-a4f4-5f56bf81afd9), p… | READY: Round retrieval filters locally, sends only accepted keys to Cala, and requests pro… | 2.6 |
+| 14/11 03:49 | backend | gpt-6-luna | Implement phase 2 of docs/internal/SPEC-canonizador.md in canonizador/ (read that section, docs/internal/CALA-SKILL.md, and the … | READY: Phase 2 implemented in `canonizador/`; the Amenitiz query revealed the discrepancy in… | 3.6 |
+| 14/11 03:54 | backend | gpt-6-luna | (follow-up) I tested with the real LLM. Amenitiz: all 4 variants return the same string and answer (good). Fi… | READY: Filters normalized deterministically; both cases generate the same query and the … | 1.7 |
+| 14/11 04:04 | backend | gpt-6-luna | Bug in canonizador/ (read canonizador/canonizador/api.py, plan.py, client.py). With the real LLM, the lists (co… | READY: Separated the main response from enrichment and adjusted the retrieval body to the co… | 2.2 |
+| 14/11 13:48 | backend | gpt-6-luna | Issue #30: implement backend/cala_core/ according to docs/internal/PLAN-CALA-CENTRO.md (sections 1–5) and the block contract… | READY: Implemented `backend/cala_core/` and the local editable dependency on Cala Canonizer. Ad… | 5.8 |
+| 14/11 14:00 | backend | gpt-6-luna | (follow-up) I tested cala_core with real Codex and Cala: it works (query, contradicted claim, mixed message). Co… | READY: Normalized sources, cleaned profile patches, canonicalized interests, and generated a title… | 2.8 |
+| 14/11 15:59 | rapido | gpt-5.6-luna | Reply only: READY: ok | READY: ok | 0.7 |
+| 14/11 15:59 | backend | gpt-6-luna | Issue #43: add Gemini as an LLM provider. Read backend/verifier/llm.py (providers with complete_json(sy… | READY: Gemini added as an LLM provider, with text, image, and audio support in the bac… | 5.2 |
+| 14/11 16:05 | backend | gpt-6-luna | (follow-up) I tested with the real key: Gemini returns HTTP 400 'Unknown name "type" … Proto field is not repeatin… | READY: Both converters normalize type lists and traverse `properties`, `items`, `anyOf` … | 2.5 |
+| 14/11 16:10 | backend | gpt-6-luna | Issue #49 (current branch). Read backend/cala_core/router.py and executor.py (already in main with the fallback fixes… | READY: Router, executor, and profile merging updated for Issue #49. | 4.6 |
+| 14/11 16:16 | backend | gpt-6-luna | (follow-up) I tested with real Gemini and Cala. Open questions now go to knowledge_search (good). Two failures:… | READY: Search sources extracted from `context[].origins[]`, `cala_answer` title based … | 7.8 |
 
 ## 5. Other machines
 

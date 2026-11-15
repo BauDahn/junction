@@ -1,119 +1,119 @@
-# Contrato de la API (backend ↔ app)
+# API contract (backend ↔ app)
 
-Fuente de verdad entre las dos personas: la app (`app/`) y el backend (`backend/`) se programan contra este documento. **Cambiar algo que no esté marcado *(borrador)* requiere un PR propio que el otro apruebe antes de implementarlo.** El porqué de los bloques está en `docs/internal/PLAN-CALA-CENTRO.md`.
+Source of truth shared by both people: the app (`app/`) and backend (`backend/`) are built against this document. **Changing anything not marked *(draft)* requires its own PR, approved by the other person before implementation.** The reason for the blocks is documented in `docs/internal/PLAN-CALA-CENTRO.md`.
 
-Base: `http://localhost:8000` en desarrollo (en la app, `EXPO_PUBLIC_API_URL`). JSON UTF-8. Errores: HTTP 4xx/5xx con `{"error": {"code": "...", "message": "..."}}`. CORS abierto en desarrollo.
+Base: `http://localhost:8000` in development (in the app, `EXPO_PUBLIC_API_URL`). JSON UTF-8. Errors: HTTP 4xx/5xx with `{"error": {"code": "...", "message": "..."}}`. CORS is open in development.
 
-## Salud
+## Health
 - `GET /api/health` → `{provider, model, cala: bool, transcription: string}`
 
-## Tipos comunes
+## Common types
 - `Source`: `{name, url, date?, source_rank?: FILING|PRIMARY|PRESS|AGGREGATOR}`
-- `CalaCall`: `{tool: knowledge_query|entity|knowledge_search, query: string}`. La consulta exacta enviada a Cala, para poder reproducirla.
+- `CalaCall`: `{tool: knowledge_query|entity|knowledge_search, query: string}`. The exact query sent to Cala, so it can be reproduced.
 
-## Bloques (lo que muestra la app) *(borrador, nuevo 14/11)*
-Las respuestas del chat son listas de `Block`. Todos los bloques de datos son **datos de Cala tal cual**; el modelo solo agrega, como mucho, `summary` (una línea).
+## Blocks (what the app displays) *(draft, new 14/11)*
+Chat responses are lists of `Block`. All data blocks are **Cala data as is**; at most, the model adds `summary` (one line).
 
-| `type` | Campos | Cuándo |
+| `type` | Fields | When |
 |---|---|---|
-| `cala_table` | `title`, `summary?`, `call: CalaCall`, `columns: [string]`, `rows: [[string \| number \| null]]`, `sources: [Source]`, `row_sources?: [[int]]` (índices en `sources` por fila), `focus_rows?: [int]` (filas que responden la pregunta; la app muestra solo esas y "Ver todas"), `answer?: string` (si es una sola fila: sus celdas de Cala unidas con " · ") | Resultado de `knowledge_query` (filas) o de una entidad (campo · valor · fuente · fecha · tipo de fuente) |
-| `cala_answer` | `title`, `call: CalaCall`, `markdown`, `sources: [Source]` | Resultado de `knowledge_search`: la respuesta de Cala tal cual |
-| `claim_check` | `claim` (lo que dijo el usuario), `verdict: confirmed\|partially_confirmed\|contradicted\|no_data`, `explanation` (una línea), `evidence: cala_table \| cala_answer`, `sources: [Source]` | El usuario afirmó un dato y se contrastó con Cala |
-| `profile_update` | `changes: {campo: valor}` | El usuario contó algo de su startup o de sus intereses |
-| `not_found` | `title`, `tried: [CalaCall]`, `closest?: cala_table \| cala_answer` | Ninguna herramienta de Cala devolvió datos; se muestra qué se buscó |
-| `text` | `text` | Respuestas sin datos (saludo, aclaración) |
+| `cala_table` | `title`, `summary?`, `call: CalaCall`, `columns: [string]`, `rows: [[string \| number \| null]]`, `sources: [Source]`, `row_sources?: [[int]]` (indices in `sources` by row), `focus_rows?: [int]` (rows that answer the question; the app shows only those and “View all”), `answer?: string` (if there is a single row: its Cala cells joined with " · ") | Result of `knowledge_query` (rows) or an entity (field · value · source · date · source type) |
+| `cala_answer` | `title`, `call: CalaCall`, `markdown`, `sources: [Source]` | Result of `knowledge_search`: Cala's answer as is |
+| `claim_check` | `claim` (what the user said), `verdict: confirmed\|partially_confirmed\|contradicted\|no_data`, `explanation` (one line), `evidence: cala_table \| cala_answer`, `sources: [Source]` | The user stated a fact and it was checked against Cala |
+| `profile_update` | `changes: {field: value}` | The user shared something about their startup or interests |
+| `not_found` | `title`, `tried: [CalaCall]`, `closest?: cala_table \| cala_answer` | No Cala tool returned data; shows what was searched |
+| `text` | `text` | Replies without data (greeting, clarification) |
 
-## Chat con audio *(borrador)*
-Una conversación por usuario. Manda texto o audio; el backend transcribe y el **router** (`backend/cala_core`) decide qué hacer con cada parte del mensaje: consultar Cala, verificar una afirmación o actualizar el perfil.
-- `POST /api/sessions` → `{session_id}` (sin login en la demo; la app guarda el id localmente)
+## Chat with audio *(draft)*
+One conversation per user. Send text or audio; the backend transcribes it and the **router** (`backend/cala_core`) decides what to do with each part of the message: query Cala, verify a claim, or update the profile.
+- `POST /api/sessions` → `{session_id}` (no login in the demo; the app stores the id locally)
 - `POST /api/sessions/{id}/messages`
-  - texto: JSON `{text}`
+  - text: JSON `{text}`
   - audio: multipart `audio` (m4a, webm, wav, mp3; ≤ 2 min)
   - → `{message: Message, reply: Message, profile_updated: bool, recommendations_status: idle|running|ready|error}`
 - `GET /api/sessions/{id}/messages` → `{messages: [Message]}`
-- `Message`: `{id, role: user|assistant, text, transcript?: string, created_at, blocks?: [Block], sources?: [Source], cards?: [Card]}`. En mensajes de usuario enviados por audio, `text` es la intención limpia (autocorrecciones aplicadas, sin muletillas) y `transcript` es lo dicho literalmente; en mensajes de texto, `transcript` es null. `text` en las respuestas pasa a ser una línea de contexto; el contenido está en `blocks`. `cards` se mantiene por compatibilidad con las recomendaciones.
+- `Message`: `{id, role: user|assistant, text, transcript?: string, created_at, blocks?: [Block], sources?: [Source], cards?: [Card]}`. In user messages sent by audio, `text` is the cleaned intent (with autocorrections applied and filler words removed), and `transcript` is what was said verbatim; in text messages, `transcript` is null. In replies, `text` becomes a context line; the content is in `blocks`. `cards` is retained for compatibility with recommendations.
 - `Card`: `{type: investor|company|competitor|prospect|claim, title, subtitle?, reason, sources: [Source]}`
 
-## Feed y detalle *(borrador, nuevo 14/11 noche)*
-Cala Match. Detalle de cómo se calcula el puntaje en `docs/SPEC-grafo-afinidad.md`.
-- `GET /api/feed?session_id=&mode=raising|investing&limit=20&cursor=` → `{mode, items: [FeedCard], next_cursor?, confidence_note?}`. `raising` devuelve inversores; `investing`, startups. Ordenado por `score` descendente y, a igual puntaje, por `confidence`. `session_id` es obligatorio (de qué sesión es el perfil; 404 si no existe). Sin `mode` se usa el guardado de la sesión (por defecto `raising`); un modo inválido da 422. `limit` de 1 a 100. `cursor` es el `next_cursor` de la página anterior (opaco). `confidence_note` (texto en inglés) avisa si el catálogo sigue cargando o si falta perfil; las claves opcionales se omiten, no van en `null`.
-- `FeedCard`: `{id, type: investor|startup, name, one_liner, tags: [string], score: 0-100, confidence: 0-1, why_match: [string], sources: [Source]}`. Con `confidence < 0.5` la app muestra "partial data".
-- `GET /api/entities/{id}?mode=&session_id=` → `EntityDetail`: `{id, type, name, description?, score?, confidence?, why_match: [{signal, text, sources: [Source]}], facts: [{label, value, sources: [Source]}], rounds: [{round_type, amount?, date?, leads: [string], investors: [string], sources: [Source]}], portfolio: [{id, name}], people: [{id, name, role, since?}], loaded_at}`. `session_id` es opcional: con él vienen `score`, `confidence` y `why_match` (el mismo puntaje que en el feed); sin él, `why_match` va vacío. `amount` y `date` son texto tal cual lo da Cala. `signal` es uno de `sector|stage|region|ticket|activity|closeness`.
-- `GET /api/search?q=<texto>&limit=8` (q de 2 a 80 caracteres) → `{query, items: [{id, name, type: investor|startup|other, origin: catalog|cala, one_liner?}], tried: [catalog|cala]}`. `type` es `investor|startup` para `catalog`; los resultados `cala` usan `other` (sin clasificar, se clasifica al abrir el detalle). Busca nombres localmente y completa con Cala si faltan resultados; los ids abren el detalle. Los resultados locales del catálogo son siempre públicos y nunca responden 401 por falta de token. Con `CALA_REQUIRE_AUTH=1` y sin Bearer se omite únicamente el respaldo en vivo a Cala (#138).
-- Para exigir cuenta en Cala, poner `CALA_REQUIRE_AUTH=1` en `backend/.env` (activar cuando el registro esté en main). Por defecto (`0`), las consultas en vivo mantienen acceso sin token y siguen protegidas por los límites de uso.
-- Si `GET /api/entities/{id}` no encuentra la entidad en catálogo ni grafo local, intenta cargarla de Cala en vivo con un retrieve y la guarda en el grafo con TTL. Si Cala no la conoce devuelve 404 `Entity not found in the graph or in Cala.`; si supera 25 segundos devuelve 504 `Cala did not answer in time.`. Las consultas posteriores usan el grafo local.
-- `POST /api/sessions/{id}/mode` con `{mode}` → `{mode}`: guarda el modo activo de la sesión.
-- Todo dato viaja con `sources`; si no hay fuente, el campo no se devuelve.
-- Las etiquetas de sector y etapa generadas por Gemini a partir de la descripción de Cala llevan el sufijo ` (AI-tagged)` en `tags`, en `why_match` y en la etiqueta del `fact`.
-- `GET /api/stats` → `{catalog: {investors, startups, total, status}, cala?, cala_usage: {date, total, by_class, by_who}}`: responde en milisegundos desde un resumen cacheado durante 60 s (#136); requiere `X-Admin-Token: <ADMIN_TOKEN>` para exponer `cala` y el desglose `by_class`/`by_who` (#134). Tamaño y progreso del catálogo, métricas del cliente y contadores de llamadas reales a Cala del día UTC. Si Valkey no está disponible, `cala_usage` es `{}`.
+## Feed and detail *(draft, new on the night of 14/11)*
+Cala Match. Details on how the score is calculated are in `docs/SPEC-GRAPH-AFFINITY.md`.
+- `GET /api/feed?session_id=&mode=raising|investing&limit=20&cursor=` → `{mode, items: [FeedCard], next_cursor?, confidence_note?}`. `raising` returns investors; `investing` returns startups. Sorted by descending `score`, then by `confidence` for equal scores. `session_id` is required (the session whose profile is used; 404 if it does not exist). If `mode` is omitted, the session's saved mode is used (default `raising`); an invalid mode returns 422. `limit` ranges from 1 to 100. `cursor` is the `next_cursor` from the previous page (opaque). `confidence_note` (English text) indicates whether the catalog is still loading or the profile is missing; optional keys are omitted, not set to `null`.
+- `FeedCard`: `{id, type: investor|startup, name, one_liner, tags: [string], score: 0-100, confidence: 0-1, why_match: [string], sources: [Source]}`. When `confidence < 0.5`, the app displays “partial data”.
+- `GET /api/entities/{id}?mode=&session_id=` → `EntityDetail`: `{id, type, name, description?, score?, confidence?, why_match: [{signal, text, sources: [Source]}], facts: [{label, value, sources: [Source]}], rounds: [{round_type, amount?, date?, leads: [string], investors: [string], sources: [Source]}], portfolio: [{id, name}], people: [{id, name, role, since?}], loaded_at}`. `session_id` is optional: when provided, `score`, `confidence`, and `why_match` are included (the same score as in the feed); without it, `why_match` is empty. `amount` and `date` are text exactly as Cala provides them. `signal` is one of `sector|stage|region|ticket|activity|closeness`.
+- `GET /api/search?q=<text>&limit=8` (`q` from 2 to 80 characters) → `{query, items: [{id, name, type: investor|startup|other, origin: catalog|cala, one_liner?}], tried: [catalog|cala]}`. `type` is `investor|startup` for `catalog`; `cala` results use `other` (unclassified, classified when the detail is opened). Searches names locally and supplements with Cala if results are missing; ids open the detail. Local catalog results are always public and never return 401 for lack of a token. With `CALA_REQUIRE_AUTH=1` and no Bearer token, only the live Cala fallback is skipped (#138).
+- To require an account for Cala, set `CALA_REQUIRE_AUTH=1` in `backend/.env` (enable when registration is on main). By default (`0`), live queries remain accessible without a token and are still protected by usage limits.
+- If `GET /api/entities/{id}` does not find the entity in the catalog or local graph, it attempts to retrieve it from Cala live and stores it in the graph with a TTL. If Cala does not know it, returns 404 `Entity not found in the graph or in Cala.`; if it takes more than 25 seconds, returns 504 `Cala did not answer in time.`. Subsequent queries use the local graph.
+- `POST /api/sessions/{id}/mode` with `{mode}` → `{mode}`: saves the session's active mode.
+- All data is sent with `sources`; if no source is available, the field is not returned.
+- Sector and stage tags generated by Gemini from Cala's description have the suffix ` (AI-tagged)` in `tags`, `why_match`, and the `fact` label.
+- `GET /api/stats` → `{catalog: {investors, startups, total, status}, cala?, cala_usage: {date, total, by_class, by_who}}`: responds in milliseconds from a summary cached for 60 s (#136); requires `X-Admin-Token: <ADMIN_TOKEN>` to expose `cala` and the `by_class`/`by_who` breakdown (#134). Catalog size and progress, client metrics, and actual Cala call counters for the UTC day. If Valkey is unavailable, `cala_usage` is `{}`.
 
-## Contexto *(borrador, nuevo 14/11 noche)*
-Ingesta de contexto del usuario (deck PDF, nota de voz o texto libre) hacia el perfil de la sesión y edición manual de lo entendido.
+## Context *(draft, new on the night of 14/11)*
+Ingest user context (PDF deck, voice note, or free text) into the session profile, and manually edit what was understood.
 - `GET /api/sessions/{id}/context` → `ContextPayload`: `{session_id, profile, what_we_understood, sources: [ContextSource], context_strength, source?}`.
-- `POST /api/sessions/{id}/context/pdf` (multipart `file`: PDF ≤ 20 MB, hasta 15 páginas) → `ContextPayload` (incluye `source` con `kind: "pdf"`, `pages`).
-- `POST /api/sessions/{id}/context/voice` (multipart `audio` o `file`: `m4a|webm|wav|mp3|ogg`, ≤ 10 MB, ≤ 2 min) → `ContextPayload` (incluye `source` con `kind: "voice"`, `duration_s`, `transcript` literal; la extracción al perfil usa `text` limpio cuando el transcriptor lo devuelve).
-- `POST /api/sessions/{id}/context/note` (JSON `{text, title?}`, `text` no vacío ≤ 8000 caracteres) → `ContextPayload` (incluye `source` con `kind: "note"`).
-- `PATCH /api/sessions/{id}/context/understood` (JSON parcial con claves de `what_we_understood`, cada una `[string]`) → `ContextPayload`: actualiza `what_we_understood`, `seeking`, `sector`/`stage`/`location`, `ticket`/`raising.amount`/`ticket_range` (al enviar `target_round_size`) e `interests.{sectors, stages, regions}` conservando `interests.follows` (`companies`, `investors`) preexistente.
-- `DELETE /api/sessions/{id}/context/sources/{source_id}` → `ContextPayload`: elimina esa fuente de `sources` (`profile.context_sources`).
+- `POST /api/sessions/{id}/context/pdf` (multipart `file`: PDF ≤ 20 MB, up to 15 pages) → `ContextPayload` (includes `source` with `kind: "pdf"`, `pages`).
+- `POST /api/sessions/{id}/context/voice` (multipart `audio` or `file`: `m4a|webm|wav|mp3|ogg`, ≤ 10 MB, ≤ 2 min) → `ContextPayload` (includes `source` with `kind: "voice"`, `duration_s`, verbatim `transcript`; profile extraction uses clean `text` when the transcriber returns it).
+- `POST /api/sessions/{id}/context/note` (JSON `{text, title?}`, non-empty `text` ≤ 8000 characters) → `ContextPayload` (includes `source` with `kind: "note"`).
+- `PATCH /api/sessions/{id}/context/understood` (partial JSON with `what_we_understood` keys, each `[string]`) → `ContextPayload`: updates `what_we_understood`, `seeking`, `sector`/`stage`/`location`, `ticket`/`raising.amount`/`ticket_range` (when `target_round_size` is sent), and `interests.{sectors, stages, regions}`, preserving pre-existing `interests.follows` (`companies`, `investors`).
+- `DELETE /api/sessions/{id}/context/sources/{source_id}` → `ContextPayload`: deletes that source from `sources` (`profile.context_sources`).
 - `what_we_understood`: `{sector_focus: [string], target_stage: [string], target_round_size: [string], geography: [string], seeking: [string]}`.
 - `sources` (`ContextSource`): `{id, kind: pdf|voice|note, title, subtitle, status: "ready", created_at, pages?, duration_s?, transcript?}`.
 - `context_strength`: `{score: 0-100, signals_added: int, signals_total: 6, label: "Needs Context"|"Calibrating"|"Good Calibration"|"High Signal"}`.
-- En `profile`: además de `ticket` (string para mostrar), se guarda `ticket_range?: {min: number, max: number, currency: "EUR"|"USD"|"GBP"|null}` en unidades base numéricas.
-- Códigos HTTP: `400` (PDF vacío, JSON o campos inválidos, nota vacía), `404` (sesión o `source_id` inexistente), `413` (PDF > 20 MB, audio > 10 MB o > 2 min, nota > 8000 caracteres), `415` (formato PDF o audio no admitido), `422` (PDF ilegible o audio vacío/ininteligible), `502` (fallo de extracción LLM o transcripción), `503` (transcripción no configurada).
+- In `profile`, in addition to `ticket` (string for display), `ticket_range?: {min: number, max: number, currency: "EUR"|"USD"|"GBP"|null}` is stored in numeric base units.
+- HTTP codes: `400` (empty PDF, invalid JSON or fields, empty note), `404` (session or `source_id` not found), `413` (PDF > 20 MB, audio > 10 MB or > 2 min, note > 8000 characters), `415` (unsupported PDF or audio format), `422` (unreadable PDF or empty/unintelligible audio), `502` (LLM extraction or transcription failure), `503` (transcription not configured).
 
 
-## Cuentas *(borrador, 15/11)*
-Registro real con correo. El rol se elige al registrarse y **no se puede cambiar**.
-- `POST /api/auth/register` con `{email, password, name, company, role: raiser|investor}` → `201 {token, user}`. Contraseña de 8 caracteres o más. `409 email_taken` si el correo ya existe; `422` si falta algo o el correo no es válido.
-- `POST /api/auth/login` con `{email, password}` → `{token, user}`; `401 invalid_credentials`.
+## Accounts *(draft, 15/11)*
+Real registration with email. The role is selected at registration and **cannot be changed**.
+- `POST /api/auth/register` with `{email, password, name, company, role: raiser|investor}` → `201 {token, user}`. Password must be at least 8 characters. `409 email_taken` if the email already exists; `422` if a field is missing or the email is invalid.
+- `POST /api/auth/login` with `{email, password}` → `{token, user}`; `401 invalid_credentials`.
 - `POST /api/auth/logout` → `204`.
 - `GET /api/me` → `User`.
-- `User`: `{id, email, name, company, role: raiser|investor, session_id, created_at}`. `session_id` es la sesión de chat, contexto y feed de ese usuario: la app la usa en lugar de crear una sesión anónima.
-- Autenticación: cabecera `Authorization: Bearer <token>` en `/api/me/*` y `/api/auth/logout`; sin token o con uno vencido, `401`.
-- **Rol fijo:** ningún endpoint lo cambia. `POST /api/sessions/{id}/mode` con un modo distinto del rol del usuario dueño de la sesión responde `409 role_locked`.
-- Almacenamiento: `ACCOUNTS_STORE=valkey|postgres|sqlite`; por defecto usa Valkey compartido si `VALKEY_URL` está definido, si no `DATABASE_URL` o SQLite (`backend/data/app.db`). Si Valkey falla, registro e inicio de sesión responden `503`. Contraseñas con scrypt; tokens aleatorios guardados como hash, con 30 días de vida. No se envían correos (sin verificación por ahora).
+- `User`: `{id, email, name, company, role: raiser|investor, session_id, created_at}`. `session_id` is that user's chat, context, and feed session: the app uses it instead of creating an anonymous session.
+- Authentication: `Authorization: Bearer <token>` header on `/api/me/*` and `/api/auth/logout`; without a token or with an expired one, `401`.
+- **Fixed role:** no endpoint changes it. `POST /api/sessions/{id}/mode` with a mode different from the role of the session's owner returns `409 role_locked`.
+- Storage: `ACCOUNTS_STORE=valkey|postgres|sqlite`; by default, uses shared Valkey if `VALKEY_URL` is defined, otherwise `DATABASE_URL` or SQLite (`backend/data/app.db`). If Valkey fails, registration and login return `503`. Passwords use scrypt; random tokens are stored as hashes and expire after 30 days. No emails are sent (no verification for now).
 
-## Contexto en texto *(borrador, 15/11)*
-El perfil muestra el contexto como **el texto del usuario, tal cual**, no como etiquetas. Las etiquetas siguen existiendo por debajo para el motor de recomendación.
+## Context as text *(draft, 15/11)*
+The profile displays the context as **the user's text, exactly as written**, not as tags. Tags still exist behind the scenes for the recommendation engine.
 - `GET /api/me/context/raw` → `{text, updated_at}`.
-- `PUT /api/me/context/raw` con `{text}` → `{text, updated_at, profile_updated: bool}`. Guarda el texto sin tocarlo y vuelve a extraer el perfil (sector, etapa, región, ticket) con Gemini.
-- `POST /api/me/context/raw/append` con `{text}` → lo mismo, agregando el texto al final (una línea nueva). Lo usan la nota de voz confirmada y el asistente cuando el usuario cuenta algo de sí mismo.
-- Los tres endpoints requieren `Authorization: Bearer <token>`; el límite es 8.000 caracteres y se responde 422 al superarlo.
-- Un PDF subido por `POST /api/sessions/{id}/context/pdf` agrega una línea propia al texto (`From <archivo>: <resumen de una línea>`).
-- Las notas de texto y voz guardadas desde `backend/context` también agregan su texto al contexto crudo.
+- `PUT /api/me/context/raw` with `{text}` → `{text, updated_at, profile_updated: bool}`. Saves the text unchanged and re-extracts the profile (sector, stage, region, ticket) with Gemini.
+- `POST /api/me/context/raw/append` with `{text}` → same response, appending the text at the end (on a new line). Used by the confirmed voice note and by the assistant when the user shares something about themselves.
+- All three endpoints require `Authorization: Bearer <token>`; the limit is 8,000 characters, with 422 returned if exceeded.
+- A PDF uploaded via `POST /api/sessions/{id}/context/pdf` adds its own line to the text (`From <file>: <one-line summary>`).
+- Text and voice notes saved from `backend/context` also append their text to the raw context.
 
-## Voz con vista previa *(borrador, 15/11)*
-- `POST /api/transcribe` (multipart `audio`) → `{transcript, text}`. **No modifica nada**: sirve para mostrar lo que se entendió. Si el usuario lo confirma con el botón "Add to context", la app llama a `POST /api/me/context/raw/append` con `text`.
-- Acepta los mismos formatos, tamaño máximo (10 MB) y duración máxima (120 segundos) que el audio del chat; es público y no requiere token.
-- Mientras el usuario habla, la vista en vivo la hace el navegador (reconocimiento de voz del propio navegador, con resultados parciales); la transcripción del backend es la que vale al confirmar.
+## Voice with preview *(draft, 15/11)*
+- `POST /api/transcribe` (multipart `audio`) → `{transcript, text}`. **Does not modify anything**: used to show what was understood. If the user confirms with the “Add to context” button, the app calls `POST /api/me/context/raw/append` with `text`.
+- Accepts the same formats, maximum size (10 MB), and maximum duration (120 seconds) as chat audio; it is public and does not require a token.
+- While the user speaks, the live view is handled by the browser (the browser's own speech recognition, with partial results); the backend transcription is authoritative on confirmation.
 
-## Perfil y recomendaciones *(borrador)*
+## Profile and recommendations *(draft)*
 - `GET /api/sessions/{id}/profile` → `{startup_name?, one_liner?, sector?, stage?, location?, raising?: {amount?, round?}, competitors: [string], target_customers?, role?: founder|investor|other, interests?: {sectors: [string], regions: [string], stages: [string], follows: {companies: [string], investors: [string]}}, facts: [{text, origin: user}], updated_at}`
 - `GET /api/sessions/{id}/recommendations` → `{status: idle|running|ready|error, updated_at, investors: [Card], competitors: [Card], prospects: [Card]}`
 
-## Eventos *(borrador, 15/11, #111 parte 3)*
-Cada evento tiene su propio catálogo en Cala (claves `cat:v1:<event_id>:*`, ver `docs/ARQUITECTURA.md` sección 10). Solo Slush 2026 tiene participantes; los demás eventos solo tienen speakers.
-- `GET /api/events` → `{items: [Event]}`. Público; con `Authorization: Bearer <token>` cada evento trae además `saved`. Orden: fecha ascendente.
-- `Event`: `{id, name, slogan?, date, city, image_url?, counts: {participants, speakers, investors, startups}, has_participants: bool, status: loading|ready|empty, saved?: bool}`. `date` es `YYYY-MM-DD` (inicio). `counts` son los datos que hay hoy en el catálogo de ese evento (0 si no hay); `has_participants` es `counts.participants > 0`. `status`: `loading` si la carga sigue en curso, `empty` si no hay nada. Las claves opcionales se omiten, no van en `null`.
-- `POST /api/me/events/{id}` → `204`: guarda el evento para el usuario (idempotente). `404 event_not_found` si el id no existe.
-- `DELETE /api/me/events/{id}` → `204`: lo quita (idempotente, también si no estaba guardado). `404 event_not_found` si el id no existe.
-- `GET /api/me/events` → `{items: [Event]}`: solo los guardados (con `saved: true`).
-- Los tres `/api/me/events*` requieren `Authorization: Bearer <token>` (cuentas, ver *Cuentas*); sin token o vencido, `401`. Se guardan en la misma base de las cuentas (tabla `saved_events`: `user_id`, `event_id`, `created_at`).
-- `GET /api/events/{id}/feed?session_id=&mode=raising|investing&limit=20&cursor=` → misma forma y reglas que `GET /api/feed` (`{mode, items: [FeedCard], next_cursor?, confidence_note?}`), pero con candidatos solo de ese evento y puntuados con el perfil de la sesión. `404 event_not_found` si el evento no existe; `404` si la sesión no existe; `422` con modo inválido. Un evento sin participantes devuelve `items` solo con speakers y `confidence_note` lo avisa (en inglés).
-- Compatibilidad: `GET /api/feed` sin evento sigue igual y equivale al evento por defecto (Slush 2026).
+## Events *(draft, 15/11, #111 part 3)*
+Each event has its own catalog in Cala (keys `cat:v1:<event_id>:*`, see section 10 of `docs/ARCHITECTURE.md`). Only Slush 2026 has participants; the other events have speakers only.
+- `GET /api/events` → `{items: [Event]}`. Public; with `Authorization: Bearer <token>`, each event also includes `saved`. Order: ascending date.
+- `Event`: `{id, name, slogan?, date, city, image_url?, counts: {participants, speakers, investors, startups}, has_participants: bool, status: loading|ready|empty, saved?: bool}`. `date` is `YYYY-MM-DD` (start date). `counts` are the data currently available in that event's catalog (0 if none); `has_participants` is `counts.participants > 0`. `status`: `loading` if loading is still in progress, `empty` if there is nothing. Optional keys are omitted, not set to `null`.
+- `POST /api/me/events/{id}` → `204`: saves the event for the user (idempotent). `404 event_not_found` if the id does not exist.
+- `DELETE /api/me/events/{id}` → `204`: removes it (idempotent, including if it was not saved). `404 event_not_found` if the id does not exist.
+- `GET /api/me/events` → `{items: [Event]}`: saved events only (with `saved: true`).
+- All three `/api/me/events*` endpoints require `Authorization: Bearer <token>` (accounts, see *Accounts*); without a token or with an expired one, `401`. Stored in the same database as accounts (table `saved_events`: `user_id`, `event_id`, `created_at`).
+- `GET /api/events/{id}/feed?session_id=&mode=raising|investing&limit=20&cursor=` → same shape and rules as `GET /api/feed` (`{mode, items: [FeedCard], next_cursor?, confidence_note?}`), but with candidates only from that event, scored against the session profile. `404 event_not_found` if the event does not exist; `404` if the session does not exist; `422` for an invalid mode. An event with no participants returns `items` with speakers only, and `confidence_note` indicates this (in English).
+- Compatibility: `GET /api/feed` without an event remains unchanged and is equivalent to the default event (Slush 2026).
 
-## Informe de favoritos en PDF *(borrador, 15/11)*
-Para quien marca inversores o empresas como favoritos: un PDF con esas entidades, datos adicionales **solo de Cala** (cada dato con su fuente) y un plan de acción propuesto por Gemini, claramente separado.
-- `POST /api/favorites/report` con `{entity_ids: [string] (1 a 10, sin repetir), session_id?: string, mode?: raising|investing}` → `200 application/pdf`, `Content-Disposition: attachment; filename="cala-match-favorites.pdf"`.
-- Cada id se carga llamando a la misma lógica que `GET /api/entities/{id}`: UUID por id cuando hay Cala, límite de 20 solicitudes/minuto y 200/día por cliente, límite diario por cuenta, caché negativa, tope diario de Cala y caché del grafo (una entidad ya expandida no vuelve a llamar a Cala). Así el informe nunca hace más llamadas a Cala que diez aperturas de entidad.
-- El informe exige `Authorization: Bearer <token>` cuando `CALA_REQUIRE_AUTH=1`, aunque todas las entidades ya estén cacheadas; sin token válido devuelve `401 unauthorized`. Además aplica su propio límite de **3 informes por minuto y 30 al día por cliente**; devuelve `429` con `Retry-After` al alcanzarlo.
-- Con `session_id` el detalle trae `score` y `why_match`, y el perfil de la sesión se pasa a Gemini; sin sesión no hay puntaje.
-- Contenido (en inglés): portada (Cala Match, Favorites report, fecha, modo) y, por entidad, nombre, tipo, puntaje si lo hay, descripción, datos, rondas, personas, por qué encaja y las fuentes de Cala como enlaces. Lo que Cala no tiene se omite o dice "Not available in Cala". Pie de página: "Data: Cala · Plan: Gemini".
-- **Plan de acción:** un bloque aparte por entidad, "Proposed action plan", con la etiqueta "Generated by Gemini from the Cala data above. Not Cala data." Son de 3 a 5 pasos. Gemini recibe **solo** los datos de Cala de esa entidad (y el perfil del usuario si hay sesión); el backend descarta cualquier paso con cifras que no estén en esa entrada. Si Gemini falla, tarda más de 30 s o devuelve menos de 3 pasos válidos, el PDF sale igual y esa entidad dice "Action plan unavailable"; el plan nunca es un error HTTP.
-- Entidades que no existen en el catálogo, el grafo ni Cala, que tienen un id no UUID cuando Cala está habilitado, o que no se pudieron cargar (límite por entidad, tope de llamadas, Cala caído), no rompen el informe: aparecen en "Not included" con su motivo y en `X-Favorites-Not-Included` (ids separados por comas). Un id inválido muestra `Invalid id (not a Cala id)`.
-- Errores (formato común): `422` lista vacía, con más de 10 ids o ids vacíos; `401` si `CALA_REQUIRE_AUTH=1` y no hay token válido; `404` si la sesión no existe o **todas** las entidades devuelven 404; `422` si todas fallan por id inválido; `429` si se alcanza un límite (el informe propaga el mensaje original para límites por entidad); `503` si todas fallaron por el tope de llamadas a Cala; `502` si todas fallaron por un error de Cala; `504` si el informe supera 90 segundos.
+## Favorites report in PDF *(draft, 15/11)*
+For users who favorite investors or companies: a PDF with those entities, additional data **from Cala only** (each item with its source), and an action plan proposed by Gemini, clearly separated.
+- `POST /api/favorites/report` with `{entity_ids: [string] (1 to 10, no duplicates), session_id?: string, mode?: raising|investing}` → `200 application/pdf`, `Content-Disposition: attachment; filename="cala-match-favorites.pdf"`.
+- Each id is loaded by calling the same logic as `GET /api/entities/{id}`: UUID per id when Cala is available, limit of 20 requests/minute and 200/day per client, daily limit per account, negative cache, Cala call cap, and graph cache (an already expanded entity does not call Cala again). Thus the report never makes more Cala calls than ten entity-detail opens.
+- The report requires `Authorization: Bearer <token>` when `CALA_REQUIRE_AUTH=1`, even if all entities are already cached; without a valid token it returns `401 unauthorized`. It also has its own limit of **3 reports per minute and 30 per day per client**; returns `429` with `Retry-After` when reached.
+- With `session_id`, the detail includes `score` and `why_match`, and the session profile is passed to Gemini; without a session there is no score.
+- Content (in English): cover (Cala Match, Favorites report, date, mode) and, for each entity, name, type, score if available, description, facts, rounds, people, why it matches, and Cala sources as links. Anything Cala does not have is omitted or says “Not available in Cala”. Footer: “Data: Cala · Plan: Gemini”.
+- **Action plan:** a separate block per entity, “Proposed action plan”, with the label “Generated by Gemini from the Cala data above. Not Cala data.” There are 3 to 5 steps. Gemini receives **only** the Cala data for that entity (and the user profile if there is a session); the backend discards any step with figures not present in that input. If Gemini fails, takes more than 30 s, or returns fewer than 3 valid steps, the PDF is still generated and that entity says “Action plan unavailable”; the plan is never an HTTP error.
+- Entities absent from the catalog, graph, and Cala, with a non-UUID id when Cala is enabled, or that could not be loaded (per-entity limit, call cap, Cala down), do not break the report: they appear under “Not included” with the reason and in `X-Favorites-Not-Included` (comma-separated ids). An invalid id displays `Invalid id (not a Cala id)`.
+- Errors (common format): `422` for an empty list, more than 10 ids, or empty ids; `401` if `CALA_REQUIRE_AUTH=1` and no valid token is provided; `404` if the session does not exist or **all** entities return 404; `422` if all fail due to invalid ids; `429` if a limit is reached (the report propagates the original message for per-entity limits); `503` if all failed due to the Cala call cap; `502` if all failed due to a Cala error; `504` if the report exceeds 90 seconds.
 
-## Reglas
-- Todo dato que venga de Cala viaja con `sources`, y la app siempre las muestra.
-- El modelo nunca escribe cifras ni nombres que no vengan de Cala. Si Cala no tiene el dato después de probar todas sus herramientas, se devuelve `not_found` con lo que se buscó.
-- Nada de claves en respuestas ni logs.
+## Rules
+- All data from Cala is sent with `sources`, and the app always displays them.
+- The model never writes figures or names that do not come from Cala. If Cala does not have the data after all its tools have been tried, `not_found` is returned with what was searched.
+- No keys in responses or logs.

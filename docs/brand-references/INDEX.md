@@ -18,10 +18,10 @@ Visual and structural benchmarks for **Cala Match** (B2B Event & Deal-Flow), ali
 
 ## Extracted Artifacts & Captures
 
-- [captured-styles.css](file:///c:/Users/04gab/OneDrive%20-%20UPV/Escritorio/JUNCTION/docs/brand-references/captured-styles.css) — Unified `:root` host-verified live DOM tokens from all 5 sites + direct **Cala Match** token mapping (`#3730A3`, `#f8f9fc`, `#0f172a`, `1px` borders, `box-shadow: none`).
-- [luma-latest.png](file:///c:/Users/04gab/OneDrive%20-%20UPV/Escritorio/JUNCTION/docs/brand-references/captures/luma-latest.png) — Host-verified browser screenshot capture (`final_step_22.png`) of `https://luma.com`.
-- [attio-tokens.css](file:///c:/Users/04gab/OneDrive%20-%20UPV/Escritorio/JUNCTION/docs/brand-references/attio-tokens.css) — Extended Attio typography & card tokens.
-- [mercury-tokens.css](file:///c:/Users/04gab/OneDrive%20-%20UPV/Escritorio/JUNCTION/docs/brand-references/mercury-tokens.css) — Extended Mercury dual-mode tokens & layout gutters.
-- [midday-ledger-pattern.html](file:///c:/Users/04gab/OneDrive%20-%20UPV/Escritorio/JUNCTION/docs/brand-references/midday-ledger-pattern.html) — 4-column `tabular-nums` ledger HTML/CSS pattern.
-- [twenty-grid-pattern.html](file:///c:/Users/04gab/OneDrive%20-%20UPV/Escritorio/JUNCTION/docs/brand-references/twenty-grid-pattern.html) — CRM entity table HTML/CSS pattern.
-- [luma-event-pattern.md](file:///c:/Users/04gab/OneDrive%20-%20UPV/Escritorio/JUNCTION/docs/brand-references/luma-event-pattern.md) — `https://luma.com` event card HTML/CSS snippet and Helsinki/Slush/Junction reference notes.
+- [captured-styles.css](captured-styles.css) — Unified `:root` host-verified live DOM tokens from all 5 sites + direct **Cala Match** token mapping (`#3730A3`, `#f8f9fc`, `#0f172a`, `1px` borders, `box-shadow: none`).
+- [luma-latest.png](captures/luma-latest.png) — Host-verified browser screenshot capture (`final_step_22.png`) of `https://luma.com`.
+- [attio-tokens.css](attio-tokens.css) — Extended Attio typography & card tokens.
+- [mercury-tokens.css](mercury-tokens.css) — Extended Mercury dual-mode tokens & layout gutters.
+- [midday-ledger-pattern.html](midday-ledger-pattern.html) — 4-column `tabular-nums` ledger HTML/CSS pattern.
+- [twenty-grid-pattern.html](twenty-grid-pattern.html) — CRM entity table HTML/CSS pattern.
+- [luma-event-pattern.md](luma-event-pattern.md) — `https://luma.com` event card HTML/CSS snippet and Helsinki/Slush/Junction reference notes.

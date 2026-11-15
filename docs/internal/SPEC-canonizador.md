@@ -1,56 +1,56 @@
-# Spec: canonizador de consultas a Cala
+# Spec: Cala query canonicalizer
 
-## Problema (medido el 14/11 contra `POST /v1/knowledge/search`)
-La misma pregunta escrita con acentos, sin acentos, reformulada o en inglés recupera hechos distintos: 0 hechos en común entre variantes (5, 4, 3 y 4 hechos), conjuntos de entidades distintos y respuestas con distinto nivel de detalle. El texto idéntico repetido sí devuelve lo mismo (5/5 hechos), así que depende de la forma del texto, no del azar. `GET /v1/entities?name=` no tiene el problema ("Telefónica" = "Telefonica"). Además el límite de uso es bajo: tras ~7 llamadas seguidas hubo HTTP 429 durante ~1 min.
+## Problem (measured on 14/11 against `POST /v1/knowledge/search`)
+The same question, written with accents, without accents, rephrased, or in English, retrieves different facts: 0 facts in common across variants (5, 4, 3, and 4 facts), different entity sets, and answers with different levels of detail. Repeating the exact same text does return the same result (5/5 facts), so the result depends on the wording, not chance. `GET /v1/entities?name=` does not have this problem ("Telefónica" = "Telefonica"). The usage limit is also low: after ~7 consecutive calls, HTTP 429 occurred for ~1 min.
 
-## Objetivo
-Misma intención → mismas llamadas a Cala → misma respuesta, sin importar acentos, redacción o idioma. Y menos llamadas (caché por intención).
+## Goal
+Same intent → same Cala calls → same answer, regardless of accents, wording, or language. And fewer calls (cache by intent).
 
-## Diseño (paquete Python en `canonizador/`, con uv, independiente de `backend/`)
-1. `normalize.py`: Unicode NFC, espacios, quitar `¿¡`, comillas tipográficas. Determinista.
-2. `intent.py`: un LLM chico convierte la pregunta en una intención estructurada:
+## Design (Python package in `canonizador/`, with uv, independent of `backend/`)
+1. `normalize.py`: Unicode NFC, whitespace, remove `¿¡`, typographic quotation marks. Deterministic.
+2. `intent.py`: a small LLM converts the question into a structured intent:
    `{entities: [{name, type: Company|Person|Event|Investor}], attribute: funding_round|total_funding|investors|lead_investors|founders|executives|headcount|acquisitions|profile|event_attendees|other, filters: {round_label?, year?}}`.
-   Reglas: nombres propios tal cual aparecen (sin traducir), `round_label` en el código de Cala (SEED, SERIES_A, SERIES_B…). Proveedor de LLM configurable como en `backend/verifier/llm.py` (por defecto `codex exec` con `gpt-5.6-luna` y esfuerzo low; también NVIDIA), con caché en disco.
-3. `resolve.py`: resuelve cada entidad a su id con `GET /v1/entities?name=&entity_types=` (ya ignora acentos). Si hay varias candidatas, elegir de forma determinista (coincidencia exacta de nombre o alias normalizado; si no, la primera) y devolver las alternativas.
-4. `plan.py`: para atributos conocidos, **plan determinista sobre los endpoints de entidades** (ver `docs/internal/CALA-CAMPOS.md`), que es el camino que Cala recomienda:
-   - `funding_round` / `lead_investors`: empresa → `PARTICIPATES_IN_FUNDING_ROUND` (role ISSUER) → ronda que cumpla los filtros → propiedades + participantes entrantes con `is_lead`.
-   - `total_funding`, `profile`, `headcount`: propiedades y series de Company.
-   - `investors`: `INVESTED_IN` entrante. `founders`/`executives`: `FOUNDED`, `IS_CEO_OF`… `acquisitions`: `PARTICIPATES_IN_CORPORATE_EVENT`. `event_attendees`: `PARTICIPATES_IN_EVENT` entrante del evento.
-   - `other`: respaldo con `knowledge/search` usando UNA pregunta canónica en inglés generada por plantilla desde la intención (no el texto del usuario).
-   Verificar contra la API real la ruta y el cuerpo de retrieval (`POST /v1/entities/{id}` con `{properties, relationships: {incoming|outgoing: {TIPO: {limit, offset}}}, numerical_observations}`) y de introspección (`GET /v1/entities/{id}/introspection`); ajustar si difiere.
-5. `cache.py`: caché en disco; clave = hash de la intención canónica (ids de entidad ordenados + atributo + filtros). Todas las variantes de una pregunta pegan en la misma entrada.
-6. `client.py`: cliente de Cala con **una sola llamada a la vez**, reintentos con backoff ante 429/5xx (esperas de 20, 40, 80 s) y caché de cada respuesta cruda.
-7. API pública: `answer(question) -> {intent, entity_ids, plan, result: datos estructurados con fuentes, cache_hit, cala_calls}`. CLI: `uv run python -m canonizador "pregunta"`.
+   Rules: proper names exactly as they appear (do not translate), `round_label` in Cala's code (SEED, SERIES_A, SERIES_B…). LLM provider configurable as in `backend/verifier/llm.py` (by default `codex exec` with `gpt-5.6-luna` and low effort; NVIDIA too), with disk cache.
+3. `resolve.py`: resolves each entity to its id with `GET /v1/entities?name=&entity_types=` (already ignores accents). If there are multiple candidates, choose deterministically (exact name match or normalized alias; otherwise the first) and return the alternatives.
+4. `plan.py`: for known attributes, **deterministic plan using entity endpoints** (see `docs/internal/CALA-CAMPOS.md`), which is the path Cala recommends:
+   - `funding_round` / `lead_investors`: company → `PARTICIPATES_IN_FUNDING_ROUND` (role ISSUER) → round matching the filters → properties + incoming participants with `is_lead`.
+   - `total_funding`, `profile`, `headcount`: Company properties and series.
+   - `investors`: incoming `INVESTED_IN`. `founders`/`executives`: `FOUNDED`, `IS_CEO_OF`… `acquisitions`: `PARTICIPATES_IN_CORPORATE_EVENT`. `event_attendees`: incoming `PARTICIPATES_IN_EVENT` from the event.
+   - `other`: fallback with `knowledge/search` using ONE canonical question in English generated from a template based on the intent (not the user's text).
+   Verify the route and retrieval body against the real API (`POST /v1/entities/{id}` with `{properties, relationships: {incoming|outgoing: {TYPE: {limit, offset}}}, numerical_observations}`) and introspection (`GET /v1/entities/{id}/introspection`); adjust if it differs.
+5. `cache.py`: disk cache; key = hash of the canonical intent (sorted entity ids + attribute + filters). All variants of a question hit the same entry.
+6. `client.py`: Cala client with **only one call at a time**, retries with backoff on 429/5xx (waits of 20, 40, 80 s), and cache of each raw response.
+7. Public API: `answer(question) -> {intent, entity_ids, plan, result: structured data with sources, cache_hit, cala_calls}`. CLI: `uv run python -m canonizador "question"`.
 
 ## Benchmark (`bench.py`) → `canonizador/REPORT.md`
-- `bench/questions.json`: grupos de variantes de la misma pregunta (con acentos, sin acentos, reformulada, inglés, catalán). Empezar con 3 grupos: Serie B de Amenitiz y quién la lideró; financiación total de Mews; fundadores de una empresa con datos.
-- Para cada grupo, dos modos: **directo** (texto tal cual a `knowledge/search`) y **canonizado**.
-- Métricas por grupo: Jaccard medio entre variantes de (a) ids de hechos o de entidades devueltas y (b) los valores clave de la respuesta (monto, líder); nº de llamadas a Cala; latencia.
-- El reporte incluye la tabla antes/después y los comandos para reproducirlo. Tiene que poder mostrarse al equipo de Cala tal cual (en inglés).
-- Cuidar el límite: todo secuencial y cacheado; el benchmark debe poder reanudarse.
+- `bench/questions.json`: groups of variants of the same question (with accents, without accents, rephrased, English, Catalan). Start with 3 groups: Amenitiz Series B and who led it; Mews total funding; founders of a company with data.
+- For each group, two modes: **direct** (text as-is to `knowledge/search`) and **canonicalized**.
+- Metrics per group: mean Jaccard across variants for (a) returned fact or entity ids and (b) key answer values (amount, lead); number of Cala calls; latency.
+- The report includes the before/after table and commands to reproduce it. It must be presentable to the Cala team as-is (in English).
+- Respect the limit: everything sequential and cached; the benchmark must be resumable.
 
-## Reglas
-- `CALA_API_KEY` se carga de `backend/.env` (o del entorno). Nunca imprimirla.
-- Tests con clientes falsos (sin red): normalización, clave de caché igual para variantes, resolución determinista, planes.
-- README corto en `canonizador/`.
+## Rules
+- `CALA_API_KEY` is loaded from `backend/.env` (or the environment). Never print it.
+- Tests with fake clients (no network): normalization, same cache key for variants, deterministic resolution, plans.
+- Short README in `canonizador/`.
 
-## Hecho cuando
-- `uv run pytest` en verde.
-- `uv run python -m canonizador` responde igual para las 4 variantes de Amenitiz (mismos ids, mismo monto y líder), con una sola tanda de llamadas a Cala.
-- `REPORT.md` generado con datos reales.
+## Done when
+- `uv run pytest` passes.
+- `uv run python -m canonizador` returns the same result for the 4 Amenitiz variants (same ids, same amount and lead), with only one batch of Cala calls.
+- `REPORT.md` generated with real data.
 
-## Fase 2 (14/11): consulta con plantilla fija sobre `knowledge_query`
-Medido: con la guía oficial (`docs/internal/CALA-SKILL.md`), un LLM traduce bien las preguntas puntuales (4 variantes de Amenitiz → €38.9M, líder Kfund, correcto), pero escribe una consulta distinta cada vez (cambia `return(...)`), y en filtros las variantes devuelven listas y cifras distintas (~€72M / ~€76M / ~€77M). La misma consulta exacta repetida devuelve exactamente lo mismo. Los endpoints de entidades son estables pero esta ronda tiene el monto mal (3.000 M EUR) y sin inversores.
+## Phase 2 (14/11): fixed-template query using `knowledge_query`
+Measured: with the official guide (`docs/internal/CALA-SKILL.md`), an LLM translates specific questions correctly (4 Amenitiz variants → €38.9M, lead Kfund, correct), but writes a different query each time (changes `return(...)`), and variants with filters return different lists and figures (~€72M / ~€76M / ~€77M). Repeating the exact same query returns exactly the same result. Entity endpoints are stable, but this round has the wrong amount (3,000 M EUR) and no investors.
 
-Cambio: el LLM **solo** extrae la intención; la consulta la arma el código con una plantilla fija por atributo. Misma intención → misma cadena de consulta, byte a byte → misma respuesta y misma entrada de caché.
-- `POST /v1/knowledge/query` con `{"input": "<consulta>"}`; tarda 16–45 s (timeout 200 s).
-- Nombre de la entidad en la consulta: el nombre canónico que devuelve `entity_search` para el id resuelto (no el texto del usuario).
-- Plantillas (campos de `return` en orden fijo), a verificar contra la API con pocas llamadas:
-  - `funding_round` y `lead_investors`: `{Empresa}.funding_round.series={X}.return(amount, lead investor, investors, date)` (SERIES_B → `B`, SEED → `Seed`…; sin `series` si no hay filtro).
-  - `total_funding`, `investors`, `founders`, `executives`, `headcount`, `acquisitions`, `profile`: una plantilla cada uno.
-  - Filtros de lista (nuevo atributo `company_list` con `filters: {location?, sector?, min_funding?, round_label?}`): `startups.location={L}.sector={S}.funding>{N}.return(name, funding, sector, location)`, con valores normalizados (país en inglés, sector en minúsculas en inglés, monto como `10M`).
-  - `other`: respaldo actual.
-- Caché: clave = la cadena de consulta canónica.
-- **Cruce con entidades** (para rondas): además de la respuesta de `knowledge_query`, traer el valor estructurado (`transaction_value`, participantes con `is_lead`) y las fuentes con `source_rank`; devolver `cross_check: {structured_amount, query_amount, match: bool, note}`. Si no coinciden, marcarlo (no elegir en silencio).
-- `result`: `{query, rows, sources, cross_check?}`; salida determinista.
-- Benchmark: tres modos por grupo de variantes: texto directo a `knowledge_search`, y canonizado con plantilla. Métrica principal: ¿todas las variantes devuelven la misma respuesta exacta? (hash), valores clave, nº de llamadas.
+Change: the LLM **only** extracts the intent; code builds the query with a fixed template per attribute. Same intent → same query string, byte for byte → same answer and same cache entry.
+- `POST /v1/knowledge/query` with `{"input": "<query>"}`; takes 16–45 s (timeout 200 s).
+- Entity name in the query: the canonical name returned by `entity_search` for the resolved id (not the user's text).
+- Templates (fields in `return` in a fixed order), to be verified against the API with few calls:
+  - `funding_round` and `lead_investors`: `{Company}.funding_round.series={X}.return(amount, lead investor, investors, date)` (SERIES_B → `B`, SEED → `Seed`…; omit `series` when there is no filter).
+  - `total_funding`, `investors`, `founders`, `executives`, `headcount`, `acquisitions`, `profile`: one template each.
+  - List filters (new `company_list` attribute with `filters: {location?, sector?, min_funding?, round_label?}`): `startups.location={L}.sector={S}.funding>{N}.return(name, funding, sector, location)`, with normalized values (country in English, sector in lowercase English, amount as `10M`).
+  - `other`: current fallback.
+- Cache: key = canonical query string.
+- **Cross-check with entities** (for rounds): in addition to the `knowledge_query` response, retrieve the structured value (`transaction_value`, participants with `is_lead`) and sources with `source_rank`; return `cross_check: {structured_amount, query_amount, match: bool, note}`. If they do not match, flag that (do not silently choose one).
+- `result`: `{query, rows, sources, cross_check?}`; deterministic output.
+- Benchmark: three modes per group of variants: direct text to `knowledge_search`, and canonicalized with template. Main metric: do all variants return exactly the same answer? (hash), key values, number of calls.

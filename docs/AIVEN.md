@@ -89,13 +89,13 @@ Because the policy is `noeviction` (Valkey never silently drops data), **every k
 - **Optional by design.** If `VALKEY_URL` is missing or the service is down, the cache degrades to disk only. A Valkey failure never breaks a user request.
 - **Fast failure.** Connect timeout 8 s, operation timeout 3 s (`VALKEY_CONNECT_TIMEOUT`, `VALKEY_TIMEOUT`). After an error the remote is skipped for 60 s instead of retrying on every call.
 - **One connection per process**, opened in the background when the backend starts (`warmup()`), so the first user does not pay the TLS handshake. Measured: the very first read on a cold connection took ~500 ms; with the connection open it takes ~30 ms.
-- **Stable keys.** The canonizer turns every phrasing of a question into one canonical query, so different wordings of the same question share one cache entry. Cala itself answers differently to different phrasings, so without canonization the cache would almost never hit. See [BENCHMARK-CANONIZADOR.md](BENCHMARK-CANONIZADOR.md).
+- **Stable keys.** The canonizer turns every phrasing of a question into one canonical query, so different wordings of the same question share one cache entry. Cala itself answers differently to different phrasings, so without canonization the cache would almost never hit. See [BENCHMARK-CANONIZER.md](BENCHMARK-CANONIZER.md).
 - **Secrets stay out of the repo.** `VALKEY_URL` lives only in `backend/.env` (git-ignored). Tests turn the remote cache off.
 - **Observable.** Hit counters per layer, and `ping()` for health.
 
 ## 6. Valkey as the product's graph store and control plane
 
-Beyond answers, Valkey stores the **graph itself**, so one shared graph grows with every user and the event feed is computed with zero live Cala calls. It also holds the counters that protect Cala's quota. Design in [ARQUITECTURA.md](ARQUITECTURA.md) and [SPEC-grafo-afinidad.md](SPEC-grafo-afinidad.md).
+Beyond answers, Valkey stores the **graph itself**, so one shared graph grows with every user and the event feed is computed with zero live Cala calls. It also holds the counters that protect Cala's quota. Design in [ARCHITECTURE.md](ARCHITECTURE.md) and [SPEC-GRAPH-AFFINITY.md](SPEC-GRAPH-AFFINITY.md).
 
 ```mermaid
 flowchart TB
