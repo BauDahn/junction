@@ -81,7 +81,7 @@ function ModeToggle() {
             onPress={() => setMode(opt.value)}
             style={({ pressed }) => ({
               width: SEGMENT_WIDTH,
-              paddingVertical: 4,
+              paddingVertical: space.xs,
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: radius.pill,
@@ -134,7 +134,7 @@ function ProfileAvatarButton() {
           style={{
             width: 9,
             height: 9,
-            borderRadius: 5,
+            borderRadius: radius.sm,
             borderWidth: 1.5,
             borderColor: colors.textMuted,
           }}
@@ -148,7 +148,7 @@ function ProfileAvatarButton() {
             borderWidth: 1.5,
             borderBottomWidth: 0,
             borderColor: colors.textMuted,
-            marginTop: 2,
+            marginTop: space.xs,
           }}
         />
       </View>
@@ -167,10 +167,10 @@ function HeaderControls() {
 
 function FeedIcon({ color }: { color: string }) {
   return (
-    <View style={{ width: 20, height: 20, justifyContent: 'center', gap: 3.5, paddingHorizontal: 2 }}>
-      <View style={{ height: 1.75, width: 16, borderRadius: 1, backgroundColor: color }} />
-      <View style={{ height: 1.75, width: 11, borderRadius: 1, backgroundColor: color }} />
-      <View style={{ height: 1.75, width: 16, borderRadius: 1, backgroundColor: color }} />
+    <View style={{ width: 20, height: 20, justifyContent: 'center', gap: space.xs, paddingHorizontal: space.xs }}>
+      <View style={{ height: 1.75, width: 16, borderRadius: radius.sm, backgroundColor: color }} />
+      <View style={{ height: 1.75, width: 11, borderRadius: radius.sm, backgroundColor: color }} />
+      <View style={{ height: 1.75, width: 16, borderRadius: radius.sm, backgroundColor: color }} />
     </View>
   );
 }
@@ -182,18 +182,18 @@ function AskIcon({ color }: { color: string }) {
         style={{
           width: 16,
           height: 13,
-          borderRadius: 4,
+          borderRadius: radius.sm,
           borderWidth: 1.6,
           borderColor: color,
           alignItems: 'center',
           justifyContent: 'center',
           flexDirection: 'row',
-          gap: 2.5,
+          gap: space.xs,
         }}
       >
-        <View style={{ width: 2, height: 2, borderRadius: 1, backgroundColor: color }} />
-        <View style={{ width: 2, height: 2, borderRadius: 1, backgroundColor: color }} />
-        <View style={{ width: 2, height: 2, borderRadius: 1, backgroundColor: color }} />
+        <View style={{ width: 2, height: 2, borderRadius: radius.sm, backgroundColor: color }} />
+        <View style={{ width: 2, height: 2, borderRadius: radius.sm, backgroundColor: color }} />
+        <View style={{ width: 2, height: 2, borderRadius: radius.sm, backgroundColor: color }} />
       </View>
     </View>
   );
@@ -206,12 +206,12 @@ function ContextIcon({ color }: { color: string }) {
         style={{
           width: 14,
           height: 17,
-          borderRadius: 2.5,
+          borderRadius: radius.sm,
           borderWidth: 1.6,
           borderColor: color,
           justifyContent: 'center',
-          gap: 3,
-          paddingHorizontal: 2.5,
+          gap: space.xs,
+          paddingHorizontal: space.xs,
         }}
       >
         <View style={{ height: 1.5, width: '100%', backgroundColor: color }} />
@@ -257,7 +257,7 @@ function ThemedTabs() {
           tabBarActiveTintColor: colors.accent,
           tabBarInactiveTintColor: colors.textFaint,
           tabBarLabelStyle: {
-            fontSize: 11,
+            fontSize: font.caption,
             fontWeight: '600',
           },
           sceneStyle: { backgroundColor: colors.bg },

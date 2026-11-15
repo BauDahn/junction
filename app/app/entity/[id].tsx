@@ -9,7 +9,7 @@ import {
   type EntityRound,
 } from '../../src/api/entities';
 import { getOrCreateSessionId, resetSessionId } from '../../src/session';
-import { maxWidth, useTheme, type Colors } from '../../src/theme';
+import { font, maxWidth, pageMargin, radius, space, tabularNums, useTheme, type Colors } from '../../src/theme';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -101,24 +101,24 @@ function DetailSkeleton({ styles }: { styles: ReturnType<typeof makeStyles> }) {
   return (
     <View accessibilityLabel="Loading entity details" style={styles.skeletonContainer}>
       <View style={[styles.skeletonBar, { width: 72, height: 12 }]} />
-      <View style={[styles.skeletonBar, { width: '64%', height: 28, marginTop: 8 }]} />
-      <View style={[styles.skeletonBar, { width: '92%', height: 14, marginTop: 16 }]} />
-      <View style={[styles.skeletonBar, { width: '74%', height: 14, marginTop: 8 }]} />
+      <View style={[styles.skeletonBar, { width: '64%', height: 28, marginTop: space.sm }]} />
+      <View style={[styles.skeletonBar, { width: '92%', height: 14, marginTop: space.lg }]} />
+      <View style={[styles.skeletonBar, { width: '74%', height: 14, marginTop: space.sm }]} />
 
       <View style={styles.section}>
-        <View style={[styles.skeletonBar, { width: 128, height: 16, marginBottom: 16 }]} />
+        <View style={[styles.skeletonBar, { width: 128, height: 16, marginBottom: space.lg }]} />
         <View style={styles.skeletonRow}>
           <View style={[styles.skeletonBar, { width: 88, height: 12 }]} />
-          <View style={[styles.skeletonBar, { width: '88%', height: 14, marginTop: 8 }]} />
+          <View style={[styles.skeletonBar, { width: '88%', height: 14, marginTop: space.sm }]} />
         </View>
         <View style={styles.skeletonRow}>
           <View style={[styles.skeletonBar, { width: 76, height: 12 }]} />
-          <View style={[styles.skeletonBar, { width: '76%', height: 14, marginTop: 8 }]} />
+          <View style={[styles.skeletonBar, { width: '76%', height: 14, marginTop: space.sm }]} />
         </View>
       </View>
 
       <View style={styles.section}>
-        <View style={[styles.skeletonBar, { width: 96, height: 16, marginBottom: 16 }]} />
+        <View style={[styles.skeletonBar, { width: 96, height: 16, marginBottom: space.lg }]} />
         <View style={styles.skeletonRow}>
           <View style={[styles.skeletonBar, { width: '55%', height: 14 }]} />
         </View>
@@ -497,14 +497,18 @@ function makeStyles(c: Colors) {
     },
     scrollContent: {
       flexGrow: 1,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 48,
+      paddingHorizontal: pageMargin,
+      paddingTop: space.lg,
+      paddingBottom: space.xxl,
     },
     container: {
       width: '100%',
       maxWidth,
       alignSelf: 'center',
+      backgroundColor: c.surface,
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
+      borderColor: c.border,
     },
     pressed: {
       opacity: 0.65,
@@ -513,23 +517,23 @@ function makeStyles(c: Colors) {
       alignSelf: 'flex-start',
       minHeight: 40,
       justifyContent: 'center',
-      marginBottom: 16,
+      marginBottom: space.lg,
     },
     backText: {
       color: c.accent,
-      fontSize: 15,
+      fontSize: font.body,
       fontWeight: '500',
     },
 
     // Header
     header: {
-      paddingBottom: 8,
+      paddingBottom: space.sm,
     },
     headerTopRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      gap: 16,
+      gap: space.lg,
     },
     headerIdentity: {
       flex: 1,
@@ -537,89 +541,86 @@ function makeStyles(c: Colors) {
     },
     typeLabel: {
       color: c.textMuted,
-      fontSize: 12,
+      fontSize: font.caption,
       fontWeight: '600',
-      letterSpacing: 0.8,
-      textTransform: 'uppercase',
+      letterSpacing: 0,
     },
     entityName: {
       color: c.text,
-      fontSize: 28,
+      fontSize: font.h1,
       fontWeight: '700',
       lineHeight: 34,
-      letterSpacing: -0.4,
-      marginTop: 4,
+      letterSpacing: 0,
+      marginTop: space.xs,
     },
     scoreBlock: {
       alignItems: 'flex-end',
-      paddingTop: 2,
+      paddingTop: space.xs,
     },
     scoreLabel: {
       color: c.textMuted,
-      fontSize: 11,
+      fontSize: font.caption,
       fontWeight: '600',
-      letterSpacing: 0.6,
-      textTransform: 'uppercase',
+      letterSpacing: 0,
     },
     scoreValue: {
       color: c.accent,
-      fontSize: 28,
+      fontSize: font.h1,
       fontWeight: '700',
       lineHeight: 32,
       fontVariant: ['tabular-nums'],
-      marginTop: 2,
+      marginTop: space.xs,
     },
     partialData: {
       color: c.textMuted,
-      fontSize: 12,
+      fontSize: font.caption,
       fontWeight: '500',
-      marginTop: 2,
+      marginTop: space.xs,
     },
     description: {
       color: c.textMuted,
-      fontSize: 15,
+      fontSize: font.body,
       lineHeight: 22,
-      marginTop: 12,
+      marginTop: space.md,
     },
     sampleNotice: {
       color: c.textFaint,
-      fontSize: 12,
-      marginTop: 12,
+      fontSize: font.caption,
+      marginTop: space.md,
     },
 
     // Sections
     section: {
       borderTopWidth: 1,
       borderTopColor: c.border,
-      marginTop: 24,
-      paddingTop: 24,
+      marginTop: space.xl,
+      paddingTop: space.xl,
     },
     sectionTitle: {
       color: c.text,
-      fontSize: 16,
+      fontSize: font.body,
       fontWeight: '600',
-      marginBottom: 8,
+      marginBottom: space.sm,
     },
     rowBlock: {
       borderTopWidth: 1,
       borderTopColor: c.border,
-      paddingVertical: 12,
+      paddingVertical: space.md,
     },
     firstRowBlock: {
       borderTopWidth: 0,
     },
     signalLabel: {
       color: c.textMuted,
-      fontSize: 11,
+      fontSize: font.caption,
       fontWeight: '600',
-      letterSpacing: 0.5,
-      textTransform: 'uppercase',
+      letterSpacing: 0,
     },
     rowText: {
       color: c.text,
-      fontSize: 15,
+      fontSize: font.body,
       lineHeight: 22,
-      marginTop: 4,
+      marginTop: space.xs,
     },
 
     // Key facts
@@ -627,18 +628,18 @@ function makeStyles(c: Colors) {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'baseline',
-      gap: 16,
+      gap: space.lg,
       flexWrap: 'wrap',
     },
     factLabel: {
       color: c.textMuted,
-      fontSize: 14,
+      fontSize: font.body,
       lineHeight: 20,
       flexShrink: 1,
     },
     factValue: {
       color: c.text,
-      fontSize: 15,
+      fontSize: font.body,
       fontWeight: '600',
       lineHeight: 22,
       fontVariant: ['tabular-nums'],
@@ -651,25 +652,25 @@ function makeStyles(c: Colors) {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'baseline',
-      gap: 16,
+      gap: space.lg,
     },
     roundType: {
       color: c.text,
-      fontSize: 15,
+      fontSize: font.body,
       fontWeight: '600',
       lineHeight: 22,
     },
     roundMeta: {
       color: c.text,
-      fontSize: 14,
+      fontSize: font.body,
       fontWeight: '600',
       fontVariant: ['tabular-nums'],
     },
     roundInvestors: {
       color: c.text,
-      fontSize: 14,
+      fontSize: font.body,
       lineHeight: 20,
-      marginTop: 4,
+      marginTop: space.xs,
     },
     roundLeadLabel: {
       fontWeight: '600',
@@ -677,9 +678,9 @@ function makeStyles(c: Colors) {
     },
     roundCoInvestors: {
       color: c.textMuted,
-      fontSize: 14,
+      fontSize: font.body,
       lineHeight: 20,
-      marginTop: 2,
+      marginTop: space.xs,
     },
 
     // Portfolio & People navigation rows
@@ -687,21 +688,21 @@ function makeStyles(c: Colors) {
       borderTopWidth: 1,
       borderTopColor: c.border,
       minHeight: 44,
-      paddingVertical: 12,
+      paddingVertical: space.md,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      gap: 12,
+      gap: space.md,
     },
     navRowTitle: {
       color: c.text,
-      fontSize: 15,
+      fontSize: font.body,
       fontWeight: '500',
       lineHeight: 20,
     },
     navChevron: {
       color: c.accent,
-      fontSize: 18,
+      fontSize: font.lead,
       fontWeight: '500',
     },
     personTextGroup: {
@@ -710,48 +711,54 @@ function makeStyles(c: Colors) {
     },
     personMeta: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
       fontVariant: ['tabular-nums'],
-      marginTop: 2,
+      marginTop: space.xs,
     },
 
     // Sources
     sourcesRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      columnGap: 16,
-      rowGap: 4,
-      marginTop: 8,
+      columnGap: space.sm,
+      rowGap: space.xs,
+      marginTop: space.sm,
     },
     sourceLinkPressable: {
-      paddingVertical: 2,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surfaceAlt,
+      borderRadius: radius.sm,
+      paddingHorizontal: space.sm,
+      paddingVertical: space.xs,
     },
     sourceLinkText: {
       color: c.accent,
-      fontSize: 13,
-      lineHeight: 18,
+      fontSize: font.caption,
+      fontWeight: '500',
     },
     sourceMeta: {
-      color: c.textFaint,
+      color: c.textMuted,
+      fontSize: font.caption,
     },
     sourcePlain: {
       color: c.textFaint,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
-      paddingVertical: 2,
+      paddingVertical: space.xs,
     },
 
     // Footer
     footer: {
       borderTopWidth: 1,
       borderTopColor: c.border,
-      marginTop: 24,
-      paddingTop: 16,
+      marginTop: space.xl,
+      paddingTop: space.lg,
     },
     footerText: {
       color: c.textFaint,
-      fontSize: 12,
+      fontSize: font.caption,
       fontVariant: ['tabular-nums'],
     },
 
@@ -759,80 +766,80 @@ function makeStyles(c: Colors) {
     stateBlock: {
       borderTopWidth: 1,
       borderTopColor: c.border,
-      paddingTop: 24,
-      marginTop: 8,
-      gap: 8,
+      paddingTop: space.xl,
+      marginTop: space.sm,
+      gap: space.sm,
     },
     stateTitle: {
       color: c.text,
-      fontSize: 18,
+      fontSize: font.lead,
       fontWeight: '600',
     },
     stateBody: {
       color: c.textMuted,
-      fontSize: 15,
+      fontSize: font.body,
       lineHeight: 22,
     },
     stateActions: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 12,
-      marginTop: 16,
+      gap: space.md,
+      marginTop: space.lg,
     },
     primaryButton: {
       backgroundColor: c.accent,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: 8,
+      paddingHorizontal: space.lg,
+      paddingVertical: space.sm,
+      borderRadius: radius.md,
       minHeight: 44,
       justifyContent: 'center',
       alignItems: 'center',
     },
     primaryButtonText: {
       color: c.accentText,
-      fontSize: 15,
+      fontSize: font.body,
       fontWeight: '600',
     },
     secondaryButton: {
       borderWidth: 1,
       borderColor: c.border,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: 8,
+      paddingHorizontal: space.lg,
+      paddingVertical: space.sm,
+      borderRadius: radius.md,
       minHeight: 44,
       justifyContent: 'center',
       alignItems: 'center',
     },
     secondaryButtonText: {
       color: c.text,
-      fontSize: 15,
+      fontSize: font.body,
       fontWeight: '500',
     },
     emptyInlineTitle: {
       color: c.text,
-      fontSize: 16,
+      fontSize: font.body,
       fontWeight: '600',
     },
     emptyInlineBody: {
       color: c.textMuted,
-      fontSize: 14,
+      fontSize: font.body,
       lineHeight: 20,
-      marginTop: 4,
+      marginTop: space.xs,
     },
 
     // Skeleton
     skeletonContainer: {
-      paddingTop: 4,
+      paddingTop: space.xs,
     },
     skeletonBar: {
       backgroundColor: c.border,
       opacity: 0.75,
-      borderRadius: 4,
+      borderRadius: radius.sm,
     },
     skeletonRow: {
       borderTopWidth: 1,
       borderTopColor: c.border,
-      paddingVertical: 14,
+      paddingVertical: space.sm,
     },
   });
 }

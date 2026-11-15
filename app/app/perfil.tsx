@@ -10,7 +10,7 @@ import {
 } from '../src/api';
 import CardView from '../src/components/CardView';
 import { getSessionId } from '../src/session';
-import { maxWidth, useTheme, type Colors } from '../src/theme';
+import { font, maxWidth, pageMargin, radius, space, tabularNums, useTheme, type Colors } from '../src/theme';
 import { Button, StateView } from '../src/ui';
 
 const mockEnabled = process.env.EXPO_PUBLIC_MOCK === '1';
@@ -265,9 +265,6 @@ export default function PerfilScreen() {
       </View>
 
       <View style={s.header}>
-        <Text accessibilityRole="header" style={s.title}>
-          Profile
-        </Text>
         <Text style={s.subtitle}>
           Your startup context, followed entities, and Cala recommendations.
         </Text>
@@ -319,7 +316,7 @@ export default function PerfilScreen() {
       {!loading && !error && profile ? (
         <>
           <View style={s.section}>
-            <Text style={s.sectionLabel}>STARTUP</Text>
+            <Text style={s.sectionLabel}>Startup</Text>
             <Text style={s.startupName}>{profile.startup_name || 'Your startup'}</Text>
             {profile.one_liner ? <Text style={s.oneLiner}>{profile.one_liner}</Text> : null}
             <View style={s.rows}>
@@ -338,7 +335,7 @@ export default function PerfilScreen() {
 
           {hasFocus ? (
             <View style={s.section}>
-              <Text style={s.sectionLabel}>FOCUS</Text>
+              <Text style={s.sectionLabel}>Focus</Text>
               <View style={s.rows}>
                 <InfoRow
                   label="Sectors"
@@ -370,7 +367,7 @@ export default function PerfilScreen() {
 
           {hasFollows ? (
             <View style={s.section}>
-              <Text style={s.sectionLabel}>FOLLOWS</Text>
+              <Text style={s.sectionLabel}>Follows</Text>
               <View style={s.rows}>
                 <InfoRow
                   label="Companies"
@@ -394,7 +391,7 @@ export default function PerfilScreen() {
 
           {profile.facts?.length ? (
             <View style={s.section}>
-              <Text style={s.sectionLabel}>CAPTURED SIGNALS</Text>
+              <Text style={s.sectionLabel}>Captured signals</Text>
               <View style={s.rows}>
                 {profile.facts.map((fact, idx) => (
                   <View key={`${fact.text}-${idx}`} style={s.factRow}>
@@ -451,17 +448,17 @@ function InfoRow({ label, value }: { label: string; value?: string }) {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        gap: 16,
+        gap: space.lg,
         borderTopWidth: 1,
         borderTopColor: colors.border,
-        paddingVertical: 12,
+        paddingVertical: space.md,
       }}
     >
-      <Text style={{ color: colors.textMuted, fontSize: 14 }}>{label}</Text>
+      <Text style={{ color: colors.textMuted, fontSize: font.small }}>{label}</Text>
       <Text
         style={{
           color: colors.text,
-          fontSize: 14,
+          fontSize: font.body,
           fontWeight: '500',
           textAlign: 'right',
           flexShrink: 1,
@@ -480,112 +477,117 @@ function profileStyles(c: Colors) {
       backgroundColor: c.bg,
     },
     content: {
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 48,
+      paddingHorizontal: pageMargin,
+      paddingTop: space.lg,
+      paddingBottom: space.xxl,
       width: '100%',
       maxWidth,
       alignSelf: 'center',
       flexGrow: 1,
+      backgroundColor: c.surface,
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
+      borderColor: c.border,
     },
     topBar: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingBottom: 16,
+      paddingHorizontal: pageMargin,
+      paddingVertical: space.md,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
     },
     navAction: {
       color: c.accent,
-      fontSize: 14,
+      fontSize: font.body,
       fontWeight: '600',
     },
     header: {
-      paddingBottom: 24,
-      borderBottomWidth: 1,
-      borderBottomColor: c.border,
-      gap: 4,
+      paddingHorizontal: pageMargin,
+      paddingVertical: space.md,
     },
     title: {
       color: c.text,
-      fontSize: 28,
+      fontSize: font.h1,
       fontWeight: '700',
     },
     subtitle: {
       color: c.textMuted,
-      fontSize: 15,
+      fontSize: font.body,
       lineHeight: 22,
     },
     stateWrap: {
-      marginTop: 24,
+      marginTop: space.xl,
     },
     emptyActions: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 8,
+      gap: space.sm,
     },
     section: {
-      marginTop: 24,
+      marginTop: space.xl,
     },
     sectionLabel: {
-      color: c.textFaint,
-      fontSize: 11,
+      color: c.text,
+      fontSize: font.small,
       fontWeight: '600',
-      letterSpacing: 0.8,
-      marginBottom: 8,
+      letterSpacing: 0,
+      marginBottom: space.sm,
     },
     startupName: {
       color: c.text,
-      fontSize: 20,
+      fontSize: font.h2,
       fontWeight: '700',
     },
     oneLiner: {
       color: c.textMuted,
-      fontSize: 15,
+      fontSize: font.body,
       lineHeight: 22,
-      marginTop: 4,
-      marginBottom: 12,
+      marginTop: space.xs,
+      marginBottom: space.md,
     },
     rows: {
-      marginTop: 8,
+      marginTop: space.sm,
       borderBottomWidth: 1,
       borderBottomColor: c.border,
     },
     factRow: {
       borderTopWidth: 1,
       borderTopColor: c.border,
-      paddingVertical: 12,
-      gap: 4,
+      paddingVertical: space.md,
+      gap: space.xs,
     },
     factText: {
       color: c.text,
-      fontSize: 14,
+      fontSize: font.body,
       lineHeight: 20,
     },
     factOrigin: {
       color: c.textFaint,
-      fontSize: 12,
+      fontSize: font.caption,
     },
     recsSection: {
-      marginTop: 32,
+      marginTop: space.xxl,
     },
     recsHeading: {
       color: c.text,
-      fontSize: 20,
+      fontSize: font.h2,
       fontWeight: '700',
     },
     recsStatus: {
       color: c.textMuted,
-      fontSize: 13,
-      marginTop: 4,
+      fontSize: font.small,
+      marginTop: space.xs,
     },
     recGroup: {
-      marginTop: 24,
+      marginTop: space.xl,
     },
     recGroupTitle: {
       color: c.text,
-      fontSize: 15,
+      fontSize: font.body,
       fontWeight: '600',
-      marginBottom: 8,
+      marginBottom: space.sm,
     },
     recList: {
       borderBottomWidth: 1,
@@ -593,16 +595,16 @@ function profileStyles(c: Colors) {
     },
     emptyRowText: {
       color: c.textMuted,
-      fontSize: 14,
+      fontSize: font.body,
       borderTopWidth: 1,
       borderBottomWidth: 1,
       borderColor: c.border,
-      paddingVertical: 12,
+      paddingVertical: space.md,
     },
     updatedAt: {
       color: c.textFaint,
-      fontSize: 12,
-      marginTop: 24,
+      fontSize: font.caption,
+      marginTop: space.xl,
     },
   });
 }

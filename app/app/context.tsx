@@ -24,7 +24,7 @@ import {
   type UnderstoodKey,
 } from '../src/api/context';
 import { getOrCreateSessionId, resetSessionId } from '../src/session';
-import { maxWidth, useTheme, type Colors } from '../src/theme';
+import { font, maxWidth, pageMargin, radius, space, tabularNums, useTheme, type Colors } from '../src/theme';
 
 const MAX_PDF_BYTES = 20 * 1024 * 1024;
 const MAX_VOICE_SECONDS = 120;
@@ -382,9 +382,6 @@ export default function ContextScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={s.header}>
-        <Text accessibilityRole="header" style={s.title}>
-          Context
-        </Text>
         <Text style={s.subtitle}>
           Add your pitch deck, voice notes, or written context to calibrate your matches.
         </Text>
@@ -753,23 +750,23 @@ function LoadingSkeleton({ styles: s }: { styles: ContextStyles }) {
           <View style={[s.skeletonBar, { width: 120, height: 14 }]} />
           <View style={[s.skeletonBar, { width: 48, height: 22 }]} />
         </View>
-        <View style={[s.skeletonBar, { width: '100%', height: 6, marginTop: 12 }]} />
-        <View style={[s.skeletonRowBetween, { marginTop: 10 }]}>
+        <View style={[s.skeletonBar, { width: '100%', height: 6, marginTop: space.md }]} />
+        <View style={[s.skeletonRowBetween, { marginTop: space.sm }]}>
           <View style={[s.skeletonBar, { width: 96, height: 12 }]} />
           <View style={[s.skeletonBar, { width: 80, height: 12 }]} />
         </View>
       </View>
 
       <View style={s.section}>
-        <View style={[s.skeletonBar, { width: 112, height: 18, marginBottom: 16 }]} />
-        <View style={[s.skeletonBar, { width: '100%', height: 48, marginBottom: 16 }]} />
-        <View style={[s.skeletonBar, { width: '100%', height: 48, marginBottom: 16 }]} />
+        <View style={[s.skeletonBar, { width: 112, height: 18, marginBottom: space.lg }]} />
+        <View style={[s.skeletonBar, { width: '100%', height: 48, marginBottom: space.lg }]} />
+        <View style={[s.skeletonBar, { width: '100%', height: 48, marginBottom: space.lg }]} />
         <View style={[s.skeletonBar, { width: '100%', height: 80 }]} />
       </View>
 
       <View style={s.sectionLast}>
-        <View style={[s.skeletonBar, { width: 152, height: 18, marginBottom: 16 }]} />
-        <View style={[s.skeletonBar, { width: '75%', height: 28, marginBottom: 12 }]} />
+        <View style={[s.skeletonBar, { width: 152, height: 18, marginBottom: space.lg }]} />
+        <View style={[s.skeletonBar, { width: '75%', height: 28, marginBottom: space.md }]} />
         <View style={[s.skeletonBar, { width: '60%', height: 28 }]} />
       </View>
     </View>
@@ -820,69 +817,74 @@ function createStyles(c: Colors) {
       width: '100%',
       maxWidth,
       alignSelf: 'center',
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 48,
+      paddingHorizontal: pageMargin,
+      paddingTop: space.lg,
+      paddingBottom: space.xxl,
+      backgroundColor: c.surface,
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
+      borderColor: c.border,
     },
     header: {
-      paddingBottom: 24,
+      paddingHorizontal: pageMargin,
+      paddingVertical: space.md,
       borderBottomWidth: 1,
       borderBottomColor: c.border,
     },
     title: {
       color: c.text,
-      fontSize: 28,
+      fontSize: font.h1,
       fontWeight: '700',
-      letterSpacing: -0.4,
+      letterSpacing: 0,
     },
     subtitle: {
       color: c.textMuted,
-      fontSize: 15,
+      fontSize: font.body,
       lineHeight: 22,
-      marginTop: 8,
+      marginTop: space.sm,
     },
     demoRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       alignItems: 'center',
-      gap: 8,
-      marginTop: 8,
+      gap: space.sm,
+      marginTop: space.sm,
     },
     demoNote: {
       color: c.textFaint,
-      fontSize: 12,
+      fontSize: font.caption,
       lineHeight: 16,
     },
     demoReconnect: {
       color: c.accent,
-      fontSize: 12,
+      fontSize: font.caption,
       lineHeight: 16,
       fontWeight: '600',
     },
     section: {
-      paddingVertical: 24,
+      paddingVertical: space.lg,
       borderBottomWidth: 1,
       borderBottomColor: c.border,
     },
     sectionLast: {
-      paddingTop: 24,
+      paddingTop: space.xl,
     },
     sectionLabel: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       fontWeight: '600',
     },
     sectionTitle: {
       color: c.text,
-      fontSize: 18,
+      fontSize: font.lead,
       fontWeight: '600',
     },
     sectionSubtitle: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
-      marginTop: 4,
-      marginBottom: 16,
+      marginTop: space.xs,
+      marginBottom: space.lg,
     },
     strengthHeader: {
       flexDirection: 'row',
@@ -891,156 +893,156 @@ function createStyles(c: Colors) {
     },
     strengthScore: {
       color: c.text,
-      fontSize: 24,
+      fontSize: font.h2,
       fontWeight: '700',
       fontVariant: ['tabular-nums'],
     },
     progressTrack: {
       height: 4,
       backgroundColor: c.surfaceAlt,
-      borderRadius: 2,
+      borderRadius: radius.sm,
       overflow: 'hidden',
-      marginTop: 12,
+      marginTop: space.md,
     },
     progressFill: {
       height: '100%',
       backgroundColor: c.accent,
-      borderRadius: 2,
+      borderRadius: radius.sm,
     },
     strengthMeta: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginTop: 8,
+      marginTop: space.sm,
     },
     strengthLabel: {
       color: c.accent,
-      fontSize: 13,
+      fontSize: font.small,
       fontWeight: '600',
     },
     strengthCount: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       fontVariant: ['tabular-nums'],
     },
     missingHint: {
       color: c.textFaint,
-      fontSize: 12,
+      fontSize: font.caption,
       lineHeight: 16,
-      marginTop: 8,
+      marginTop: space.sm,
     },
     emptyBanner: {
-      paddingVertical: 16,
+      paddingVertical: space.lg,
       borderBottomWidth: 1,
       borderBottomColor: c.border,
-      gap: 4,
+      gap: space.xs,
     },
     emptyTitle: {
       color: c.text,
-      fontSize: 15,
+      fontSize: font.body,
       fontWeight: '600',
     },
     emptyBody: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 20,
     },
     errorBox: {
-      marginTop: 24,
-      padding: 16,
+      marginTop: space.xl,
+      padding: space.lg,
       borderWidth: 1,
       borderColor: c.border,
-      borderRadius: 8,
+      borderRadius: radius.md,
       backgroundColor: c.surface,
       alignItems: 'flex-start',
-      gap: 8,
+      gap: space.sm,
     },
     errorTitle: {
       color: c.text,
-      fontSize: 16,
+      fontSize: font.body,
       fontWeight: '600',
     },
     errorMessage: {
       color: c.textMuted,
-      fontSize: 14,
+      fontSize: font.body,
       lineHeight: 20,
     },
     inlineError: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      gap: 12,
-      padding: 12,
-      marginTop: 12,
+      gap: space.md,
+      padding: space.md,
+      marginTop: space.md,
       borderWidth: 1,
       borderColor: c.danger,
-      borderRadius: 8,
+      borderRadius: radius.md,
       backgroundColor: c.dangerSoft,
     },
     inlineErrorText: {
       flex: 1,
       color: c.danger,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
     },
     inlineDismiss: {
       color: c.danger,
-      fontSize: 12,
+      fontSize: font.caption,
       fontWeight: '600',
     },
     inlineNotice: {
       color: c.accent,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
-      marginTop: 12,
+      marginTop: space.md,
     },
     inputRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      gap: 16,
-      marginTop: 16,
+      gap: space.lg,
+      marginTop: space.lg,
     },
     rowDivider: {
       borderTopWidth: 1,
       borderTopColor: c.border,
-      paddingTop: 16,
+      paddingTop: space.lg,
     },
     inputMeta: {
       flex: 1,
       minWidth: 0,
-      gap: 4,
+      gap: space.xs,
     },
     rowTitle: {
       color: c.text,
-      fontSize: 15,
+      fontSize: font.body,
       fontWeight: '600',
     },
     rowSubtitle: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
     },
     recordingStatus: {
       color: c.danger,
-      fontSize: 13,
+      fontSize: font.small,
       fontWeight: '600',
       fontVariant: ['tabular-nums'],
     },
     noteBlock: {
-      marginTop: 16,
-      gap: 8,
+      marginTop: space.lg,
+      gap: space.sm,
     },
     noteInput: {
       borderWidth: 1,
       borderColor: c.border,
-      borderRadius: 8,
+      borderRadius: radius.md,
       backgroundColor: c.surface,
       color: c.text,
-      fontSize: 16,
+      fontSize: font.body,
       lineHeight: 22,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
+      paddingHorizontal: space.md,
+      paddingVertical: space.sm,
       minHeight: 80,
       textAlignVertical: 'top',
     },
@@ -1048,50 +1050,50 @@ function createStyles(c: Colors) {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      gap: 12,
+      gap: space.md,
     },
     charCount: {
       color: c.textFaint,
-      fontSize: 12,
+      fontSize: font.caption,
       fontVariant: ['tabular-nums'],
     },
     primaryButton: {
       backgroundColor: c.accent,
-      borderRadius: 8,
+      borderRadius: radius.md,
       minHeight: 44,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
+      paddingHorizontal: space.lg,
+      paddingVertical: space.sm,
       alignItems: 'center',
       justifyContent: 'center',
     },
     primaryButtonCompact: {
       backgroundColor: c.accent,
-      borderRadius: 6,
+      borderRadius: radius.sm,
       minHeight: 40,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
+      paddingHorizontal: space.md,
+      paddingVertical: space.sm,
       alignItems: 'center',
       justifyContent: 'center',
     },
     primaryButtonText: {
       color: c.accentText,
-      fontSize: 13,
+      fontSize: font.small,
       fontWeight: '600',
     },
     secondaryButton: {
       backgroundColor: c.surface,
       borderWidth: 1,
       borderColor: c.border,
-      borderRadius: 8,
+      borderRadius: radius.md,
       minHeight: 44,
-      paddingHorizontal: 14,
-      paddingVertical: 10,
+      paddingHorizontal: space.sm,
+      paddingVertical: space.sm,
       alignItems: 'center',
       justifyContent: 'center',
     },
     secondaryButtonText: {
       color: c.text,
-      fontSize: 13,
+      fontSize: font.small,
       fontWeight: '600',
     },
     disabledButton: {
@@ -1101,147 +1103,147 @@ function createStyles(c: Colors) {
       opacity: 0.45,
     },
     categoryRow: {
-      paddingVertical: 16,
+      paddingVertical: space.lg,
       borderTopWidth: 1,
       borderTopColor: c.border,
-      gap: 8,
+      gap: space.sm,
     },
     categoryRowFirst: {
       borderTopWidth: 1,
     },
     categoryLabel: {
       color: c.textMuted,
-      fontSize: 12,
+      fontSize: font.caption,
       fontWeight: '600',
-      letterSpacing: 0.2,
+      letterSpacing: 0,
     },
     tagWrap: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       alignItems: 'center',
-      gap: 8,
+      gap: space.sm,
     },
     tag: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
+      gap: space.xs,
       borderWidth: 1,
       borderColor: c.border,
       backgroundColor: c.surface,
-      borderRadius: 6,
-      paddingLeft: 10,
-      paddingRight: 8,
-      paddingVertical: 6,
+      borderRadius: radius.sm,
+      paddingLeft: space.sm,
+      paddingRight: space.sm,
+      paddingVertical: space.xs,
     },
     tagText: {
       color: c.text,
-      fontSize: 13,
+      fontSize: font.small,
     },
     tagRemove: {
       color: c.textMuted,
-      fontSize: 15,
+      fontSize: font.body,
       lineHeight: 16,
       fontWeight: '600',
     },
     noneText: {
       color: c.textFaint,
-      fontSize: 13,
+      fontSize: font.small,
     },
     addTagTrigger: {
       borderWidth: 1,
       borderColor: c.border,
       borderStyle: 'dashed',
-      borderRadius: 6,
-      paddingHorizontal: 10,
-      paddingVertical: 6,
+      borderRadius: radius.sm,
+      paddingHorizontal: space.sm,
+      paddingVertical: space.xs,
     },
     addTagTriggerText: {
       color: c.accent,
-      fontSize: 13,
+      fontSize: font.small,
       fontWeight: '600',
     },
     addTagRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
-      marginTop: 4,
+      gap: space.sm,
+      marginTop: space.xs,
     },
     addTagInput: {
       flex: 1,
       minWidth: 0,
       borderWidth: 1,
       borderColor: c.accent,
-      borderRadius: 6,
+      borderRadius: radius.sm,
       backgroundColor: c.surface,
       color: c.text,
-      fontSize: 16,
+      fontSize: font.body,
       lineHeight: 22,
-      paddingHorizontal: 10,
-      paddingVertical: 7,
+      paddingHorizontal: space.sm,
+      paddingVertical: space.sm,
     },
     cancelLink: {
-      paddingHorizontal: 8,
-      paddingVertical: 8,
+      paddingHorizontal: space.sm,
+      paddingVertical: space.sm,
     },
     cancelLinkText: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
     },
     sourcesHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'baseline',
-      marginBottom: 12,
+      marginBottom: space.md,
     },
     sourcesCount: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       fontVariant: ['tabular-nums'],
     },
     sourcesEmpty: {
       borderTopWidth: 1,
       borderTopColor: c.border,
-      paddingVertical: 16,
-      gap: 4,
+      paddingVertical: space.lg,
+      gap: space.xs,
     },
     sourceRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      gap: 16,
+      gap: space.lg,
       borderTopWidth: 1,
       borderTopColor: c.border,
-      paddingVertical: 16,
+      paddingVertical: space.lg,
     },
     sourceMain: {
       flex: 1,
       minWidth: 0,
-      gap: 4,
+      gap: space.xs,
     },
     sourceTitle: {
       color: c.text,
-      fontSize: 15,
+      fontSize: font.body,
       fontWeight: '600',
     },
     sourceMeta: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
       fontVariant: ['tabular-nums'],
     },
     sourceTranscript: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
-      marginTop: 4,
+      marginTop: space.xs,
     },
     removeButton: {
-      paddingVertical: 4,
-      paddingHorizontal: 4,
+      paddingVertical: space.xs,
+      paddingHorizontal: space.xs,
     },
     removeButtonText: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       fontWeight: '600',
     },
     skeletonWrap: {
@@ -1254,7 +1256,7 @@ function createStyles(c: Colors) {
     },
     skeletonBar: {
       backgroundColor: c.surfaceAlt,
-      borderRadius: 4,
+      borderRadius: radius.sm,
     },
   });
 }

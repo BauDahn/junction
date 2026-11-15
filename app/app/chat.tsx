@@ -24,7 +24,7 @@ import {
 } from '../src/api';
 import CardView from '../src/components/CardView';
 import BlockView from '../src/components/BlockView';
-import { maxWidth, useTheme, type Colors } from '../src/theme';
+import { font, maxWidth, pageMargin, radius, space, tabularNums, useTheme, type Colors } from '../src/theme';
 import { Button, StateView } from '../src/ui';
 
 type ChatMessage = Message & {
@@ -273,7 +273,7 @@ export default function ChatScreen() {
           <View style={s.userBubble}>
             {item.transcript ? (
               <>
-                <Text style={s.transcriptLabel}>TRANSCRIPT</Text>
+                <Text style={s.transcriptLabel}>Transcript</Text>
                 <Text style={s.userText}>{item.transcript}</Text>
               </>
             ) : (
@@ -306,7 +306,7 @@ export default function ChatScreen() {
         {item.text ? <Text style={s.assistantText}>{item.text}</Text> : null}
         {standaloneSources.length ? (
           <View style={s.sourceList}>
-            <Text style={s.sourceHeading}>SOURCES</Text>
+            <Text style={s.sourceHeading}>Sources</Text>
             {standaloneSources.map((source, index) => (
               <Pressable
                 key={`${source.url}-${index}`}
@@ -345,9 +345,6 @@ export default function ChatScreen() {
     >
       <View style={s.frame}>
         <View style={s.header}>
-          <Text accessibilityRole="header" style={s.title}>
-            Ask Cala
-          </Text>
           <Text style={s.subtitle}>Every fact and figure is grounded in Cala sources.</Text>
         </View>
 
@@ -402,7 +399,7 @@ export default function ChatScreen() {
                   Answers pull structured records and citations directly from Cala.
                 </Text>
                 <View style={s.suggestions}>
-                  <Text style={s.suggestionsLabel}>SUGGESTIONS</Text>
+                  <Text style={s.suggestionsLabel}>Suggestions</Text>
                   {SUGGESTIONS.map((prompt) => (
                     <Pressable
                       key={prompt}
@@ -518,178 +515,182 @@ function chatStyles(c: Colors) {
       width: '100%',
       maxWidth,
       alignSelf: 'center',
+      backgroundColor: c.surface,
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
+      borderColor: c.border,
     },
     header: {
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 16,
+      paddingHorizontal: pageMargin,
+      paddingTop: space.lg,
+      paddingBottom: space.lg,
       borderBottomWidth: 1,
       borderBottomColor: c.border,
-      gap: 4,
+      gap: space.xs,
     },
     title: {
       color: c.text,
-      fontSize: 22,
+      fontSize: font.lead,
       fontWeight: '700',
     },
     subtitle: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
     },
     contextBar: {
-      marginHorizontal: 20,
-      marginTop: 8,
-      paddingVertical: 8,
-      paddingHorizontal: 12,
+      marginHorizontal: pageMargin,
+      marginTop: space.sm,
+      paddingVertical: space.sm,
+      paddingHorizontal: space.md,
       borderWidth: 1,
       borderColor: c.border,
-      borderRadius: 8,
+      borderRadius: radius.md,
       backgroundColor: c.surface,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      gap: 12,
+      gap: space.md,
     },
     contextText: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       flexShrink: 1,
     },
     contextClear: {
       color: c.accent,
-      fontSize: 13,
+      fontSize: font.small,
       fontWeight: '600',
     },
     stateWrap: {
       flex: 1,
-      paddingHorizontal: 20,
-      paddingTop: 24,
+      paddingHorizontal: pageMargin,
+      paddingTop: space.xl,
     },
     messages: {
-      paddingHorizontal: 20,
-      paddingVertical: 16,
+      paddingHorizontal: pageMargin,
+      paddingVertical: space.lg,
       flexGrow: 1,
     },
     messagesEmpty: {
       justifyContent: 'flex-end',
     },
     emptyWrap: {
-      gap: 16,
-      paddingBottom: 8,
+      gap: space.lg,
+      paddingBottom: space.sm,
     },
     emptyTitle: {
       color: c.text,
-      fontSize: 17,
+      fontSize: font.lead,
       fontWeight: '600',
     },
     emptyBody: {
       color: c.textMuted,
-      fontSize: 14,
+      fontSize: font.body,
       lineHeight: 20,
       marginTop: -8,
     },
     suggestions: {
-      gap: 8,
+      gap: space.sm,
     },
     suggestionsLabel: {
       color: c.textFaint,
-      fontSize: 11,
+      fontSize: font.caption,
       fontWeight: '600',
-      letterSpacing: 0.6,
+      letterSpacing: 0,
     },
     suggestionRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      gap: space.md,
+      paddingHorizontal: space.lg,
+      paddingVertical: space.md,
       borderWidth: 1,
       borderColor: c.border,
-      borderRadius: 8,
+      borderRadius: radius.md,
       backgroundColor: c.surface,
     },
     suggestionText: {
       color: c.text,
-      fontSize: 14,
+      fontSize: font.body,
       lineHeight: 20,
       flex: 1,
     },
     suggestionAction: {
       color: c.accent,
-      fontSize: 13,
+      fontSize: font.small,
       fontWeight: '600',
     },
     userRow: {
       alignItems: 'flex-end',
-      marginBottom: 16,
-      gap: 6,
+      marginBottom: space.lg,
+      gap: space.xs,
     },
     userBubble: {
       maxWidth: '85%',
       backgroundColor: c.accent,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      borderRadius: radius.lg,
+      paddingHorizontal: space.lg,
+      paddingVertical: space.md,
     },
     userText: {
       color: c.accentText,
-      fontSize: 15,
+      fontSize: font.body,
       lineHeight: 22,
     },
     transcriptLabel: {
       color: c.accentText,
       opacity: 0.85,
-      fontSize: 11,
+      fontSize: font.caption,
       fontWeight: '600',
-      letterSpacing: 0.5,
-      marginBottom: 4,
+      letterSpacing: 0,
+      marginBottom: space.xs,
     },
     pending: {
       color: c.accentText,
       opacity: 0.8,
-      fontSize: 12,
-      marginTop: 6,
+      fontSize: font.caption,
+      marginTop: space.xs,
     },
     retryRow: {
       maxWidth: '85%',
       alignItems: 'flex-end',
-      gap: 4,
+      gap: space.xs,
     },
     errorText: {
       color: c.danger,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
       textAlign: 'right',
     },
     retry: {
       color: c.accent,
-      fontSize: 13,
+      fontSize: font.small,
       fontWeight: '600',
     },
     assistantRow: {
       width: '100%',
-      marginBottom: 24,
-      gap: 8,
+      marginBottom: space.xl,
+      gap: space.sm,
     },
     assistantText: {
       color: c.text,
-      fontSize: 15,
+      fontSize: font.body,
       lineHeight: 22,
     },
     sourceList: {
-      gap: 4,
-      marginTop: 4,
+      gap: space.xs,
+      marginTop: space.xs,
     },
     sourceHeading: {
       color: c.textFaint,
-      fontSize: 11,
+      fontSize: font.caption,
       fontWeight: '600',
-      letterSpacing: 0.6,
+      letterSpacing: 0,
     },
     sourceLine: {
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
     },
     sourceLink: {
@@ -698,50 +699,50 @@ function chatStyles(c: Colors) {
     },
     sourceDomain: {
       color: c.textFaint,
-      fontSize: 12,
+      fontSize: font.caption,
     },
     thinkingRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
-      paddingVertical: 8,
+      gap: space.sm,
+      paddingVertical: space.sm,
     },
     thinkingText: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
     },
     notice: {
       borderTopWidth: 1,
       borderTopColor: c.border,
       backgroundColor: c.surface,
-      paddingHorizontal: 20,
-      paddingVertical: 10,
+      paddingHorizontal: pageMargin,
+      paddingVertical: space.sm,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
     },
     noticeText: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
     },
     noticeLink: {
       color: c.accent,
-      fontSize: 13,
+      fontSize: font.small,
       fontWeight: '600',
     },
     globalError: {
       color: c.danger,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
-      paddingHorizontal: 20,
-      paddingVertical: 8,
+      paddingHorizontal: pageMargin,
+      paddingVertical: space.sm,
     },
     composer: {
       flexDirection: 'row',
       alignItems: 'flex-end',
-      gap: 8,
-      paddingHorizontal: 20,
-      paddingVertical: 12,
+      gap: space.sm,
+      paddingHorizontal: pageMargin,
+      paddingVertical: space.md,
       borderTopWidth: 1,
       borderTopColor: c.border,
       backgroundColor: c.bg,
@@ -753,28 +754,28 @@ function chatStyles(c: Colors) {
       justifyContent: 'center',
       borderWidth: 1,
       borderColor: c.border,
-      borderRadius: 8,
+      borderRadius: radius.md,
       backgroundColor: c.surface,
-      paddingHorizontal: 12,
+      paddingHorizontal: space.md,
     },
     input: {
       color: c.text,
-      fontSize: 16,
+      fontSize: font.body,
       lineHeight: 22,
-      paddingVertical: 10,
+      paddingVertical: space.sm,
       maxHeight: 100,
     },
     recording: {
       color: c.danger,
-      fontSize: 14,
+      fontSize: font.body,
       fontWeight: '600',
-      paddingVertical: 10,
+      paddingVertical: space.sm,
       fontVariant: ['tabular-nums'],
     },
     voiceButton: {
       height: 44,
-      paddingHorizontal: 14,
-      borderRadius: 8,
+      paddingHorizontal: space.sm,
+      borderRadius: radius.md,
       borderWidth: 1,
       borderColor: c.border,
       backgroundColor: c.surface,
@@ -783,7 +784,7 @@ function chatStyles(c: Colors) {
     },
     voiceButtonText: {
       color: c.text,
-      fontSize: 14,
+      fontSize: font.body,
       fontWeight: '600',
     },
     recordingButton: {
@@ -795,15 +796,15 @@ function chatStyles(c: Colors) {
     },
     sendButton: {
       height: 44,
-      paddingHorizontal: 16,
-      borderRadius: 8,
+      paddingHorizontal: space.lg,
+      borderRadius: radius.md,
       backgroundColor: c.accent,
       alignItems: 'center',
       justifyContent: 'center',
     },
     sendButtonText: {
       color: c.accentText,
-      fontSize: 14,
+      fontSize: font.body,
       fontWeight: '600',
     },
     disabled: {

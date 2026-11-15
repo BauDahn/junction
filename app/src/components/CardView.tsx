@@ -1,6 +1,6 @@
 import { Linking, Pressable, Text, View } from 'react-native';
 import type { Card as CardData } from '../api';
-import { font, space, useTheme } from '../theme';
+import { font, radius, space, useTheme } from '../theme';
 
 function host(url: string): string {
   try {
@@ -43,12 +43,12 @@ export default function CardView({ card }: { card: CardData }) {
           <Text
             style={{
               color: colors.textFaint,
-              fontSize: 11,
+              fontSize: font.caption,
               fontWeight: '600',
-              letterSpacing: 0.6,
+              letterSpacing: 0,
             }}
           >
-            SOURCES
+            Sources
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.md }}>
             {card.sources.map((source, index) => (

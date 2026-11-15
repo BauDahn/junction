@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Block, CalaCall, ClaimVerdict, Source } from '../api';
-import { useTheme, type Colors } from '../theme';
+import { font, radius, space, tabularNums, useTheme, type Colors } from '../theme';
 
 const SOURCE_RANKS = ['FILING', 'PRIMARY', 'PRESS', 'AGGREGATOR'] as const;
 
@@ -64,7 +64,7 @@ function Sources({
   if (!sources?.length) return null;
   return (
     <View style={s.sources}>
-      <Text style={s.sectionMicro}>SOURCES</Text>
+      <Text style={s.sectionMicro}>Sources</Text>
       {sources.map((source, index) => {
         const domain = source.url ? host(source.url) : '';
         const rank =
@@ -170,7 +170,7 @@ function TableBlock({
               <View style={s.tableHeaderRow}>
                 {columns.map((col, idx) => (
                   <Text key={`${col}-${idx}`} style={[s.cell, s.headerCell]}>
-                    {col.toUpperCase()}
+                    {col.replace(/_/g, ' ').replace(/^\w/, (letter) => letter.toUpperCase())}
                   </Text>
                 ))}
               </View>
@@ -307,7 +307,7 @@ export default function BlockView({
       ) : block.type === 'not_found' ? (
         <>
           <Text style={s.title}>{block.title || 'No data found in Cala'}</Text>
-          <Text style={s.sectionMicro}>CHECKED IN CALA</Text>
+          <Text style={s.sectionMicro}>Checked in Cala</Text>
           <View style={s.kvList}>
             {block.tried.map((call, i) => (
               <View key={`${call.tool}-${i}`} style={s.triedRow}>
@@ -330,30 +330,23 @@ export default function BlockView({
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: {
-      backgroundColor: c.surface,
-      borderColor: c.border,
-      borderWidth: 1,
-      borderRadius: 8,
-      padding: 16,
-      marginTop: 8,
-      gap: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      paddingVertical: space.md,
+      gap: space.sm,
     },
     nestedContainer: {
-      borderTopWidth: 1,
-      borderTopColor: c.border,
-      paddingTop: 12,
-      marginTop: 4,
-      gap: 8,
+      gap: space.sm,
     },
     title: {
       color: c.text,
       fontWeight: '600',
-      fontSize: 15,
+      fontSize: font.body,
       lineHeight: 22,
     },
     body: {
       color: c.textMuted,
-      fontSize: 14,
+      fontSize: font.small,
       lineHeight: 20,
     },
     bold: {
@@ -361,14 +354,12 @@ function makeStyles(c: Colors) {
       color: c.text,
     },
     markdown: {
-      gap: 6,
+      gap: space.xs,
     },
     tableWrap: {
-      borderWidth: 1,
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
       borderColor: c.border,
-      borderRadius: 8,
-      overflow: 'hidden',
-      backgroundColor: c.surface,
     },
     tableHeaderRow: {
       flexDirection: 'row',
@@ -384,18 +375,18 @@ function makeStyles(c: Colors) {
       minWidth: 96,
       maxWidth: 220,
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
+      paddingHorizontal: space.md,
+      paddingVertical: space.sm,
       fontVariant: ['tabular-nums'],
     },
     headerCell: {
       color: c.textMuted,
-      fontSize: 11,
+      fontSize: font.caption,
       fontWeight: '600',
-      letterSpacing: 0.5,
-      paddingVertical: 8,
+      letterSpacing: 0,
+      paddingVertical: space.sm,
     },
     primaryCell: {
       color: c.text,
@@ -403,25 +394,25 @@ function makeStyles(c: Colors) {
     },
     sourceCell: {
       color: c.accent,
-      fontSize: 12,
+      fontSize: font.caption,
     },
     more: {
       color: c.accent,
-      fontSize: 13,
+      fontSize: font.small,
       fontWeight: '600',
     },
     sources: {
-      gap: 6,
-      paddingTop: 4,
+      gap: space.xs,
+      paddingTop: space.xs,
     },
     sectionMicro: {
-      color: c.textFaint,
-      fontSize: 11,
+      color: c.textMuted,
+      fontSize: font.caption,
       fontWeight: '600',
-      letterSpacing: 0.6,
+      letterSpacing: 0,
     },
     sourceRow: {
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
     },
     link: {
@@ -430,47 +421,46 @@ function makeStyles(c: Colors) {
     },
     sourceMeta: {
       color: c.textFaint,
-      fontSize: 12,
+      fontSize: font.caption,
     },
     sourceRank: {
       color: c.textMuted,
-      fontSize: 11,
+      fontSize: font.caption,
       fontWeight: '600',
-      letterSpacing: 0.4,
+      letterSpacing: 0,
     },
     query: {
       borderTopWidth: 1,
       borderTopColor: c.border,
-      paddingTop: 8,
+      paddingTop: space.sm,
     },
     queryToggle: {
       color: c.textMuted,
-      fontSize: 12,
+      fontSize: font.caption,
       fontWeight: '500',
     },
     queryText: {
       color: c.textMuted,
-      fontSize: 12,
+      fontSize: font.caption,
       lineHeight: 18,
-      marginTop: 6,
+      marginTop: space.xs,
     },
     muted: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
     },
     verdictRow: {
       borderLeftWidth: 2,
-      paddingLeft: 8,
+      paddingLeft: space.sm,
     },
     verdictLabel: {
-      fontSize: 11,
+      fontSize: font.caption,
       fontWeight: '600',
-      letterSpacing: 0.6,
-      textTransform: 'uppercase',
+      letterSpacing: 0,
     },
     quote: {
       color: c.text,
-      fontSize: 15,
+      fontSize: font.body,
       fontWeight: '600',
       lineHeight: 22,
     },
@@ -482,18 +472,18 @@ function makeStyles(c: Colors) {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      gap: 12,
+      gap: space.md,
       borderTopWidth: 1,
       borderTopColor: c.border,
-      paddingVertical: 8,
+      paddingVertical: space.sm,
     },
     kvKey: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
     },
     kvVal: {
       color: c.text,
-      fontSize: 13,
+      fontSize: font.small,
       fontWeight: '500',
       textAlign: 'right',
       flexShrink: 1,
@@ -501,19 +491,18 @@ function makeStyles(c: Colors) {
     triedRow: {
       borderTopWidth: 1,
       borderTopColor: c.border,
-      paddingVertical: 8,
-      gap: 2,
+      paddingVertical: space.sm,
+      gap: space.xs,
     },
     triedTool: {
-      color: c.textFaint,
-      fontSize: 11,
+      color: c.textMuted,
+      fontSize: font.caption,
       fontWeight: '600',
-      letterSpacing: 0.5,
-      textTransform: 'uppercase',
+      letterSpacing: 0,
     },
     triedQuery: {
       color: c.textMuted,
-      fontSize: 13,
+      fontSize: font.small,
       lineHeight: 18,
     },
   });

@@ -32,7 +32,7 @@ export const light: Colors = {
   border: '#e2e8f0',
   text: '#0f172a',
   textMuted: '#475569',
-  textFaint: '#64748b',
+  textFaint: '#475569',
   accent: '#3730A3',
   accentText: '#ffffff',
   accentSoft: '#eef2ff',
@@ -71,7 +71,7 @@ export const dark: Colors = {
   neutralSoft: '#1e293b',
 };
 
-export const space = { xs: 4, sm: 8, md: 12, lg: 16, page: 20, xl: 24, xxl: 32 } as const;
+export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 export const pageMargin = 20;
 export const radius = { sm: 6, md: 8, lg: 12, pill: 999 } as const;
 export const font = {
@@ -81,7 +81,6 @@ export const font = {
   lead: 17,
   h2: 20,
   h1: 28,
-  display: 34,
 } as const;
 export const tabularNums: Pick<TextStyle, 'fontVariant'> = { fontVariant: ['tabular-nums'] };
 export const maxWidth = 760;

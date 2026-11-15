@@ -33,7 +33,7 @@ function FeedSkeleton() {
           style={{
             width: 168,
             height: 12,
-            borderRadius: 4,
+            borderRadius: radius.sm,
             backgroundColor: colors.surfaceAlt,
           }}
         />
@@ -57,7 +57,7 @@ function FeedSkeleton() {
               style={{
                 width: row % 2 === 0 ? '48%' : '56%',
                 height: 16,
-                borderRadius: 4,
+                borderRadius: radius.sm,
                 backgroundColor: colors.surfaceAlt,
               }}
             />
@@ -65,7 +65,7 @@ function FeedSkeleton() {
               style={{
                 width: '86%',
                 height: 12,
-                borderRadius: 4,
+                borderRadius: radius.sm,
                 backgroundColor: colors.surfaceAlt,
               }}
             />
@@ -73,7 +73,7 @@ function FeedSkeleton() {
               style={{
                 width: '38%',
                 height: 10,
-                borderRadius: 4,
+                borderRadius: radius.sm,
                 backgroundColor: colors.surfaceAlt,
               }}
             />
@@ -81,7 +81,7 @@ function FeedSkeleton() {
               style={{
                 width: '70%',
                 height: 12,
-                borderRadius: 4,
+                borderRadius: radius.sm,
                 backgroundColor: colors.surfaceAlt,
               }}
             />
@@ -90,7 +90,7 @@ function FeedSkeleton() {
             style={{
               width: 32,
               height: 22,
-              borderRadius: 4,
+              borderRadius: radius.sm,
               backgroundColor: colors.surfaceAlt,
             }}
           />
@@ -111,7 +111,7 @@ function FeedRow({ item, onPress }: { item: FeedCard; onPress: () => void }) {
       onPress={onPress}
       style={(state: PressableStateCallbackType & { hovered?: boolean }) => ({
         paddingHorizontal: pageMargin,
-        paddingVertical: space.lg,
+        paddingVertical: space.md,
         backgroundColor: state.pressed || state.hovered ? colors.surfaceAlt : colors.surface,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
@@ -127,7 +127,7 @@ function FeedRow({ item, onPress }: { item: FeedCard; onPress: () => void }) {
         }}
       >
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text numberOfLines={1} style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>
+          <Text numberOfLines={1} style={{ fontSize: font.body, fontWeight: '600', color: colors.text }}>
             {item.name}
           </Text>
           {item.one_liner ? (
@@ -135,7 +135,7 @@ function FeedRow({ item, onPress }: { item: FeedCard; onPress: () => void }) {
               numberOfLines={1}
               ellipsizeMode="tail"
               style={{
-                fontSize: 14,
+                fontSize: font.small,
                 color: colors.textMuted,
                 marginTop: space.xs,
                 lineHeight: 20,
@@ -173,11 +173,11 @@ function FeedRow({ item, onPress }: { item: FeedCard; onPress: () => void }) {
           ) : null}
         </View>
 
-        <View style={{ alignItems: 'flex-end', minWidth: 56, paddingTop: 2 }}>
+        <View style={{ alignItems: 'flex-end', minWidth: 56, paddingTop: space.xs }}>
           <Text
             style={[
               {
-                fontSize: 20,
+                fontSize: font.h2,
                 fontWeight: '700',
                 color: colors.accent,
                 lineHeight: 24,
@@ -187,8 +187,9 @@ function FeedRow({ item, onPress }: { item: FeedCard; onPress: () => void }) {
           >
             {score}
           </Text>
+          <Text style={{ fontSize: font.caption, color: colors.textMuted }}>Match</Text>
           {item.confidence < 0.5 ? (
-            <Text style={{ fontSize: 11, color: colors.textFaint, marginTop: space.xs }}>
+            <Text style={{ fontSize: font.caption, color: colors.textFaint, marginTop: space.xs }}>
               Partial data
             </Text>
           ) : null}
@@ -362,6 +363,9 @@ export default function FeedScreen() {
           maxWidth,
           alignSelf: 'center',
           backgroundColor: colors.surface,
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderColor: colors.border,
         }}
       >
         {loading && items.length === 0 ? (
@@ -397,7 +401,7 @@ export default function FeedScreen() {
                   minHeight: 44,
                   justifyContent: 'center',
                   paddingHorizontal: space.lg,
-                  paddingVertical: 10,
+                  paddingVertical: space.sm,
                   borderRadius: radius.md,
                   opacity: pressed ? 0.85 : 1,
                   ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
@@ -441,7 +445,7 @@ export default function FeedScreen() {
                   minHeight: 44,
                   justifyContent: 'center',
                   paddingHorizontal: space.lg,
-                  paddingVertical: 10,
+                  paddingVertical: space.sm,
                   borderRadius: radius.md,
                   opacity: pressed ? 0.85 : 1,
                   ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
