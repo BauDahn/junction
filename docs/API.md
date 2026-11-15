@@ -44,7 +44,7 @@ Cala Match. Detalle de cómo se calcula el puntaje en `docs/SPEC-grafo-afinidad.
 - `POST /api/sessions/{id}/mode` con `{mode}` → `{mode}`: guarda el modo activo de la sesión.
 - Todo dato viaja con `sources`; si no hay fuente, el campo no se devuelve.
 - Las etiquetas de sector y etapa generadas por Gemini a partir de la descripción de Cala llevan el sufijo ` (AI-tagged)` en `tags`, en `why_match` y en la etiqueta del `fact`.
-- `GET /api/stats` → `{catalog: {investors, startups, total, status}, cala?}`: tamaño y progreso del catálogo y, si el cliente de Cala las expone, sus métricas.
+- `GET /api/stats` → `{catalog: {investors, startups, total, status}, cala?, cala_usage: {date, total, by_class, by_who}}`: tamaño y progreso del catálogo, métricas del cliente y contadores de llamadas reales a Cala del día UTC. `by_class` separa `entities` y `knowledge`; `by_who` agrupa por `CALA_CLIENT_LABEL` o etiqueta local. Si Valkey no está disponible, `cala_usage` es `{}`.
 
 ## Contexto *(borrador, nuevo 14/11 noche)*
 Ingesta de contexto del usuario (deck PDF, nota de voz o texto libre) hacia el perfil de la sesión y edición manual de lo entendido.

@@ -5,13 +5,36 @@ from email.utils import format_datetime
 import httpx
 import pytest
 
-from canonizador.client import CalaClient
+from canonizador.client import CalaBudgetExceeded, CalaClient, _usage_memory, cala_usage
 
 
 class Cache:
     def __init__(self): self.data = {}
     def get_key(self, ns, key): return self.data.get((ns, key))
     def put_key(self, ns, key, value): self.data[(ns, key)] = value
+
+
+@pytest.mark.asyncio
+async def test_real_call_usage_cache_and_daily_cap(monkeypatch):
+    calls = 0
+    async def handler(request):
+        nonlocal calls
+        calls += 1
+        return response()
+    monkeypatch.setenv("CALA_CLIENT_LABEL", "test:catalog")
+    monkeypatch.setenv("CALA_DAILY_CALL_CAP", "1")
+    _usage_memory.clear()
+    http = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    client = CalaClient("x", client=http, entities_interval=0, cache=Cache())
+    await client.entities("one", "Company")
+    await client.entities("one", "Company")  # respuesta cacheada
+    with pytest.raises(CalaBudgetExceeded, match="Daily Cala call cap reached \(1\)"):
+        await client.entities("two", "Company")
+    usage = cala_usage(date=__import__("datetime").datetime.now(__import__("datetime").timezone.utc).date().isoformat())
+    assert calls == 1 and usage["total"] == 1
+    assert usage["by_class"] == {"entities": 1, "knowledge": 0}
+    assert usage["by_who"] == {"test:catalog": 1}
+    await http.aclose()
 
 
 def response(status=200, headers=None, data=None):

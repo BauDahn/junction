@@ -306,9 +306,15 @@ async def entity(entity_id: str, mode: str | None = None, session_id: str | None
             expanded = await asyncio.wait_for(expand_node(graph, cala, entity_id, stats), timeout=25)
         except asyncio.TimeoutError as exc:
             raise HTTPException(504, "Cala did not answer in time.") from exc
+        except Exception as exc:
+            if exc.__class__.__name__ == "CalaBudgetExceeded":
+                raise HTTPException(503, "Cala call cap reached.") from exc
+            raise
         if expanded is None:
             errors = stats.get("errors") or []
             message = " ".join(str(error.get("error", "")) for error in errors if isinstance(error, dict)).casefold()
+            if "daily cala call cap reached" in message:
+                raise HTTPException(503, "Cala call cap reached.")
             missing = any(token in message for token in ("not found", "not exist", "unknown entity", "404", "doesn't exist"))
             missing = missing or any(str(error.get("error", "")).strip("'\"") == str(entity_id)
                                      for error in errors if isinstance(error, dict))
@@ -390,6 +396,23 @@ def _stats_snapshot(catalog, cala):
                            "total": len({feature["id"] for feature in investors + startups}),
                            "status": catalog.status()}}
     stats = getattr(cala, "stats", None) if cala else None
+    remote = getattr(getattr(cala, "cache", None), "remote", None) if cala else None
+    if remote is None and cala is not None and hasattr(cala, "cache") and hasattr(cala.cache, "_run"):
+        remote = cala.cache
+    if remote is None:
+        try:
+            from canonizador.cache import remote_from_env
+            remote = remote_from_env()
+        except Exception:
+            remote = None
+    if remote is not None:
+        try:
+            from canonizador.client import cala_usage
+            output["cala_usage"] = cala_usage(remote)
+        except Exception:
+            output["cala_usage"] = {}
+    else:
+        output["cala_usage"] = {}
     if stats is not None:
         try:
             output["cala"] = stats() if callable(stats) else stats

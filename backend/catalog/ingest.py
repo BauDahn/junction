@@ -19,7 +19,7 @@ from statistics import quantiles
 import httpx
 
 from canonizador.cache import load_env
-from canonizador.client import CalaClient
+from canonizador.client import CalaBudgetExceeded, CalaClient
 from core.config import settings
 from core.llm import make_llm
 
@@ -1109,6 +1109,7 @@ async def run_catalog(
     page_size=100,
     today=None,
     lock_ttl=None,
+    max_calls=150,
 ):
     """Ejecuta las etapas 1–3 de forma reanudable y protegida con lock SET NX y renovación de TTL."""
     load_env()
@@ -1122,6 +1123,9 @@ async def run_catalog(
     if cala is None:
         owned_http = httpx.AsyncClient(timeout=120)
         cala = CalaClient(settings.cala_api_key, settings.cache_dir, client=owned_http, entities_interval=0.7)
+    if max_calls and hasattr(cala, "call_cap"):
+        cala.call_cap = max(0, int(max_calls))
+        cala._run_reserved = 0
     resolved_llm = _resolve_llm(llm)
 
     stop_heartbeat = asyncio.Event()
@@ -1145,9 +1149,16 @@ async def run_catalog(
     heartbeat_task = asyncio.create_task(_lock_heartbeat())
 
     try:
-        status, todo, attendees = await _fetch_stage1(
-            cala, kv, limit=limit, page_size=page_size, lock_token=token, lock_ttl=effective_lock_ttl,
-        )
+        try:
+            status, todo, attendees = await _fetch_stage1(
+                cala, kv, limit=limit, page_size=page_size, lock_token=token, lock_ttl=effective_lock_ttl,
+            )
+        except CalaBudgetExceeded:
+            status = _json_load(kv.get(STATUS_KEY)) or {}
+            status["stage"] = "paused"
+            status["stopped"] = f"call budget reached ({max_calls})"
+            _save_state(kv, status, _json_load(kv.get(TODO_KEY)) or [], lock_token=token, lock_ttl=effective_lock_ttl)
+            return status
         status.pop("stopped", None)
         existing_done = int(status.get("done") or 0)
         if limit is not None:
@@ -1172,7 +1183,7 @@ async def run_catalog(
 
         todo_set = set(todo)
         state_lock = asyncio.Lock()
-        payment_breaker = {"consecutive": 0, "tripped": False}
+        payment_breaker = {"consecutive": 0, "tripped": False, "budget": False}
         payment_trip = max(1, int(os.getenv("CATALOG_402_TRIP", "5")))
         cala_sem = asyncio.Semaphore(max(1, int(cala_concurrency)))
         llm_sem = asyncio.Semaphore(max(1, int(llm_concurrency)))
@@ -1249,6 +1260,13 @@ async def run_catalog(
                             error_exc = exc
                             break
                         raise
+            except CalaBudgetExceeded:
+                async with state_lock:
+                    payment_breaker["budget"] = True
+                    status["stage"] = "paused"
+                    status["stopped"] = f"call budget reached ({max_calls})"
+                    _save_state(kv, status, todo, lock_token=token, lock_ttl=effective_lock_ttl)
+                return
             except Exception as exc:
                 logger.warning("Fallo Stage 2 en Cala para %s: %s", eid, exc)
                 async with state_lock:
@@ -1304,6 +1322,11 @@ async def run_catalog(
 
         if lock_lost_error[0] is not None:
             raise lock_lost_error[0]
+        if payment_breaker["budget"]:
+            status["stage"] = "paused"
+            status["stopped"] = f"call budget reached ({max_calls})"
+            _save_state(kv, status, todo, lock_token=token, lock_ttl=effective_lock_ttl)
+            return status
         if payment_breaker["tripped"]:
             status["stage"] = "paused"
             _save_state(kv, status, todo, lock_token=token, lock_ttl=effective_lock_ttl)

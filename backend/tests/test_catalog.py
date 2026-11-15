@@ -437,6 +437,34 @@ def test_payment_breaker_pauses_and_success_resets_consecutive_count(monkeypatch
     asyncio.run(scenario())
 
 
+def test_run_call_budget_pauses_and_resumes(monkeypatch):
+    monkeypatch.setenv("VALKEY_URL", "")
+    monkeypatch.setattr(catalog_ingest, "_sleep", lambda _: asyncio.sleep(0))
+    attendees = {eid: {"id": eid, "name": eid} for eid in ("a", "b")}
+    monkeypatch.setattr(catalog_ingest, "_fetch_stage1", _fake_stage1(attendees))
+
+    class Cala:
+        call_cap = 0
+        _run_reserved = 0
+        async def retrieve(self, eid, **kwargs):
+            from canonizador.client import CalaBudgetExceeded
+            if self._run_reserved >= self.call_cap:
+                raise CalaBudgetExceeded(self.call_cap)
+            self._run_reserved += 1
+            return {}
+
+    async def scenario():
+        kv, cala = MemoryCatalogKV(), Cala()
+        first = await run_catalog(cala=cala, llm=None, kv=kv, store=_FallbackGraphStore(kv),
+                                  cala_concurrency=1, max_calls=1)
+        assert first["stage"] == "paused" and first["stopped"] == "call budget reached (1)"
+        assert json.loads(kv.get(TODO_KEY)) == ["b"]
+        second = await run_catalog(cala=cala, llm=None, kv=kv, store=_FallbackGraphStore(kv),
+                                   cala_concurrency=1, max_calls=2)
+        assert second["stage"] == "done"
+    asyncio.run(scenario())
+
+
 def test_put_expansion_pr81_and_legacy_adapter(tmp_path, monkeypatch):
     monkeypatch.setenv("VALKEY_URL", "")
     attendees, entities = _make_simulated_dataset(2)
