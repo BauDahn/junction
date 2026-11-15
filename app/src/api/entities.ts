@@ -1,4 +1,4 @@
-import { ApiError, type Source } from './index';
+import { ApiError, normalizeSources, type Source } from './index';
 
 export type EntityMode = 'raising' | 'investing';
 
@@ -71,13 +71,7 @@ function findMockEntity(id: string, _mode: EntityMode): EntityDetail | null {
   };
 }
 
-function sanitizeSources(raw: unknown): Source[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.filter(
-    (s): s is Source =>
-      Boolean(s && typeof s === 'object' && typeof (s as Source).name === 'string' && typeof (s as Source).url === 'string'),
-  );
-}
+const sanitizeSources = normalizeSources;
 
 function sanitizeStrings(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
