@@ -17,6 +17,7 @@ from catalog import (
 )
 from catalog.__main__ import main as catalog_cli
 from catalog.ingest import STATUS_KEY, TODO_KEY, _FallbackGraphStore
+import catalog.ingest as catalog_ingest
 
 
 class FakeRedis:
@@ -312,6 +313,62 @@ def test_resumable_limit_and_lock_enforcement(tmp_path, monkeypatch):
             await http1.aclose()
 
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("failures,expected_status", [(2, 200), (5, 402), (1, 404)])
+def test_stage2_retries_payment_failures_and_records_terminal_errors(monkeypatch, failures, expected_status):
+    monkeypatch.setenv("VALKEY_URL", "")
+    monkeypatch.setenv("CATALOG_402_WAIT", "0.01")
+    sleeps = []
+
+    async def fake_sleep(seconds):
+        sleeps.append(seconds)
+
+    monkeypatch.setattr(catalog_ingest, "_sleep", fake_sleep)
+    ids = ["target", "other"] if expected_status == 402 else ["target"]
+    attendees = {eid: {"id": eid, "name": eid, "type": "Company"} for eid in ids}
+    monkeypatch.setattr(catalog_ingest, "_fetch_stage1", _fake_stage1(attendees))
+
+    class FakeCala:
+        def __init__(self):
+            self.calls = {}
+
+        async def retrieve(self, eid, **kwargs):
+            self.calls[eid] = self.calls.get(eid, 0) + 1
+            if eid == "target" and self.calls[eid] <= failures:
+                response = httpx.Response(402 if expected_status == 200 else expected_status, request=httpx.Request("GET", f"https://cala.test/{eid}"))
+                raise httpx.HTTPStatusError(f"Cala {expected_status}", request=response.request, response=response)
+            return {}
+
+    async def scenario():
+        kv = MemoryCatalogKV()
+        cala = FakeCala()
+        status = await run_catalog(cala=cala, llm=None, kv=kv, store=_FallbackGraphStore(kv))
+        if expected_status == 200:
+            assert cala.calls["target"] == 3
+            assert status.get("errors", 0) == 0
+            assert kv.get("cat:v1:failed:target") is None
+        elif expected_status == 402:
+            assert cala.calls["target"] == 5
+            assert cala.calls["other"] == 1
+            failed = json.loads(kv.get("cat:v1:failed:target"))
+            assert failed["status"] == 402 and failed["error"] and failed["at"]
+            assert status["payment_required"] == 1 and status["errors"] == 1
+            assert "target" in json.loads(kv.get(TODO_KEY))
+        else:
+            assert cala.calls["target"] == 1
+            failed = json.loads(kv.get("cat:v1:failed:target"))
+            assert failed["status"] == 404
+            assert status["not_found"] == 1 and status["errors"] == 1
+        assert len(sleeps) == (2 if expected_status == 200 else 4 if expected_status == 402 else 0)
+
+    asyncio.run(scenario())
+
+
+def _fake_stage1(attendees):
+    async def fetch(cala, kv, limit, page_size=100, *, lock_token=None, lock_ttl=600):
+        return ({"done": 0, "errors": 0}, list(attendees), attendees)
+    return fetch
 
 
 def test_put_expansion_pr81_and_legacy_adapter(tmp_path, monkeypatch):
