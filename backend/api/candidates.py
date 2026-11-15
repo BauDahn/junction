@@ -3,6 +3,7 @@ import time
 from .affinity import rank, score_candidate, ticket_bounds
 from .enrich import rounds_for
 from .graph_port import neighbors_batch
+from .investor_pool import portfolio_investors
 
 _BFS = {}
 
@@ -134,6 +135,9 @@ def candidate_for_entity(ident, session_id, profile, mode, catalog, store):
     else:
         kind = "investor" if mode == "raising" else "startup"
     candidate = _feature_candidate(features, kind, graph_data, ident) if features else None
+    if candidate is None and not features and kind == "investor":
+        candidate = next((item for item in portfolio_investors(catalog, store)
+                          if str(item["id"]) == str(ident)), None)
     if candidate is None and node:
         edges = neighbors_batch(store, [ident]).get(str(ident), [])
         local_data = {"nodes": {str(ident): node}, "edges": [edge for edge, _ in edges]}
@@ -193,6 +197,16 @@ def build_feed(session_id, profile, mode, catalog, store, today=None):
             distance, sources = graph_data["distance"][ident]
             candidate["distance"] = distance
             candidate["distance_sources"] = sources
+            candidates.append(candidate)
+            seen.add(ident)
+    if mode == "raising":
+        for candidate in portfolio_investors(catalog, store):
+            ident = str(candidate["id"])
+            if ident in seen or ident in seeds:
+                continue
+            distance = graph_data["distance"].get(ident)
+            candidate["distance"] = distance[0] if distance else None
+            candidate["distance_sources"] = distance[1] if distance else []
             candidates.append(candidate)
     normalized = normalize_profile(profile, mode, seeds)
     results = []
