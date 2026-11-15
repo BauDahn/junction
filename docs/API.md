@@ -77,10 +77,13 @@ El perfil muestra el contexto como **el texto del usuario, tal cual**, no como e
 - `GET /api/me/context/raw` → `{text, updated_at}`.
 - `PUT /api/me/context/raw` con `{text}` → `{text, updated_at, profile_updated: bool}`. Guarda el texto sin tocarlo y vuelve a extraer el perfil (sector, etapa, región, ticket) con Gemini.
 - `POST /api/me/context/raw/append` con `{text}` → lo mismo, agregando el texto al final (una línea nueva). Lo usan la nota de voz confirmada y el asistente cuando el usuario cuenta algo de sí mismo.
+- Los tres endpoints requieren `Authorization: Bearer <token>`; el límite es 8.000 caracteres y se responde 422 al superarlo.
 - Un PDF subido por `POST /api/sessions/{id}/context/pdf` agrega una línea propia al texto (`From <archivo>: <resumen de una línea>`).
+- Las notas de texto y voz guardadas desde `backend/context` también agregan su texto al contexto crudo.
 
 ## Voz con vista previa *(borrador, 15/11)*
 - `POST /api/transcribe` (multipart `audio`) → `{transcript, text}`. **No modifica nada**: sirve para mostrar lo que se entendió. Si el usuario lo confirma con el botón "Add to context", la app llama a `POST /api/me/context/raw/append` con `text`.
+- Acepta los mismos formatos, tamaño máximo (10 MB) y duración máxima (120 segundos) que el audio del chat; es público y no requiere token.
 - Mientras el usuario habla, la vista en vivo la hace el navegador (reconocimiento de voz del propio navegador, con resultados parciales); la transcripción del backend es la que vale al confirmar.
 
 ## Perfil y recomendaciones *(borrador)*

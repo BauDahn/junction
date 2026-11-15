@@ -27,11 +27,12 @@ class FakeLLM:
 @pytest.fixture
 def setup_context(tmp_path, monkeypatch):
     monkeypatch.setenv("CHAT_DB_PATH", str(tmp_path / "chat.db"))
+    monkeypatch.setenv("APP_DB_PATH", str(tmp_path / "chat.db"))
     llm = FakeLLM()
     paths = []
     async def transcriber(path, hint=None):
         paths.append(Path(path))
-        return {"text": "Stayflow raises a Seed round in Barcelona", "duration_s": 10}
+        return {"transcript": "Stayflow raises a Seed round in Barcelona", "text": "Stayflow raises a Seed round in Barcelona", "duration_s": 10}
     backend_app.app.dependency_overrides[get_llm] = lambda: llm
     backend_app.app.dependency_overrides[chat_get_llm] = lambda: llm
     backend_app.app.dependency_overrides[get_transcriber] = lambda: transcriber
@@ -60,6 +61,7 @@ def test_pdf_sample_extracts_and_persists_context(setup_context):
     assert context["what_we_understood"]["target_stage"] == ["Seed"]
     assert context["sources"][0]["pages"] == 6
     assert context["context_strength"]["signals_total"] == 6
+    assert store.get_raw_context(sid)["text"].startswith("From sample_deck.pdf:")
 
 
 def test_voice_uses_transcriber_and_removes_temp_file(setup_context):
@@ -68,12 +70,14 @@ def test_voice_uses_transcriber_and_removes_temp_file(setup_context):
     assert response.status_code == 200, response.text
     assert paths and not paths[0].exists()
     assert response.json()["source"]["kind"] == "voice"
+    assert store.get_raw_context(sid)["text"] == "Stayflow raises a Seed round in Barcelona"
 
 
 def test_note_understood_and_delete_source(setup_context):
     client, sid, _, _ = setup_context
     added = client.post(f"/api/sessions/{sid}/context/note", json={"text": "We are raising Seed in Barcelona", "title": "Pitch"}).json()
     source_id = added["source"]["id"]
+    assert store.get_raw_context(sid)["text"] == "We are raising Seed in Barcelona"
     patched = client.patch(f"/api/sessions/{sid}/context/understood", json={"geography": ["Barcelona", "SPAIN"], "seeking": ["Climate investors"]})
     assert patched.status_code == 200
     assert patched.json()["profile"]["seeking"] == ["Climate investors"]
@@ -82,6 +86,35 @@ def test_note_understood_and_delete_source(setup_context):
     assert client.get(f"/api/sessions/{sid}/context").json()["what_we_understood"]["geography"] == []
     deleted = client.delete(f"/api/sessions/{sid}/context/sources/{source_id}")
     assert deleted.status_code == 200 and deleted.json()["sources"] == []
+
+
+def test_authenticated_raw_context_roundtrip_and_profile_reextract(setup_context):
+    client, _, llm, _ = setup_context
+    registered = client.post("/api/auth/register", json={"email": "raw@example.com", "password": "secret-pass-123", "name": "Founder", "company": "Acme", "role": "raiser"}).json()
+    headers = {"Authorization": f"Bearer {registered['token']}"}
+    assert client.get("/api/me/context/raw").status_code == 401
+    assert client.get("/api/me/context/raw", headers=headers).json() == {"text": "", "updated_at": None}
+    raw = "Acme\nSEED — Montréal é"
+    response = client.put("/api/me/context/raw", json={"text": raw}, headers=headers)
+    assert response.status_code == 200 and response.json()["text"] == raw
+    assert response.json()["profile_updated"] is True
+    assert llm.calls[-1][0].endswith(raw)
+    appended = client.post("/api/me/context/raw/append", json={"text": "Next line"}, headers=headers)
+    assert appended.json()["text"] == raw + "\nNext line"
+    assert llm.calls[-1][0].endswith(raw + "\nNext line")
+    assert client.put("/api/me/context/raw", json={"text": "x" * 8001}, headers=headers).status_code == 422
+
+
+def test_transcribe_preview_does_not_mutate_profile_or_messages(setup_context):
+    client, sid, _, _ = setup_context
+    before_profile = client.get(f"/api/sessions/{sid}/profile").json()
+    before_messages = client.get(f"/api/sessions/{sid}/messages").json()
+    response = client.post("/api/transcribe", files={"audio": ("note.wav", b"audio-data", "audio/wav")})
+    assert response.status_code == 200
+    assert response.json() == {"transcript": "Stayflow raises a Seed round in Barcelona", "text": "Stayflow raises a Seed round in Barcelona"}
+    after_profile = client.get(f"/api/sessions/{sid}/profile").json()
+    assert {k: v for k, v in after_profile.items() if k != "updated_at"} == {k: v for k, v in before_profile.items() if k != "updated_at"}
+    assert client.get(f"/api/sessions/{sid}/messages").json() == before_messages
 
 
 def test_context_error_responses(setup_context, monkeypatch):

@@ -22,6 +22,7 @@ def _connect():
     CREATE TABLE IF NOT EXISTS messages(id TEXT PRIMARY KEY, session_id TEXT NOT NULL, role TEXT NOT NULL, text TEXT NOT NULL, transcript TEXT, sources_json TEXT NOT NULL, cards_json TEXT NOT NULL, created_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS messages_session_created ON messages(session_id, created_at, id);
     CREATE TABLE IF NOT EXISTS profiles(session_id TEXT PRIMARY KEY, json TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS context_raw(session_id TEXT PRIMARY KEY, text TEXT NOT NULL, updated_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS recommendations(session_id TEXT PRIMARY KEY, status TEXT NOT NULL, json TEXT NOT NULL, fingerprint TEXT NOT NULL, updated_at TEXT NOT NULL, notified INTEGER NOT NULL DEFAULT 0);
     """)
     columns = {row["name"] for row in conn.execute("PRAGMA table_info(messages)")}
@@ -70,6 +71,19 @@ def get_profile(session_id):
 def save_profile(session_id, profile):
     with _connect() as db:
         db.execute("INSERT INTO profiles VALUES (?, ?, ?) ON CONFLICT(session_id) DO UPDATE SET json=excluded.json, updated_at=excluded.updated_at", (session_id, json.dumps(profile, ensure_ascii=False), profile["updated_at"]))
+
+
+def get_raw_context(session_id):
+    with _connect() as db:
+        row = db.execute("SELECT text, updated_at FROM context_raw WHERE session_id=?", (session_id,)).fetchone()
+    return {"text": row["text"], "updated_at": row["updated_at"]} if row else {"text": "", "updated_at": None}
+
+
+def save_raw_context(session_id, text):
+    updated_at = now_iso()
+    with _connect() as db:
+        db.execute("INSERT INTO context_raw VALUES (?, ?, ?) ON CONFLICT(session_id) DO UPDATE SET text=excluded.text, updated_at=excluded.updated_at", (session_id, text, updated_at))
+    return {"text": text, "updated_at": updated_at}
 
 
 def get_recommendations(session_id):
