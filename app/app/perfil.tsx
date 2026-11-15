@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { getEventById } from '../src/api/events';
 import { getEntityDetail } from '../src/api/entities';
 import RawContextVoiceCard from '../src/components/RawContextVoiceCard';
+import { FavoritesReportButton } from '../src/components/FavoritesReportButton';
 import { useMode } from '../src/mode';
 import { font, maxWidth, pageMargin, radius, space, tabularNums, useTheme } from '../src/theme';
 
@@ -102,6 +103,7 @@ export default function PerfilScreen() {
               </View>
             );
           }) : <Text style={styles.empty}>No saved investors yet.</Text>}
+          <FavoritesReportButton />
           <Text style={[styles.heading, { marginTop: space.lg }]}>My events</Text>
           {myEventIds.length ? myEventIds.map((id) => {
             const event = getEventById(id);
