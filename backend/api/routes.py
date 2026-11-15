@@ -5,8 +5,8 @@ import json
 import unicodedata
 from collections import Counter
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from pydantic import BaseModel, Field, field_validator
 from chat import store as chat_store
 from .affinity import format_amount, rank
 from . import enrich
@@ -16,6 +16,31 @@ from .graph_port import get_graph, neighbors_batch
 
 router = APIRouter()
 _cala = None
+
+
+class FavoritesReportRequest(BaseModel):
+    entity_ids: list[str] = Field(min_length=1, max_length=10)
+    session_id: str | None = None
+    mode: str | None = None
+
+    @field_validator("entity_ids", mode="before")
+    @classmethod
+    def normalize_entity_ids(cls, value):
+        if isinstance(value, list):
+            return list(dict.fromkeys(item.strip() for item in value if isinstance(item, str)))
+        return value
+
+    @field_validator("entity_ids")
+    @classmethod
+    def validate_entity_ids(cls, value):
+        if any(not item or len(item) > 200 for item in value):
+            raise ValueError("entity ids must be non-empty and at most 200 characters")
+        return value
+
+
+def get_report_llm():
+    from core.llm import make_llm
+    return make_llm(tier="fast")[0]
 
 
 def get_cala():
@@ -423,6 +448,65 @@ async def entity(entity_id: str, mode: str | None = None, session_id: str | None
         if not graph.get_node(entity_id) and not catalog.get_features(entity_id):
             raise HTTPException(404, "Entity not found in the graph or in Cala.")
     return await asyncio.to_thread(_detail_sync, entity_id, session_id, profile, current_mode, catalog, graph)
+
+
+@router.post("/api/favorites/report")
+async def favorites_report(body: FavoritesReportRequest, catalog=Depends(get_catalog),
+                           graph=Depends(get_graph), cala=Depends(get_cala), llm=Depends(get_report_llm)):
+    from .favorites_report import action_plan, render_pdf
+
+    current_mode = _mode(body.mode, body.session_id)
+    if body.session_id:
+        _session(body.session_id)
+    profile = chat_store.get_profile(body.session_id) or {} if body.session_id else {}
+
+    async def create_report():
+        omitted_by_index = [None] * len(body.entity_ids)
+        failure_codes = [None] * len(body.entity_ids)
+        entries_by_index = [None] * len(body.entity_ids)
+        semaphore = asyncio.Semaphore(2)
+
+        async def load(index, entity_id):
+            async with semaphore:
+                try:
+                    detail = await entity(entity_id, current_mode, body.session_id, catalog, graph, cala)
+                    entries_by_index[index] = {"detail": detail, "plan": None}
+                except HTTPException as exc:
+                    failure_codes[index] = exc.status_code
+                    reason = {404: "Not found in the catalog or in Cala", 503: "Cala daily call cap reached",
+                              504: "Cala did not answer in time"}.get(exc.status_code, "Cala request failed")
+                    omitted_by_index[index] = {"id": entity_id, "reason": reason}
+                except Exception:
+                    failure_codes[index] = 502
+                    omitted_by_index[index] = {"id": entity_id, "reason": "Cala request failed"}
+
+        await asyncio.gather(*(load(index, entity_id) for index, entity_id in enumerate(body.entity_ids)))
+        entries = [entry for entry in entries_by_index if entry is not None]
+        omitted = [row for row in omitted_by_index if row is not None]
+        if not entries:
+            status = 404 if failure_codes and all(code == 404 for code in failure_codes) else (
+                503 if 503 in failure_codes else 504 if 504 in failure_codes else 502)
+            message = {404: "No favorites were found in the catalog or Cala.",
+                       503: "Cala's daily call cap was reached.", 504: "Cala did not answer in time.",
+                       502: "Cala request failed for all favorites."}[status]
+            raise HTTPException(status, message)
+        plan_semaphore = asyncio.Semaphore(3)
+
+        async def plan(entry):
+            async with plan_semaphore:
+                entry["plan"] = await action_plan(llm, entry["detail"], profile)
+
+        await asyncio.gather(*(plan(entry) for entry in entries))
+        pdf = await asyncio.to_thread(render_pdf, entries, omitted, current_mode, datetime.now(timezone.utc))
+        headers = {"Content-Disposition": 'attachment; filename="cala-match-favorites.pdf"'}
+        if omitted:
+            headers["X-Favorites-Not-Included"] = ",".join(row["id"] for row in omitted)
+        return Response(content=pdf, media_type="application/pdf", headers=headers)
+
+    try:
+        return await asyncio.wait_for(create_report(), timeout=90)
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(504, "The report took too long.") from exc
 
 
 def _fold_name(value):

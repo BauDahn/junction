@@ -73,6 +73,7 @@ app.add_middleware(
     allow_origins=[o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()],
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition", "X-Favorites-Not-Included"],
 )
 
 
