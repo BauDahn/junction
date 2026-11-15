@@ -494,7 +494,7 @@ async def favorites_report(body: FavoritesReportRequest, catalog=Depends(get_cat
 
         async def plan(entry):
             async with plan_semaphore:
-                entry["plan"] = await action_plan(llm, entry["detail"], profile)
+                entry["plan"] = await action_plan(llm, entry["detail"], profile, current_mode)
 
         await asyncio.gather(*(plan(entry) for entry in entries))
         pdf = await asyncio.to_thread(render_pdf, entries, omitted, current_mode, datetime.now(timezone.utc))
