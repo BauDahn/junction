@@ -1,0 +1,92 @@
+/* Host-Verified Live DOM Computed Styles & CSS Variables (Browser Subagent c5eafc4c)
+ * Verified origins: attio.com, mercury.com, midday.ai, twenty.com, luma.com (blocked_origins: none)
+ * Direct token mapping for Cala Match (Anti-AI-slop B2B Event & Deal-Flow)
+ */
+
+:root {
+  /* =========================================================
+     1. ATTIO (https://attio.com)
+     ========================================================= */
+  --attio-font-body: 'Inter', sans-serif;
+  --attio-font-display: 'Inter Tight', 'Inter', sans-serif;
+  --attio-h1-size: clamp(64px, 16px + 5.333svh, 80px);
+  /* Gray scale tokens: --gray1 .. --gray12 */
+  --attio-cta-bg: #18181b;
+  --attio-cta-radius: 10px;
+
+  /* =========================================================
+     2. MERCURY (https://mercury.com)
+     ========================================================= */
+  --mercury-font-body: 'Arcadia Sans', sans-serif;
+  --mercury-font-display: 'arcadia-display-3', 'Arcadia Sans', sans-serif;
+  --mercury-ink-primary: #0B0C0E;
+  --mercury-surface-primary: #4361EE;
+  --mercury-cta-radius: 9999px;
+
+  /* =========================================================
+     3. MIDDAY (https://midday.ai)
+     ========================================================= */
+  --midday-font-body: 'hedvig_letters_sans', sans-serif;
+  --midday-font-display: 'hedvig_letters_serif', serif;
+  --midday-background-hsl: 0 0% 5%; /* #0c0c0c */
+  --midday-background: #0c0c0c;
+  --midday-primary-hsl: 0 0% 98%;   /* #ffffff */
+  --midday-primary: #ffffff;
+  --midday-border-hsl: 0 0% 15%;
+
+  /* =========================================================
+     4. TWENTY (https://twenty.com)
+     ========================================================= */
+  --twenty-font-display: 'Instrument Serif', serif;
+  --twenty-font-body: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --twenty-ink-primary: #161616;
+  /* Beveled button uses CSS clip-path */
+
+  /* =========================================================
+     5. LUMA (https://luma.com)
+     ========================================================= */
+  --luma-ink-primary: #0F0F11;
+  --luma-primary-color: #2e66ff;
+  --luma-cranberry-content: #f43f5e;
+  --luma-city-column: min(12.75rem, calc((100vw - 3rem) / 3));
+
+  /* =========================================================
+     CALA MATCH — DIRECT DESIGN TOKEN MAPPING
+     ========================================================= */
+  --cala-canvas: #f8f9fc;
+  --cala-surface: #ffffff;
+  --cala-ink: #0f172a;
+  --cala-muted-ink: #6b7280;
+  --cala-accent: #3730A3;
+  --cala-border: 1px solid #e2e8f0;
+  --cala-border-subtle: 1px solid rgba(15, 23, 42, 0.08);
+  --cala-shadow: none;
+  --cala-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --cala-radius-card: 8px;
+  --cala-radius-cta: 6px;
+}
+
+/* Reference Computed Element Primitives for Cala Match */
+.cala-body {
+  background-color: var(--cala-canvas);
+  color: var(--cala-ink);
+  font-family: var(--cala-font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+.cala-card {
+  background-color: var(--cala-surface);
+  border: var(--cala-border);
+  border-radius: var(--cala-radius-card);
+  box-shadow: var(--cala-shadow);
+}
+
+.cala-cta-primary {
+  background-color: var(--cala-accent);
+  color: #ffffff;
+  border: 1px solid var(--cala-accent);
+  border-radius: var(--cala-radius-cta);
+  box-shadow: none;
+  font-family: var(--cala-font-sans);
+  font-weight: 500;
+}

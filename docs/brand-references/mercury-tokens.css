@@ -1,0 +1,60 @@
+/* Mercury Design Tokens & Layout Rules
+ * Source: https://mercury.com & https://fontofweb.com/tokens/mercury.com
+ * Extracted for Cala Match brand reference (indigo-adjacent accent, tabular-nums, hairline dividers)
+ */
+
+:root {
+  /* Dark Product Interface Mode */
+  --mercury-canvas: #000000;
+  --mercury-surface: #171721;
+  --mercury-surface-elevated: #1C1C23;
+  --mercury-ink: #EDEDF3;
+  --mercury-muted-ink: #C3C3CC;
+  --mercury-secondary-ink: #70707D;
+  --mercury-border-subtle: #28253B;
+
+  /* Warm Marketing Mode */
+  --mercury-warm-canvas: #F6F5F2;
+  --mercury-warm-ink: #272735;
+  --mercury-warm-muted: #707393;
+  --mercury-border-warm: #EFEEE9;
+
+  /* Shared Accent */
+  --mercury-accent: #5266EB;
+  --mercury-accent-hover: #535461;
+
+  /* Typography */
+  --mercury-font-sans: 'Arcadia', 'Inter', sans-serif;
+  --mercury-font-display: 'Arcadia Display-Variable', 'Arcadia', sans-serif;
+
+  /* Layout Rhythm */
+  --mercury-gutter: 2rem;
+  --mercury-section-gap: 5rem;
+  --mercury-section-large: 8rem;
+  --mercury-component-gap: 1.5rem;
+}
+
+.mercury-container {
+  padding: 0 32px;
+  margin: 0 auto;
+}
+
+.mercury-financial-figure {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.mercury-divider-light {
+  border-bottom: 1px solid var(--mercury-border-warm);
+}
+
+.mercury-panel-dark {
+  background-color: var(--mercury-surface);
+  border: 1px solid var(--mercury-border-subtle);
+  border-radius: 0.75rem;
+  padding: 1.5rem 2rem;
+}
+
+/* Key Asset URLs observed in tavily_extract (https://mercury.com):
+ * Favicon / Apple Icon: https://mercury.com/apple-icon.png?apple-icon.24duaeqfro1-o.png
+ */

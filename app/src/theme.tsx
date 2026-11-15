@@ -1,7 +1,9 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useColorScheme, type TextStyle } from 'react-native';
 
-/** Minimalist Cala Match design tokens: single indigo accent, clean neutrals, 1px borders, zero decorative shadows. */
+/** calado design tokens: corporate colors are white and #006CFF. Single blue accent, hairline 1px borders, zero decorative shadows. */
+export const brandBlue = '#006CFF';
 export type Colors = {
   bg: string;
   surface: string;
@@ -29,19 +31,19 @@ export type Colors = {
 };
 
 export const light: Colors = {
-  bg: '#f8f9fc',
+  bg: '#f1f6ff',
   surface: '#ffffff',
-  surfaceAlt: '#f1f5f9',
-  border: '#e2e8f0',
-  text: '#0f172a',
+  surfaceAlt: '#e8f0fd',
+  border: '#e6edf8',
+  text: '#0b1424',
   textMuted: '#475569',
   textFaint: '#475569',
-  accent: '#3730A3',
+  accent: '#006CFF',
   accentText: '#ffffff',
-  accentSoft: '#eef2ff',
+  accentSoft: '#e8f1ff',
   secondary: '#006CFF',
   secondaryText: '#ffffff',
-  secondarySoft: '#eaf2ff',
+  secondarySoft: '#e8f1ff',
   danger: '#b42318',
   dangerSoft: '#fef2f2',
   confirmed: '#166534',
@@ -55,19 +57,19 @@ export const light: Colors = {
 };
 
 export const dark: Colors = {
-  bg: '#0b1120',
-  surface: '#111827',
-  surfaceAlt: '#1e293b',
-  border: '#273449',
+  bg: '#070d1a',
+  surface: '#0d1526',
+  surfaceAlt: '#16213a',
+  border: '#1b2a45',
   text: '#f1f5f9',
   textMuted: '#94a3b8',
   textFaint: '#94a3b8',
-  accent: '#818cf8',
-  accentText: '#0b1120',
-  accentSoft: '#1e1b4b',
-  secondary: '#5AA2FF',
-  secondaryText: '#0b1120',
-  secondarySoft: '#132b4a',
+  accent: '#4D96FF',
+  accentText: '#04101f',
+  accentSoft: '#0f2747',
+  secondary: '#4D96FF',
+  secondaryText: '#04101f',
+  secondarySoft: '#0f2747',
   danger: '#fca5a5',
   dangerSoft: '#3a1b25',
   confirmed: '#6ee7b7',
@@ -82,7 +84,7 @@ export const dark: Colors = {
 
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 export const pageMargin = 20;
-export const radius = { sm: 6, md: 8, lg: 12, pill: 999 } as const;
+export const radius = { sm: 8, md: 12, lg: 20, pill: 999 } as const;
 export const font = {
   caption: 12,
   small: 13,
@@ -104,24 +106,30 @@ export const shadow = {
   elevation: 0,
 } as const;
 
-export type Theme = { mode: 'dark' | 'light'; colors: Colors };
+export type ThemePreference = 'system' | 'light' | 'dark';
+export type Theme = { mode: 'dark' | 'light'; colors: Colors; preference: ThemePreference; setPreference: (next: ThemePreference) => void };
 
-const ThemeContext = createContext<Theme>({ mode: 'light', colors: light });
+const THEME_KEY = 'calado_theme_preference';
+const ThemeContext = createContext<Theme>({ mode: 'light', colors: light, preference: 'system', setPreference: () => {} });
 
 /**
- * Provides theme colors across the app. Defaults to light mode.
+ * Provides theme colors across the app. The user's choice (system, light or dark) is persisted.
  */
-export function ThemeProvider({
-  mode = 'light',
-  children,
-}: {
-  mode?: 'dark' | 'light' | 'system';
-  children: ReactNode;
-}) {
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const scheme = useColorScheme();
-  const resolved = mode === 'system' ? (scheme === 'dark' ? 'dark' : 'light') : mode;
+  const [preference, setPreferenceState] = useState<ThemePreference>('system');
+  useEffect(() => {
+    AsyncStorage.getItem(THEME_KEY).then((saved) => {
+      if (saved === 'light' || saved === 'dark' || saved === 'system') setPreferenceState(saved);
+    }).catch(() => {});
+  }, []);
+  const setPreference = (next: ThemePreference) => {
+    setPreferenceState(next);
+    void AsyncStorage.setItem(THEME_KEY, next).catch(() => {});
+  };
+  const resolved = preference === 'system' ? (scheme === 'dark' ? 'dark' : 'light') : preference;
   return (
-    <ThemeContext.Provider value={{ mode: resolved, colors: resolved === 'light' ? light : dark }}>
+    <ThemeContext.Provider value={{ mode: resolved, colors: resolved === 'light' ? light : dark, preference, setPreference }}>
       {children}
     </ThemeContext.Provider>
   );

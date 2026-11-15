@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { useRouter } from 'expo-router';
 import { useMode, type MatchMode } from '../src/mode';
 import { font, pageMargin, radius, space, useTheme } from '../src/theme';
+import Logo from '../src/ui/Logo';
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const roles: { value: MatchMode; label: string; description: string }[] = [
@@ -24,17 +25,17 @@ export default function OnboardingScreen() {
 
   const styles = StyleSheet.create({
     page: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: pageMargin, backgroundColor: colors.bg },
-    panel: { width: '100%', maxWidth: 480, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, padding: space.xl, gap: space.lg },
+    panel: { width: '100%', maxWidth: 480, backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.xl, gap: space.lg },
     headingGroup: { gap: space.sm },
-    heading: { fontSize: font.h1, fontWeight: '700', color: colors.text },
+    heading: { fontSize: 26, lineHeight: 32, fontWeight: '800', letterSpacing: -0.6, color: colors.text },
     body: { fontSize: font.body, color: colors.textMuted, lineHeight: 22 },
-    tabs: { flexDirection: 'row', borderBottomWidth: 1, borderColor: colors.border },
-    tab: { flex: 1, minWidth: 0, minHeight: 44, padding: space.md, borderColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+    tabs: { flexDirection: 'row', backgroundColor: colors.surfaceAlt, borderRadius: radius.pill, padding: 4 },
+    tab: { flex: 1, minWidth: 0, minHeight: 44, padding: space.md, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
     tabText: { fontWeight: '600' },
     formGroup: { gap: space.md },
     field: { gap: space.xs, minWidth: 0 },
     label: { color: colors.text, fontSize: font.small, fontWeight: '600' },
-    input: { minHeight: 44, fontSize: 16, color: colors.text, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: space.md, paddingVertical: space.md, backgroundColor: colors.surface },
+    input: { minHeight: 44, fontSize: 16, color: colors.text, borderRadius: radius.md, paddingHorizontal: space.md, paddingVertical: space.md, backgroundColor: colors.surfaceAlt },
     roleGroup: { gap: space.xs },
     roleMeta: { fontSize: font.small, color: colors.textMuted },
     roleOptions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
@@ -42,7 +43,7 @@ export default function OnboardingScreen() {
     roleTitle: { color: colors.text, fontWeight: '600' },
     roleDescription: { color: colors.textMuted, fontSize: font.small, lineHeight: 18 },
     error: { color: colors.danger, fontSize: font.small },
-    primaryButton: { minHeight: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: radius.md, paddingVertical: space.md },
+    primaryButton: { minHeight: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: radius.pill, paddingVertical: space.md },
     primaryButtonText: { color: colors.accentText, fontSize: font.body, fontWeight: '600' },
   });
 
@@ -75,12 +76,13 @@ export default function OnboardingScreen() {
     <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
       <View style={styles.panel}>
         <View style={styles.headingGroup}>
-          <Text accessibilityRole="header" style={styles.heading}>Welcome to Cala Match</Text>
+          <Logo size={40} />
+          <Text accessibilityRole="header" style={styles.heading}>Meet the right investors at the right event.</Text>
           <Text style={styles.body}>Create an account or sign in to continue.</Text>
         </View>
         <View style={styles.tabs}>
           {(['register', 'login'] as const).map((value) => (
-            <Pressable key={value} accessibilityRole="tab" accessibilityState={{ selected: tab === value }} onPress={() => { setTab(value); setError(''); }} style={[styles.tab, { borderBottomWidth: tab === value ? 2 : 0 }]}>
+            <Pressable key={value} accessibilityRole="tab" accessibilityState={{ selected: tab === value }} onPress={() => { setTab(value); setError(''); }} style={[styles.tab, tab === value && { backgroundColor: colors.surface }]}>
               <Text style={[styles.tabText, { color: tab === value ? colors.accent : colors.textMuted }]}>{value === 'register' ? 'Create account' : 'Sign in'}</Text>
             </Pressable>
           ))}
@@ -92,7 +94,7 @@ export default function OnboardingScreen() {
               <Text style={styles.roleMeta}>Your role is permanent for this account.</Text>
               <View style={styles.roleOptions}>
                 {roles.map((option) => (
-                  <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ selected: role === option.value }} onPress={() => setRole(option.value)} style={[styles.roleOption, { borderColor: role === option.value ? colors.accent : colors.border, backgroundColor: role === option.value ? colors.accentSoft : colors.surface }]}>
+                  <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ selected: role === option.value }} onPress={() => setRole(option.value)} style={[styles.roleOption, { borderColor: role === option.value ? colors.accent : 'transparent', backgroundColor: role === option.value ? colors.accentSoft : colors.surfaceAlt }]}>
                     <Text style={styles.roleTitle}>{option.label}</Text>
                     <Text style={styles.roleDescription}>{option.description}</Text>
                   </Pressable>

@@ -1,0 +1,63 @@
+/* Attio Design Tokens & Surface Rules
+ * Source: https://attio.com & https://fontofweb.com/tokens/attio.com
+ * Extracted for Cala Match brand reference (1px borders, no decorative shadows)
+ */
+
+:root {
+  /* Colors */
+  --attio-canvas: #FFFFFF;
+  --attio-surface: #F5F5F5;
+  --attio-ink: #1A1A1A;
+  --attio-muted-ink: #6B7280;
+  --attio-border: #E5E7EB;
+  --attio-action: #3B82F6;
+  --attio-action-hover: #2563EB;
+  --attio-inverse-ink: #FFFFFF;
+  --attio-inverse-surface: #0A0A0A;
+  --attio-success: #10B981;
+
+  /* Typography */
+  --attio-font-display: 'Tiempos Text', Georgia, serif;
+  --attio-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --attio-font-condensed: 'Inter Tight', 'Inter', sans-serif;
+
+  /* Spacing & Radii */
+  --attio-radius-card: 0.75rem;
+  --attio-section-gap: 6rem;
+  --attio-card-padding: 2rem;
+}
+
+.attio-card {
+  background-color: var(--attio-canvas);
+  border: 1px solid var(--attio-border);
+  border-radius: var(--attio-radius-card);
+  padding: var(--attio-card-padding);
+  box-shadow: none; /* Hierarchy via 1px border only */
+}
+
+.attio-heading-display {
+  font-family: var(--attio-font-display);
+  font-size: 3rem;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--attio-ink);
+}
+
+.attio-heading-section {
+  font-family: var(--attio-font-sans);
+  font-size: 2.5rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--attio-ink);
+}
+
+/* Key Asset URLs observed in tavily_extract (https://attio.com):
+ * Favicon: https://attio.com/favicon.ico?favicon.17i4ytxwoisgb.ico?dpl=dpl_GBAZ2Hw8yiY1vGGq5PwmmEkbdPXX
+ * Hero Slack Avatar: https://attio.com/_next/image?url=%2F_next%2Fstatic%2Fimmutable%2Fmedia%2Fhero-slack-avatar.06yrawpz2a498.jpg&w=64&q=75
+ * Integration SVGs:
+ *   - https://attio.com/_next/static/immutable/media/claude.2nutjf_0spu_8.svg
+ *   - https://attio.com/_next/static/immutable/media/linear.24toa1a2d23rr.svg
+ *   - https://attio.com/_next/static/immutable/media/stripe.3c5to-2h9vh9d.svg
+ */
