@@ -98,17 +98,6 @@ The canonizer normalizes user questions before they reach Cala. Local graph trav
 | `docs/` | API contract, architecture, affinity spec, benchmark and error report, one page per challenge, pitch, and the presentation and project PDF (`docs/presentation/`) |
 | `docs/internal/` | Working notes: ideas, plans, canonizer spec and Cala reference guides. See [docs/internal/README.md](docs/internal/README.md) |
 
-## Team
-
-| Machine | Person | Focus |
-|---|---|---|
-| `bau` | Bau | Orchestration, review, architecture, backend with Codex, pitch and documentation |
-| `gabriel` | Gabriel | The v3 interface layout, built with Gemini |
-| `fabricio` | Fabricio | Interface (theme, navigation, events, assistant bubble), Cala client optimizer and Aiven integration (feed API, graph store, shared rate limit) |
-| `adrian` | Adrian | Design review, presentation and the context upload |
-
-Claude plans and reviews, Codex writes the backend, Gemini is both the AI inside the product and the tool building the interface.
-
 ## Run it
 
 ```bash
@@ -121,6 +110,8 @@ cd app && npm install && npx expo start --web
 ```
 
 Set `CALA_API_KEY`, `GEMINI_API_KEY`, and `VALKEY_URL` only in `backend/.env` (template: `backend/.env.example`). Do not commit keys.
+
+The backend protects the Cala quota against abuse: per-client rate limits (HTTP 429 with `Retry-After`), entity ids validated before any Cala call, a one-hour negative cache, daily call caps, and per-machine usage in `/api/stats` only with `ADMIN_TOKEN`. Setting `CALA_REQUIRE_AUTH=1` makes chat and live Cala calls require an account (off by default).
 
 ## Challenges
 

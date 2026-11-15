@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, Request
 from pydantic import BaseModel, Field
 
 from accounts import security, store
@@ -49,7 +49,9 @@ async def current_user(authorization: str | None = Header(default=None)):
 
 
 @router.post("/api/auth/register", status_code=201)
-async def register(body: RegisterInput):
+async def register(body: RegisterInput, request: Request):
+    from core.abuse import enforce, client_ip
+    enforce(request, "register", f"ip:{client_ip(request)}", 5, 60)
     email = body.email.strip().lower()
     if not EMAIL_RE.fullmatch(email) or body.role not in ("raiser", "investor"):
         raise HTTPException(422, "Invalid email or role.")
