@@ -15,7 +15,7 @@
 | Adrian's machine (`adrian`) | **10 tasks, 17 min, 8.9 M input** (95% cached), **120 k output** |
 | **Team total (four machines)** | **63 tasks, about 189 min of Codex time, 63.4 M input tokens, 790 k output tokens** |
 | Code in `main` | about **7,500 lines** of Python and TypeScript at the time of the first count, and growing (app, backend, canonizer, catalog, graph, feed API) |
-| Tests | **206 passing** on the combined main (backend) plus the canonizer suite |
+| Tests | **274** backend tests and **49** canonizer tests in `main` (counted with `pytest --collect-only` on 15 Nov) |
 
 ## 1. How we use Codex
 
@@ -45,7 +45,7 @@ flowchart LR
 | **Cala client optimizer** (#63) | Per-endpoint pacing, `Retry-After`, one request in flight per key; measured up to 1.89 calls/s with zero 429 | Fabricio's machine |
 | **Expo app** (`app/`) | Chat with audio, profile, design system | Fabricio's machine |
 | **Context ingestion** (#66) | PDF and voice notes into the profile with Gemini | In main |
-| **n8n flows** (#47, in review) | Daily journal and Cala query workflows, validated against the n8n schema | Gabriel's machine |
+| **n8n flows** (#47) | Daily journal and Cala query workflows. Built, then dropped with the journal; never merged (PR #61 closed) | Gabriel's machine |
 | **Shared graph store** (#64) and **feed API** (#65) | Shared graph and feed API | In main |
 | **Accounts, context and voice** (#112/#121) | Email authentication, fixed role, raw context and voice preview | In main |
 | **Favorites PDF report** (#131/#137) | Cala-backed report and action plan | In main |
@@ -69,6 +69,8 @@ The pattern that paid off is **test against the real services, then hand Codex t
 Each correction was a short task with the failing input attached. The nine follow-ups took a median of 103 seconds of Codex time (from 34 s to 7.8 min).
 
 ## 4. Task log, `bau` machine (from `cx log`)
+
+Task summaries are quoted as logged, in Spanish. The first six rows are the pitch-deck verifier prototype, which is no longer in the repository.
 
 | Date | Role | Model | Task (summary) | Result | Min |
 |---|---|---|---|---|---|
@@ -94,7 +96,7 @@ Each correction was a short task with the failing input attached. The nine follo
 
 ## 5. Other machines
 
-- **`gabriel`:** 4 tasks, 12 min, 5,177,047 input tokens (96% cached), 115,061 output, model `gpt-6-luna`. They built the three n8n workflows (#47), validated with `n8n-mcp`, and the context module (#66).
+- **`gabriel`:** 4 tasks, 12 min, 5,177,047 input tokens (96% cached), 115,061 output, model `gpt-6-luna`. They built the three n8n workflows (#47, later dropped and not merged) and the context module (#66).
 - **`fabricio`:** 30 tasks, 107 min, 34.9 M input tokens (96% cached), 371 k output. Cala client optimizer and shared rate limit, Gemini audio, feed and detail API with the affinity score, shared graph store on Valkey, journal and chat integration, design system, router fixes, Valkey connection.
 - **`adrian`:** 10 tasks, 17 min, 8.9 M input tokens (95% cached), 120 k output. Context adaptation; #112/#121 email authentication, fixed role, raw context and voice preview; #133 Vercel SPA configuration.
 

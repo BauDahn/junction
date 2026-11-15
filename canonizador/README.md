@@ -1,6 +1,6 @@
 # Canonizador de consultas Cala
 
-Normaliza preguntas, convierte su intención a JSON con `codex exec` por defecto (o `LLM_PROVIDER=nvidia`), resuelve entidades y consulta endpoints de entidad con caché local en `cache/`.
+Normaliza preguntas, convierte su intención a JSON con Gemini si hay `GEMINI_API_KEY` (si no, NVIDIA si hay `NVIDIA_API_KEY`, y si no `codex exec`; `LLM_PROVIDER` lo fuerza), resuelve entidades y consulta endpoints de entidad con caché local en `cache/`.
 
 Desde esta carpeta:
 

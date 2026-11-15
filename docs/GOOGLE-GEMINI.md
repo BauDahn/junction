@@ -1,8 +1,8 @@
-# How Cala Match uses Google Gemini
+# How calado uses Google Gemini
 
 **Short version:** Gemini is the AI inside the product, at every point where a human says something messy and the system needs something exact. It listens, understands, classifies and normalizes. It **never introduces a fact**: every number, name and source on screen comes from Cala. That split is what makes the product trustworthy, and Gemini's speed and multimodality are what make it feel conversational.
 
-Numbers are measured on 14 November 2026 with the team's real key unless noted. Status tags: **In main**, **In review** (open pull request), **Planned**.
+Numbers are measured on 14 November 2026 with the team's real key unless noted. Everything in the table below is in `main`.
 
 ## 1. Where Gemini sits
 
@@ -29,7 +29,7 @@ flowchart LR
 | **Row focus** | Given a table Cala returned, picks which rows answer the question. It returns **row indices only**; the answer is built from Cala's own cells | `backend/chat/focus.py` | In main |
 | **Follow-up** | Rewrites "and their CEO?" into a self-contained question using only what was already said in the conversation, adding no new facts | `backend/chat/followup.py` | In main |
 | **Recommendations** | Turns a Cala research answer into up to five cards, **using only facts stated in the answer**; each card must cite numbered sources, and cards with invalid citations are dropped | `backend/chat/recommend.py` | In main |
-| **Context from PDFs and voice notes** | Reads pitch-deck pages (text and images) and notes, extracts sector, stage, region and ticket | `backend/context/` (#66) | In main |
+| **Context from PDFs and voice notes** | Reads pitch-deck pages (text and images) and notes, extracts sector, stage, region and ticket | `backend/context/service.py` (#66) | In main |
 | **Catalog tags** | Tags the sector and stage of ~3,000 Slush companies from the descriptions Cala already has, in parallel, without spending Cala's rate limit | `backend/catalog/` (#72) | In main |
 | **Favorites report action plan** | Proposes 3 to 5 steps per favorite using only Cala facts and drops steps that introduce new figures | `backend/api/favorites_report.py` | In main |
 
