@@ -371,6 +371,72 @@ def _fake_stage1(attendees):
     return fetch
 
 
+def test_402_backoff_refreshes_lock_in_bounded_chunks(monkeypatch):
+    monkeypatch.setenv("VALKEY_URL", "")
+    monkeypatch.setenv("CATALOG_402_WAIT", "0.12")
+    sleeps, refreshes = [], []
+    async def fake_sleep(seconds):
+        sleeps.append(seconds)
+    monkeypatch.setattr(catalog_ingest, "_sleep", fake_sleep)
+    original_refresh = catalog_ingest._refresh_lock
+    def record_refresh(kv, token, lock_ttl=600):
+        refreshes.append(lock_ttl)
+        return original_refresh(kv, token, lock_ttl)
+    monkeypatch.setattr(catalog_ingest, "_refresh_lock", record_refresh)
+    attendees = {"one": {"id": "one", "name": "one"}}
+    monkeypatch.setattr(catalog_ingest, "_fetch_stage1", _fake_stage1(attendees))
+
+    class Cala:
+        calls = 0
+        async def retrieve(self, eid, **kwargs):
+            self.calls += 1
+            if self.calls == 1:
+                response = httpx.Response(402, request=httpx.Request("GET", "https://cala.test/one"))
+                raise httpx.HTTPStatusError("402", request=response.request, response=response)
+            return {}
+
+    async def scenario():
+        kv = MemoryCatalogKV()
+        await run_catalog(cala=Cala(), llm=None, kv=kv, store=_FallbackGraphStore(kv), lock_ttl=0.09)
+    asyncio.run(scenario())
+    assert len(sleeps) > 1 and len(refreshes) >= len(sleeps)
+    assert max(sleeps) < 0.09 / 3
+
+
+def test_payment_breaker_pauses_and_success_resets_consecutive_count(monkeypatch):
+    monkeypatch.setenv("VALKEY_URL", "")
+    monkeypatch.setenv("CATALOG_402_TRIP", "2")
+    monkeypatch.setattr(catalog_ingest, "_sleep", lambda _: asyncio.sleep(0))
+    ids = ["a", "b", "c", "d", "e"]
+    attendees = {eid: {"id": eid, "name": eid} for eid in ids}
+    monkeypatch.setattr(catalog_ingest, "_fetch_stage1", _fake_stage1(attendees))
+
+    class Cala:
+        def __init__(self): self.calls = {}
+        async def retrieve(self, eid, **kwargs):
+            self.calls[eid] = self.calls.get(eid, 0) + 1
+            # a and c persist, b succeeds (reset), d trips the breaker.
+            if eid in {"a", "c", "d", "e"}:
+                response = httpx.Response(402, request=httpx.Request("GET", f"https://cala.test/{eid}"))
+                raise httpx.HTTPStatusError("402", request=response.request, response=response)
+            return {}
+
+    async def scenario():
+        kv, cala = MemoryCatalogKV(), Cala()
+        status = await run_catalog(cala=cala, llm=None, kv=kv, store=_FallbackGraphStore(kv), cala_concurrency=1)
+        assert status["stopped"] == "payment_required" and status["stage"] == "paused"
+        todo = json.loads(kv.get(TODO_KEY))
+        assert "e" in todo
+        assert kv.get("cat:v1:failed:e") is None
+        assert cala.calls["b"] == 1
+        assert kv.get(catalog_ingest.LOCK_KEY) is None
+        # A new run removes the prior stop marker before continuing.
+        monkeypatch.setenv("CATALOG_402_TRIP", "10")
+        followup = await run_catalog(cala=cala, llm=None, kv=kv, store=_FallbackGraphStore(kv), cala_concurrency=1)
+        assert "stopped" not in followup
+    asyncio.run(scenario())
+
+
 def test_put_expansion_pr81_and_legacy_adapter(tmp_path, monkeypatch):
     monkeypatch.setenv("VALKEY_URL", "")
     attendees, entities = _make_simulated_dataset(2)
