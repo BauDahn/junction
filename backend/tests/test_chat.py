@@ -124,4 +124,4 @@ def test_executor_falls_back_to_not_found_when_cala_errors(monkeypatch):
         async def search(self, *a, **k): raise RuntimeError("429")
     monkeypatch.setattr(executor, "answer", fake_answer)
     block = asyncio.run(executor.execute("¿Esto es verdad?", cala=BrokenCala()))
-    assert block["type"] == "not_found" and len(block["tried"]) == 3
+    assert block["type"] == "not_found" and len(block["tried"]) == 4

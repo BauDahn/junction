@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 from fastapi.testclient import TestClient
 import app as backend_app
@@ -5,6 +6,7 @@ from api import enrich
 from api.catalog_port import MemoryCatalog, get_catalog
 from api.graph_port import MemoryGraph, get_graph
 from api.routes import get_cala
+from graph.store import GraphStore, MemoryKV
 from chat import store
 
 SOURCE = {"name": "Cala", "url": "https://cala.test"}
@@ -114,6 +116,32 @@ def test_graph_edges_without_sources_are_hidden_and_people_have_roles(client):
     assert detail["portfolio"] == [{"id": "portfolio", "name": "Portfolio"}]
 
 
+def test_graph_entity_type_uses_invested_in_direction(client):
+    graph = MemoryGraph()
+    graph.add_node({"id": "startup", "type": "Company", "name": "Startup", "props": {}})
+    graph.add_node({"id": "fund", "type": "Organization", "name": "Fund", "props": {}})
+    graph.add_node({"id": "round", "type": "FundingRound", "name": "Series A", "props": {}})
+    graph.add_edge({"id": "investment", "src": "fund", "dst": "startup", "rel": "INVESTED_IN", "sources": [SOURCE]})
+    graph.add_edge({"id": "issuer", "src": "startup", "dst": "round", "rel": "PARTICIPATES_IN_FUNDING_ROUND",
+                    "role": "ISSUER", "sources": [SOURCE]})
+    backend_app.app.dependency_overrides[get_graph] = lambda: graph
+    startup = client.get("/api/entities/startup").json()
+    fund = client.get("/api/entities/fund").json()
+    assert startup["type"] == "startup"
+    assert fund["type"] == "investor"
+
+
+def test_graph_entity_type_uses_mode_when_both_roles_are_evident(client):
+    graph = MemoryGraph()
+    graph.add_node({"id": "hybrid", "type": "Company", "name": "Hybrid", "props": {}})
+    graph.add_node({"id": "other", "type": "Company", "name": "Other", "props": {}})
+    graph.add_edge({"id": "outgoing", "src": "hybrid", "dst": "other", "rel": "INVESTED_IN", "sources": [SOURCE]})
+    graph.add_edge({"id": "incoming", "src": "other", "dst": "hybrid", "rel": "INVESTED_IN", "sources": [SOURCE]})
+    backend_app.app.dependency_overrides[get_graph] = lambda: graph
+    assert client.get("/api/entities/hybrid?mode=raising").json()["type"] == "investor"
+    assert client.get("/api/entities/hybrid?mode=investing").json()["type"] == "startup"
+
+
 def test_startup_rounds_group_by_event_date_and_omit_empty_date(client):
     graph = MemoryGraph()
     graph.add_node({"id": "startup", "type": "Company", "name": "Startup", "props": {}})
@@ -166,6 +194,62 @@ def test_detail_single_typical_amount_and_activity_facts_are_strings(client):
 
 def test_detail_not_found(client):
     assert client.get("/api/entities/missing").status_code == 404
+
+
+class LiveCala:
+    def __init__(self, raw=None, fail=False): self.raw, self.fail, self.calls = raw, fail, 0
+    async def retrieve(self, ident, **kwargs):
+        self.calls += 1
+        if self.fail: raise RuntimeError("Cala request failed")
+        if self.raw is None: raise KeyError(ident)
+        return self.raw
+
+
+def test_detail_loads_unknown_entity_once_and_reuses_graph(client):
+    graph = GraphStore(MemoryKV())
+    def neighbor(ident, name, entity_type, edge_id, **props):
+        return {"id": ident, "name": name, "entity_type": entity_type,
+                "properties": {"id": edge_id, "sources": [SOURCE], **props}}
+    raw = {"id": "live-id", "name": "Live startup", "entity_type": "Company",
+           "properties": {"description": {"value": "Sourced summary", "sources": [SOURCE]}},
+           "relationships": {"incoming": {
+               "PARTICIPATES_IN_FUNDING_ROUND": [neighbor("excluded-round", "Private round", "PrivateCompanyFundingRound", "e-private")],
+               "INVESTED_IN": [neighbor("fund", "Live Fund", "Organization", "e-round", event_date="2025")],
+           }, "outgoing": {"WORKS_AT": [neighbor("product", "A product", "Product", "e-product")]}}}
+    cala = LiveCala(raw)
+    backend_app.app.dependency_overrides[get_graph] = lambda: graph
+    backend_app.app.dependency_overrides[get_cala] = lambda: cala
+    first = client.get("/api/entities/live-id")
+    second = client.get("/api/entities/live-id")
+    assert first.status_code == second.status_code == 200
+    assert first.json()["description"] == "Sourced summary"
+    assert first.json()["loaded_at"]
+    assert first.json()["rounds"] == [{"date": "2025", "leads": [], "investors": ["Live Fund"], "sources": [SOURCE]}]
+    assert graph.get_node("excluded-round") is None and graph.get_node("product") is None
+    assert cala.calls == 1
+
+
+def test_detail_live_cala_request_error_is_502(client):
+    backend_app.app.dependency_overrides[get_cala] = lambda: LiveCala(fail=True)
+    response = client.get("/api/entities/failed-live")
+    assert response.status_code == 502
+    assert response.json()["error"]["message"] == "Cala request failed."
+
+
+def test_detail_live_entity_unknown_and_timeout(client, monkeypatch):
+    graph = GraphStore(MemoryKV())
+    backend_app.app.dependency_overrides[get_graph] = lambda: graph
+    backend_app.app.dependency_overrides[get_cala] = lambda: LiveCala()
+    assert client.get("/api/entities/unknown-live").status_code == 404
+    from graph import loader as graph_loader
+    async def slow(*args, **kwargs):
+        await asyncio.sleep(0.1)
+    monkeypatch.setattr(graph_loader, "expand_node", slow)
+    real_wait_for = asyncio.wait_for
+    monkeypatch.setattr("api.routes.asyncio.wait_for", lambda coro, timeout: real_wait_for(coro, timeout=0.01))
+    response = client.get("/api/entities/slow-live")
+    assert response.status_code == 504
+    assert response.json()["error"]["message"] == "Cala did not answer in time."
 
 
 def test_stats_catalog_counts_status_and_optional_cala(tmp_path, monkeypatch):
