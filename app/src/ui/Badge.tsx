@@ -3,7 +3,7 @@ import { font, radius, useTheme } from '../theme';
 
 export type Tone = 'confirmed' | 'partial' | 'contradicted' | 'neutral' | 'accent';
 
-/** Etiqueta pequeña con color de tono (fondo suave + texto). */
+/** Small tinted label (soft background and text). */
 export default function Badge({ label, tone = 'neutral' }: { label: string; tone?: Tone }) {
   const c = useTheme().colors;
   const map = {

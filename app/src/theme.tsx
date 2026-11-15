@@ -95,7 +95,7 @@ export const font = {
 } as const;
 export const tabularNums: Pick<TextStyle, 'fontVariant'> = { fontVariant: ['tabular-nums'] };
 export const maxWidth = 760;
-/** Altura de la barra inferior: el boton flotante debe usar bottom >= tabBarHeight + space.md para no tapar pestanas. */
+/** Bottom tab bar height: the floating button should use bottom >= tabBarHeight + space.md to avoid covering tabs. */
 export const tabBarHeight = 64;
 /** Kept for compatibility with existing components; intentionally flat without decorative shadows. */
 export const shadow = {

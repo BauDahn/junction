@@ -66,7 +66,7 @@ def _format_num(value):
 
 
 def _parse_ticket_range(raw_text, *, ticket_min=None, ticket_max=None, currency=None):
-    """Convierte rangos o montos de ticket a unidades base numéricas y moneda."""
+    """Converts ticket ranges or amounts to numeric base units and currency."""
     detected_currency = _detect_currency(raw_text, currency)
     explicit = [n for n in (_clean_number(ticket_min), _clean_number(ticket_max)) if n is not None]
     if explicit:
@@ -83,7 +83,7 @@ def _parse_ticket_range(raw_text, *, ticket_min=None, ticket_max=None, currency=
     )
     if not matches:
         return None
-    # Propaga el sufijo desde la derecha cuando un rango solo lo escribe al final (ej. "1-3M EUR").
+    # Propagates the suffix from the right when a range only includes it at the end (e.g. "1-3M EUR").
     resolved = []
     trailing_unit = None
     for raw_num, unit in reversed(matches):
@@ -182,7 +182,7 @@ async def extract_context(llm, text, images=None):
         try:
             return await llm.complete_json(system, prompt, CONTEXT_SCHEMA, images=images)
         except (TypeError, RuntimeError) as exc:
-            if isinstance(exc, TypeError) or "admite texto" in str(exc).lower():
+            if isinstance(exc, TypeError) or "only supports text" in str(exc).lower():
                 return await llm.complete_json(system, prompt, CONTEXT_SCHEMA)
             raise
     return await llm.complete_json(system, prompt, CONTEXT_SCHEMA)

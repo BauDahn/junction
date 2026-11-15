@@ -14,7 +14,7 @@ SYSTEM = "You help a startup founder build a factual startup profile. Extract on
 
 
 def missing_fields(profile):
-    """Campos del perfil que todavía no tenemos, para que el chat no pregunte lo que ya sabe."""
+    """Profile fields that are still missing, so the chat does not ask for information it already has."""
     checks = {
         "what the startup does": profile.get("one_liner"),
         "sector": profile.get("sector"),
@@ -31,7 +31,7 @@ async def handle_text(session_id, text, llm, transcript=None, cala=None, context
     profile = store.get_profile(session_id) or empty_profile()
     rec = store.get_recommendations(session_id)
     pending_notice = bool(rec and rec["status"] == "ready" and not rec["notified"])
-    # cala_core usa el cliente del canonizador (knowledge_query); el CalaClient del verificador no sirve aquí.
+    # cala_core uses the canonizer client (knowledge_query); the verifier CalaClient is not suitable here.
     core_cala = cala if hasattr(cala, "knowledge_query") else None
     question = await self_contained(text, store.list_messages(session_id), llm)
     result = await cala_handle_message(question, profile, llm, cala=core_cala, cache_dir=getattr(settings, "cache_dir", None))
@@ -48,7 +48,7 @@ async def handle_text(session_id, text, llm, transcript=None, cala=None, context
             if source not in reply_sources: reply_sources.append(source)
     if len(blocks) == 1 and blocks[0].get("type") == "text":
         reply_text = blocks[0].get("text", "")
-        blocks = []  # el texto ya va en el mensaje; no repetirlo como bloque
+        blocks = []  # the text is already in the message; do not repeat it as a block
     elif (answers := [b["answer"] for b in blocks if b.get("answer")]) and len(answers) == 1:
         reply_text = answers[0]
     elif any(b.get("type") == "cala_table" or b.get("type") == "cala_answer" for b in blocks):

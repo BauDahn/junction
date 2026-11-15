@@ -20,7 +20,7 @@ app = FastAPI(title="Cala Match")
 
 @app.on_event("startup")
 async def warmup_valkey():
-    # La primera conexión TLS a Aiven puede tardar varios segundos; no retrases el arranque HTTP.
+    # The first TLS connection to Aiven may take several seconds; do not delay HTTP startup.
     def run():
         try:
             from canonizador.cache import warmup
@@ -67,7 +67,7 @@ async def validation_error(_: Request, exc: RequestValidationError):
     return _error(422, f"{where}: {first.get('msg', 'invalid request')}".strip(": "))
 
 
-# CORS abierto en desarrollo (docs/API.md); en producción, CORS_ORIGINS con los orígenes separados por comas.
+# CORS is open in development (docs/API.md); in production, set CORS_ORIGINS to comma-separated origins.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()],

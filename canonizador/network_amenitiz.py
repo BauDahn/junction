@@ -1,4 +1,4 @@
-"""Prueba de red manual (no forma parte de pytest): intent fijo, sin LLM."""
+"""Manual network check (not part of pytest): fixed intent, no LLM."""
 import asyncio
 import json
 import tempfile
@@ -9,7 +9,7 @@ from canonizador.client import CalaClient
 
 async def main():
     _env()
-    # Cache temporal para confirmar la respuesta actual de Cala en esta corrida.
+    # Temporary cache to verify Cala's current response in this run.
     with tempfile.TemporaryDirectory(prefix="cala-amenitiz-network-") as cache:
         cala = CalaClient(cache_dir=cache)
         intent = {

@@ -1,4 +1,4 @@
-"""Construcción rápida del feed sobre datos locales."""
+"""Fast feed construction from local data."""
 import time
 from .affinity import rank, score_candidate, ticket_bounds
 from .enrich import rounds_for

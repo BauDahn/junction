@@ -1,7 +1,7 @@
-"""Recorta una tabla de Cala a las filas que responden la pregunta.
+"""Trims a Cala table to the rows that answer the question.
 
-El modelo solo elige índices de filas; la respuesta se arma con las celdas de Cala tal cual,
-así nunca escribe nombres ni cifras propias.
+The model only selects row indexes; the answer is built from Cala cells as-is,
+so it never writes its own names or figures.
 """
 import json
 

@@ -117,7 +117,7 @@ async def _process_text(session_id, text, llm, cala, transcript=None, context=No
         if exc.__class__.__name__ == "CalaBudgetExceeded":
             logger.warning("Cala call cap reached client=session route=/api/sessions/{session_id}/messages")
             raise HTTPException(503, "Cala call cap reached.") from exc
-        logger.exception("chat: fallo procesando el mensaje")
+        logger.exception("chat: failed to process message")
         raise HTTPException(502, "The model did not respond. Please try again.") from exc
     store.add_message(user)
     store.add_message(reply)
@@ -167,7 +167,7 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
         try:
             with os.fdopen(fd, "wb") as stream:
                 stream.write(data)
-            if os.getenv("CHAT_KEEP_AUDIO") == "1":  # depuración local de transcripciones
+            if os.getenv("CHAT_KEEP_AUDIO") == "1":  # local transcript debugging
                 keep = Path(store.DB_PATH).parent / "audio" if hasattr(store, "DB_PATH") else Path("data/audio")
                 keep.mkdir(parents=True, exist_ok=True)
                 (keep / f"{store.now_iso().replace(':', '-')}{suffix}").write_bytes(data)
@@ -179,7 +179,7 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
             except Exception as exc:
                 if "not configured" in str(exc).lower():
                     raise HTTPException(503, "Transcription is not configured.") from exc
-                logger.exception("chat: fallo transcribiendo %s (%s, %d bytes)", audio.filename, audio.content_type, len(data))
+                logger.exception("chat: failed to transcribe %s (%s, %d bytes)", audio.filename, audio.content_type, len(data))
                 raise HTTPException(502, "Audio transcription failed.") from exc
             text = result.get("text", "").strip()
             if not text:

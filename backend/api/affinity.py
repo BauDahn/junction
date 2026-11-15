@@ -1,4 +1,4 @@
-"""Cálculo local, explicable y determinista de afinidad."""
+"""Local, explainable, deterministic affinity calculation."""
 import re
 import math
 from datetime import date
@@ -10,14 +10,14 @@ _STAGES = {"preseed":"pre-seed", "pre seed":"pre-seed", "pre-seed":"pre-seed", "
 _SYNONYMS = [set(x.split("|")) for x in ("fintech|financial services|payments", "saas|software|b2b software", "ai|artificial intelligence|machine learning", "healthtech|health|digital health", "climate|cleantech|energy", "proptech|real estate", "hospitality|travel|traveltech")]
 
 def norm_stage(value):
-    """Normaliza etapas conocidas."""
+    """Normalizes known stages."""
     if value is None: return None
     s = re.sub(r"\s+", " ", str(value).strip().casefold().replace("_", " "))
     s = re.sub(r"^serie\s+", "series ", s)
     return _STAGES.get(s) or ("pre-seed" if s.replace(" ", "") == "preseed" else s or None)
 
 def parse_amount(value):
-    """Extrae importes y convierte rangos a su punto medio."""
+    """Extracts amounts and converts ranges to their midpoint."""
     if isinstance(value, (int, float)): return float(value)
     if not isinstance(value, str): return None
     s = value.casefold().replace(",", "").replace("–", "-").replace("—", "-")
@@ -34,7 +34,7 @@ def parse_amount(value):
     return sum(vals) / len(vals) if vals else None
 
 def ticket_bounds(value):
-    """Normaliza un importe o rango de cheque a sus extremos numéricos."""
+    """Normalizes a ticket amount or range to its numeric bounds."""
     if isinstance(value, dict):
         low, high = parse_amount(value.get("min")), parse_amount(value.get("max"))
         if low is None and high is None: return None
@@ -45,7 +45,7 @@ def ticket_bounds(value):
     if not isinstance(value, str) or not value.strip(): return None
     text = value.casefold().replace(",", "").replace("–", "-").replace("—", "-")
     parts = re.split(r"\s*(?:-|\bto\b)\s*", text, maxsplit=1)
-    # Si el sufijo aparece solo en el segundo extremo, también aplica al primero.
+    # If the suffix appears only on the second bound, it also applies to the first.
     suffix = re.search(r"(bn|billion|m|million|mm|k|thousand)\b", text)
     if len(parts) == 2 and suffix:
         for i, part in enumerate(parts):
@@ -59,7 +59,7 @@ def ticket_bounds(value):
 
 def _sector_key(v): return re.sub(r"[^\w\s]", " ", str(v).casefold()).strip()
 def sector_match(a, b):
-    """Compara sectores por texto y grupos de sinónimos."""
+    """Compares sectors by text and synonym groups."""
     if not a or not b: return False
     x, y = _sector_key(a), _sector_key(b)
     if x == y or re.search(r"\b" + re.escape(x) + r"\b", y) or re.search(r"\b" + re.escape(y) + r"\b", x): return True
@@ -90,7 +90,7 @@ def format_amount(n):
 _fmt = format_amount
 
 def score_candidate(profile, candidate, *, today=None, weights=WEIGHTS):
-    """Calcula puntaje y señales con datos trazables."""
+    """Calculates a score and signals from traceable data."""
     today = today or date.today(); rounds = _rounds(candidate); attrs = candidate.get("attrs") or {}
     attr_ok = bool(attrs.get("sources")); signals = []
     def add(name, value, text="", sources=()):
@@ -178,7 +178,7 @@ def score_candidate(profile, candidate, *, today=None, weights=WEIGHTS):
     return {"id":candidate.get("id"),"name":candidate.get("name"),"type":candidate.get("type"),"score":score,"confidence":round(sum(s["weight"] for s in known)/denom,2),"signals":signals,"why_match":why}
 
 def rank(results):
-    """Ordena resultados con desempates estables."""
+    """Sorts results with stable tie-breaking."""
     return sorted(results,key=lambda x:(-x.get("score",0),-x.get("confidence",0),(x.get("name") or "").casefold(),str(x.get("id") or "")))
 
 def _ai_tagged(value, field):

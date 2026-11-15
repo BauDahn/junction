@@ -1,8 +1,8 @@
-"""Implementación local mínima de la interfaz del grafo."""
+"""Minimal local implementation of the graph interface."""
 from typing import Protocol
 
 def neighbors_batch(store, ids, rels=None):
-    """Obtiene vecinos por lote y tolera almacenes que solo aceptan IDs escalares."""
+    """Fetches neighbors in batches and supports stores that only accept scalar IDs."""
     ids = list(ids or [])
     try:
         result = store.neighbors(ids, rels=rels) if rels is not None else store.neighbors(ids)

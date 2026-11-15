@@ -1,1 +1,1 @@
-"""Ingesta de contexto para el perfil de Cala Match."""
+"""Context ingestion for Cala Match profiles."""

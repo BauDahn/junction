@@ -1,4 +1,4 @@
-"""CLI del catálogo de Slush: python -m catalog {run|export|import|status}."""
+"""Slush catalog CLI: python -m catalog {run|export|import|status}."""
 import argparse
 import asyncio
 import json
@@ -16,21 +16,21 @@ from .ingest import (
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(prog="python -m catalog", description="Ingesta y respaldo del catálogo de Slush 2026")
+    parser = argparse.ArgumentParser(prog="python -m catalog", description="Ingest and back up the Slush 2026 catalog")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    run_p = sub.add_parser("run", help="Ejecuta la ingesta reanudable (etapas 1 a 3)")
-    run_p.add_argument("--limit", type=int, default=None, help="Tope máximo de asistentes a procesar")
-    run_p.add_argument("--concurrency", type=int, default=2, help="Concurrencia de llamadas a entidades en Cala")
-    run_p.add_argument("--max-calls", type=int, default=150, help="Máximo de llamadas reales a Cala en esta corrida (0 = sin tope)")
+    run_p = sub.add_parser("run", help="Runs resumable ingestion (stages 1 to 3)")
+    run_p.add_argument("--limit", type=int, default=None, help="Maximum number of attendees to process")
+    run_p.add_argument("--concurrency", type=int, default=2, help="Concurrency for Cala entity calls")
+    run_p.add_argument("--max-calls", type=int, default=150, help="Maximum actual Cala calls in this run (0 = unlimited)")
 
-    exp_p = sub.add_parser("export", help="Exporta catálogo y grafo a un archivo JSON (Plan B)")
-    exp_p.add_argument("path", help="Ruta del archivo JSON de salida")
+    exp_p = sub.add_parser("export", help="Exports the catalog and graph to a JSON file (Plan B)")
+    exp_p.add_argument("path", help="Output JSON file path")
 
-    imp_p = sub.add_parser("import", help="Importa catálogo y grafo desde un archivo JSON")
-    imp_p.add_argument("path", help="Ruta del archivo JSON de respaldo")
+    imp_p = sub.add_parser("import", help="Imports the catalog and graph from a JSON file")
+    imp_p.add_argument("path", help="Backup JSON file path")
 
-    sub.add_parser("status", help="Muestra el estado actual de cat:v1:status")
+    sub.add_parser("status", help="Shows the current cat:v1:status state")
     return parser
 
 
@@ -39,7 +39,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.command == "run":
         if args.max_calls < 0:
-            parser.error("--max-calls debe ser 0 o mayor")
+            parser.error("--max-calls must be 0 or greater")
         if args.max_calls == 0:
             print("Warning: --max-calls 0 disables the per-run Cala call budget.", file=sys.stderr)
         try:

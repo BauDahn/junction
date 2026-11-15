@@ -90,16 +90,16 @@ class CalaClient:
                  knowledge_interval=None, entities_interval=None, entities_concurrency=None, shared_limiter=None):
         if not api_key: load_env()
         self.api_key = api_key or os.getenv("CALA_API_KEY", "")
-        if not self.api_key: raise RuntimeError("Definí CALA_API_KEY en el entorno o backend/.env")
+        if not self.api_key: raise RuntimeError("Set CALA_API_KEY in the environment or backend/.env")
         self.cache_dir, self.client, self.sleep = Path(cache_dir), client, sleep
-        # min_interval sigue siendo el valor predeterminado explícito para knowledge.
+        # min_interval remains the explicit default for knowledge.
         self.min_interval = min_interval
         self.intervals = {
             "knowledge": float(knowledge_interval if knowledge_interval is not None else os.getenv("CALA_KNOWLEDGE_INTERVAL", min_interval)),
             "entities": float(entities_interval if entities_interval is not None else os.getenv("CALA_ENTITIES_INTERVAL", "0.7")),
         }
         concurrency = int(entities_concurrency if entities_concurrency is not None else os.getenv("CALA_ENTITIES_CONCURRENCY", "2"))
-        if concurrency < 1: raise ValueError("entities_concurrency debe ser al menos 1")
+        if concurrency < 1: raise ValueError("entities_concurrency must be at least 1")
         self._semaphores = {"knowledge": asyncio.Semaphore(1), "entities": asyncio.Semaphore(concurrency)}
         self._schedule_locks = {kind: asyncio.Lock() for kind in self.intervals}
         self._last_call = {kind: None for kind in self.intervals}

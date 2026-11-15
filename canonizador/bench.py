@@ -1,7 +1,7 @@
-"""Benchmark del canonizador: misma pregunta en varias redacciones, directo vs canonizado.
+"""Canonizer benchmark: same question in multiple phrasings, direct vs. canonicalized.
 
-  uv run python bench.py            # corre (reanudable: todo queda en caché) y escribe bench/results.json
-Modo directo: el texto tal cual a knowledge_search. Modo canonizado: canonizador.api.answer().
+  uv run python bench.py            # runs (resumable: everything is cached) and writes bench/results.json
+Direct mode: send the text as-is to knowledge_search. Canonicalized mode: canonizador.api.answer().
 """
 import asyncio, hashlib, json, sys, time
 from pathlib import Path
@@ -33,13 +33,13 @@ async def run():
                                       "entity_ids": sorted(e["id"] for e in r.get("entities") or []),
                                       "answer_hash": h(r.get("content")), "answer": (r.get("content") or "")[:400],
                                       "calls": cala.calls - before, "seconds": round(time.monotonic() - t, 1)}
-                except Exception as exc:  # no cortar el benchmark por una llamada
+                except Exception as exc:  # do not stop the benchmark because of one call
                     g["direct"][q] = {"error": str(exc)[:300]}
                 OUT.write_text(json.dumps(results, ensure_ascii=False, indent=1))
                 print("direct   ", q[:60], g["direct"][q].get("seconds", "ERR"), file=sys.stderr, flush=True)
             g.setdefault("nl_query", {})
             if q not in g["nl_query"]:
-                # Lenguaje natural tal cual a knowledge/query (sin guía, sin plantilla).
+                # Natural language sent as-is to knowledge/query (no guide, no template).
                 before, t = cala.calls, time.monotonic()
                 try:
                     r = await cala.knowledge_query(q)

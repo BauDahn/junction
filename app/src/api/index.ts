@@ -45,9 +45,9 @@ export type CalaTableBlock = {
   rows: (string | number | null)[][];
   sources: Source[];
   row_sources?: number[][];
-  /** Índices de las filas que responden la pregunta; el resto se muestra con "Ver todas". */
+  /** Indexes of rows that answer the question; the rest appear under "View all". */
   focus_rows?: number[];
-  /** Si la respuesta es una fila: sus celdas de Cala unidas. */
+  /** If the response is a row: its Cala cells joined together. */
   answer?: string;
 };
 export type CalaAnswerBlock = {

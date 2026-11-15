@@ -1,4 +1,4 @@
-"""Carga BFS del vecindario de Cala en el grafo compartido."""
+"""Loads the Cala neighborhood into the shared graph using BFS."""
 import time
 from collections import Counter
 
@@ -127,7 +127,7 @@ async def load_neighborhood(store, cala, seed_ids, *, user=None, depth=2, quota=
             return (-rank, normalize_name(node.get("name", "")), ident)
         frontier = [ident for ident, _ in sorted(candidates.items(), key=sort_key)[:max(0, quota)]]
         if level + 1 >= depth: break
-    # Cuenta aristas y nodos del recorrido desde el store, incluidos los ya existentes.
+    # Counts traversal edges and nodes from the store, including existing ones.
     if reached:
         all_rows = store.neighbors(list(reached), rels=REL_WHITELIST)
         for row in all_rows.values():

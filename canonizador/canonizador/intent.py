@@ -32,7 +32,7 @@ def parse_json(text):
 
 
 def strict_schema(schema):
-    """Devuelve una copia compatible con Structured Outputs en modo estricto."""
+    """Returns a copy compatible with strict-mode Structured Outputs."""
     schema = json.loads(json.dumps(schema))
 
     def visit(node):
@@ -60,7 +60,7 @@ class CodexProvider:
         if not binary:
             candidates = glob.glob(str(Path.home() / ".nvm/versions/node/*/bin/codex"))
             binary = candidates[-1] if candidates else None
-        if not binary: raise RuntimeError("No se encontró el ejecutable codex")
+        if not binary: raise RuntimeError("codex executable was not found")
         with tempfile.TemporaryDirectory(prefix="cala-intent-") as td:
             root = Path(td); sp, out = root / "schema.json", root / "out.json"
             sp.write_text(json.dumps(strict_schema(schema)))
@@ -70,8 +70,8 @@ class CodexProvider:
                 proc.kill()
                 _, stderr = await proc.communicate()
                 detail = stderr.decode(errors="replace")[-800:]
-                raise RuntimeError(f"codex exec agotó el tiempo de {self.timeout:g} segundos" + (f": {detail}" if detail else ""))
-            if proc.returncode: raise RuntimeError("codex exec falló: " + stderr.decode(errors="replace")[-800:])
+                raise RuntimeError(f"codex exec timed out after {self.timeout:g} seconds" + (f": {detail}" if detail else ""))
+            if proc.returncode: raise RuntimeError("codex exec failed: " + stderr.decode(errors="replace")[-800:])
             return parse_json(out.read_text() if out.exists() else stdout.decode())
 
 
@@ -126,9 +126,9 @@ class GeminiProvider:
             except httpx.HTTPStatusError as exc:
                 try: message = exc.response.json().get("error", {}).get("message", "")
                 except (ValueError, AttributeError, TypeError): message = ""
-                message = str(message or "Error sin detalle").replace(self.api_key, "[redactado]")
-                message = re.sub(r"https?://\S+", "[URL omitida]", message)
-                raise RuntimeError(f"Gemini respondió HTTP {exc.response.status_code}: {message[:300]}") from None
+                message = str(message or "Unspecified error").replace(self.api_key, "[redacted]")
+                message = re.sub(r"https?://\S+", "[URL omitted]", message)
+                raise RuntimeError(f"Gemini returned HTTP {exc.response.status_code}: {message[:300]}") from None
             return parse_json(r.json()["candidates"][0]["content"]["parts"][0]["text"])
         finally:
             if owns: await client.aclose()

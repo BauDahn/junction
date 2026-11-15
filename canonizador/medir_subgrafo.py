@@ -1,16 +1,16 @@
-"""Mide cuánto tarda traer un subgrafo de Cala (en frío) y cuánto tarda explorarlo en local. Solo lectura.
-Uso (desde canonizador/): MIN_INTERVAL=0.7 PYTHONPATH=. uv run python medir_subgrafo.py "Amenitiz" Company 8 /tmp/subgrafo.json
-MIN_INTERVAL es la pausa entre llamadas en segundos (por defecto 8). Medido el 14/11: 185 nodos en 162 s con 8 y en 74 s sin pausa (con un 429)."""
+"""Measures how long it takes to fetch a Cala subgraph (cold) and explore it locally. Read-only.
+Usage (from canonizador/): MIN_INTERVAL=0.7 PYTHONPATH=. uv run python medir_subgrafo.py "Amenitiz" Company 8 /tmp/subgrafo.json
+MIN_INTERVAL is the pause between calls in seconds (default 8). Measured on Nov 14: 185 nodes in 162 s with 8 and in 74 s without a pause (with one 429)."""
 import asyncio, json, os, sys, time, tempfile
 from collections import deque, Counter
 
-os.environ["VALKEY_URL"] = ""  # sin caché compartida: queremos tiempos en frío
+os.environ["VALKEY_URL"] = ""  # no shared cache: measure cold timings
 import httpx
 from canonizador.client import CalaClient
 
 SEED, TYPE, MAX_EXP, OUT = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4]
 HUBS = {"HAS_DOMAIN_NAME", "HAS_HEADQUARTERS_IN", "IS_REGISTERED_IN", "OPERATES_IN_INDUSTRY"}
-raw = []  # (método, ruta corta, segundos, status)
+raw = []  # (method, short path, seconds, status)
 _t0 = {}
 
 async def on_req(r): _t0[id(r)] = time.perf_counter()
@@ -77,7 +77,7 @@ async def main():
             json.dump({"seed": sid, "nodes": nodes, "edges": edges, "levels": levels, "raw": raw, "total_s": total, "calls": cala.calls},
                       open(OUT, "w"), ensure_ascii=False)
     print("\n== CARGA DESDE CALA ==")
-    print(f"total {total}s, {len(raw)} llamadas HTTP, {len(nodes)} nodos, {len(edges)} aristas")
+    print(f"total {total}s, {len(raw)} HTTP calls, {len(nodes)} nodes, {len(edges)} edges")
     for lv in levels: print(" ", lv)
     for k in ("search", "introspection", "retrieve"):
         v = sorted(x[1] for x in raw if x[0] == k and x[2] == 200)
@@ -85,7 +85,7 @@ async def main():
     print("  http:", dict(Counter(x[2] for x in raw)), " KB totales:", round(sum(x[3] for x in raw) / 1024))
     print("  tipos de nodo:", dict(Counter(n["type"] for n in nodes.values())))
     print("  tipos de arista:", dict(Counter(e["rel"] for e in edges)))
-    print("  nodos por nivel:", dict(Counter(n["level"] for n in nodes.values())))
+    print("  nodes by level:", dict(Counter(n["level"] for n in nodes.values())))
     local(OUT)
 
 def bfs(adj, s):
@@ -110,25 +110,25 @@ def local(path):
     s = g["seed"]
     dist, prev = bfs(adj, s)
     far = max(dist, key=dist.get)
-    print("\n== EXPLORACIÓN EN LOCAL ==")
-    print(f"  leer el JSON del disco: {load_ms:.2f} ms ({os.path.getsize(path)/1024:.0f} KB)")
-    print(f"  BFS completo desde la semilla ({len(dist)} nodos alcanzados, distancia máx {dist[far]}): {bench(lambda: bfs(adj, s), 200):.3f} ms")
+    print("\n== LOCAL EXPLORATION ==")
+    print(f"  read JSON from disk: {load_ms:.2f} ms ({os.path.getsize(path)/1024:.0f} KB)")
+    print(f"  Full BFS from the seed ({len(dist)} nodes reached, max distance {dist[far]}): {bench(lambda: bfs(adj, s), 200):.3f} ms")
     def path_to():
         d, p = bfs(adj, s); out = [far]
         while out[-1] != s: out.append(p[out[-1]])
         return out
-    print(f"  camino más corto semilla → nodo más lejano: {bench(path_to, 200):.3f} ms")
+    print(f"  shortest path from seed → farthest node: {bench(path_to, 200):.3f} ms")
     names_ = [g["nodes"][n]["name"] for n in reversed(path_to())]
     print("    ejemplo:", " → ".join(str(x) for x in names_))
     f = lambda: [n for n, d in dist.items() if d <= 2 and g["nodes"][n]["type"] == "Person"]
     print(f"  filtrar personas a distancia ≤ 2: {bench(f, 200):.3f} ms ({len(f())} resultados)")
-    # mismo algoritmo sobre un grafo sintético grande, para ver si "gordo" es un problema
+    # same algorithm on a large synthetic graph, to see whether size is a problem
     for n_nodes, deg in ((10_000, 6), (100_000, 6)):
         random.seed(1); big = {i: set() for i in range(n_nodes)}
         for i in range(n_nodes):
             for _ in range(deg // 2):
                 j = random.randrange(n_nodes); big[i].add(j); big[j].add(i)
-        print(f"  sintético {n_nodes} nodos / {sum(map(len, big.values()))//2} aristas: BFS completo {bench(lambda: bfs(big, 0), 3):.1f} ms")
+        print(f"  synthetic {n_nodes} nodes / {sum(map(len, big.values()))//2} edges: full BFS {bench(lambda: bfs(big, 0), 3):.1f} ms")
 
 if __name__ == "__main__":
     if SEED == "--local": local(OUT)

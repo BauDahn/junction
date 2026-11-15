@@ -134,7 +134,7 @@ export default function FloatingMascotBubble() {
 }
 
 const styles = (c: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
-  anchor: { position: 'absolute', right: 16, bottom: tabBarHeight + 16, // más el safe area (marginBottom)
+  anchor: { position: 'absolute', right: 16, bottom: tabBarHeight + 16, // plus the safe area (marginBottom)
     zIndex: 100, alignItems: 'flex-end' },
   trigger: { width: 60, height: 60, borderRadius: radius.pill, backgroundColor: c.accent, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' },
   panel: { height: 540, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 6, overflow: 'hidden' },
