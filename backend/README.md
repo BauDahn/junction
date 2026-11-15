@@ -6,8 +6,8 @@ API en FastAPI con SQLite. Contrato con la app en [`docs/API.md`](../docs/API.md
 |---|---|
 | `app.py` | Punto de entrada: CORS, formato de errores del contrato, `/api/health` y las rutas del chat y del feed |
 | `chat/` | Sesiones, mensajes de texto y audio (`transcribe.py`: Gemini con respaldo de Whisper local), perfil de la startup (`profile.py`), recomendaciones en segundo plano (`recommend.py`), persistencia (`store.py`, SQLite en `data/chat.db`) |
-| `cala_core/` | Router de mensajes, ejecución de consultas a Cala con canonizador y respaldos, formato de bloques y comprobación de afirmaciones del usuario |
-| `api/` | Feed, detalle de una entidad y puntaje de afinidad para Cala Match (`docs/SPEC-grafo-afinidad.md`) |
+| `cala_core/` | Router de mensajes, ejecución de consultas a Cala con canonizador y comprobación de afirmaciones. **`execute` nunca lanza:** canonizador, luego búsqueda de entidad, luego `knowledge_search` y, si todo falla, `not_found` con lo intentado |
+| `api/` | Feed, detalle de una entidad, búsqueda (`GET /api/search`) y puntaje de afinidad (`docs/SPEC-grafo-afinidad.md`). **Respaldo en vivo:** una entidad fuera del catálogo y del grafo se trae de Cala (un retrieve), se guarda con TTL y la segunda vez no llama a Cala |
 | `graph/` | Grafo compartido sobre Cala: nodos y aristas con fuente, unión de duplicados, lectura por lotes en Valkey |
 | `catalog/` | Ingesta reanudable del catálogo de Slush 2026 al grafo, con etiquetas de Gemini y respaldo a archivo (`python -m catalog run`) |
 | `core/` | Módulos compartidos: proveedores de LLM (`llm.py`), configuración (`config.py`), cliente de Cala (`cala.py`) y lectura de PDF (`pdf.py`) |

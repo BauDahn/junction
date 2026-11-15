@@ -105,7 +105,7 @@ flowchart TB
   T --> G
   G --> F["Feed and affinity score<br/>computed in memory"]
   G --> X["Detail page with sources"]
-  F --> UI["Expo app"]
+  F --> UI["Web app"]
   X --> UI
 ```
 
