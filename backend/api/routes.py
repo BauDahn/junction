@@ -597,12 +597,17 @@ async def search(q: str = Query(..., min_length=2, max_length=80), limit: int = 
                               **({"one_liner": _one_liner(feature.get("description"))} if feature.get("description") else {})})
     items = local[:limit]
     tried = ["catalog"]
+    user = None
     if len(items) < limit and cala is not None:
-        from core.abuse import daily, account_daily, account_for, identity
+        from core.abuse import account_for
         authorization = request.headers.get("authorization")
         user = account_for(authorization)
+        # Local catalog search is public. With auth required, treat the remote
+        # Cala fallback as unavailable when the request has no valid account.
         if os.getenv("CALA_REQUIRE_AUTH", "0") == "1" and user is None:
-            raise HTTPException(401, "unauthorized")
+            cala = None
+    if len(items) < limit and cala is not None:
+        from core.abuse import daily, account_daily, account_for, identity
         subject = identity(request, user)
         enforce(request, "entity", subject, 20, 60)
         daily(request, "entity", subject, 200)
