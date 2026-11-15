@@ -9,7 +9,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from pydantic import BaseModel
 from core.llm import make_llm
 from core.config import settings
-from core.cala import CalaClient
 from . import store
 from .engine import handle_text
 from .profile import empty_profile
@@ -37,12 +36,26 @@ def get_transcriber():
 def get_cala():
     if not settings.cala_api_key:
         return None
+    from canonizador.client import CalaClient
     return CalaClient(settings.cala_api_key, settings.cache_dir)
 
 
 def _session(session_id):
     if not store.session_exists(session_id):
         raise HTTPException(404, "Session not found.")
+
+
+def _recommendation_is_recent(previous):
+    if not previous:
+        return False
+    from datetime import datetime, timedelta, timezone
+    try:
+        updated = datetime.fromisoformat(previous["updated_at"].replace("Z", "+00:00"))
+        if updated.tzinfo is None:
+            updated = updated.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) - updated < timedelta(minutes=10)
+    except (TypeError, ValueError):
+        return False
 
 
 @router.post("/api/transcribe")
@@ -112,7 +125,8 @@ async def _process_text(session_id, text, llm, cala, transcript=None, context=No
         store.save_profile(session_id, profile)
         fp = recommend.fingerprint(profile)
         previous = store.get_recommendations(session_id)
-        if settings.cala_api_key and (profile.get("sector") or profile.get("one_liner")) and (not previous or previous["fingerprint"] != fp or previous["status"] == "error"):
+        recent_recommendation = _recommendation_is_recent(previous)
+        if settings.cala_api_key and (profile.get("sector") or profile.get("one_liner")) and not recent_recommendation and (not previous or previous["fingerprint"] != fp or previous["status"] == "error"):
             store.save_recommendations(session_id, "running", {}, fp, notified=0)
             task = asyncio.create_task(recommend.run_recommendations(session_id, profile, llm, cala))
             _recommendation_tasks.add(task)

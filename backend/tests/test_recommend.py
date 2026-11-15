@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
+from canonizador.client import CalaBudgetExceeded, CalaClient as CanonicalCalaClient
 
 from chat import recommend
 from chat import routes
@@ -20,7 +21,7 @@ class FakeCala:
         await asyncio.sleep(0)
         if any(word in question for word in self.fail):
             raise RuntimeError("offline")
-        return {"answer":"Acme raised a seed round.", "sources":[{"name":"Cala","url":"https://example.test"}], "facts":[], "entities":[]}
+        return {"content":"Acme raised a seed round.", "context":[{"id":1,"content":"Acme raised a seed round.","origins":[{"document":{"name":"Cala","url":"https://example.test"}}]}], "entities":[]}
 
 
 class FakeLLM:
@@ -51,7 +52,7 @@ class QuickCala(FakeCala):
     async def search(self, question):
         self.calls.append(question)
         await asyncio.sleep(0)
-        return {"answer":"A company raised seed funding.", "sources":[{"name":"Cala source", "url":"https://example.test/source"}]}
+        return {"content":"A company raised seed funding.", "context":[{"content":"A company raised seed funding.","origins":[{"document":{"name":"Cala source", "url":"https://example.test/source"}}]}]}
 
 
 def test_fingerprint_normalizes_case_and_competitor_order():
@@ -145,6 +146,42 @@ def test_unexpected_recommendation_exception_sets_error(monkeypatch, tmp_path):
     assert data["error"] == "unexpected failure"
     rec = store.get_recommendations("s")
     assert rec["status"] == "error" and rec["data"] == data
+
+
+def test_get_cala_uses_canonizador_client(monkeypatch, tmp_path):
+    monkeypatch.setattr(routes, "settings", SimpleNamespace(cala_api_key="test", cache_dir=tmp_path))
+    client = routes.get_cala()
+    assert isinstance(client, CanonicalCalaClient)
+
+
+def test_recommendation_cooldown_is_ten_minutes(monkeypatch):
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone.utc)
+    assert routes._recommendation_is_recent({"updated_at": now.isoformat()})
+    assert not routes._recommendation_is_recent({"updated_at": (now - timedelta(minutes=11)).isoformat()})
+
+
+def test_budget_exceeded_sets_recommendations_error_and_chat_path_keeps_running(monkeypatch, tmp_path):
+    from chat import store
+
+    class BudgetCala:
+        async def search(self, question):
+            raise CalaBudgetExceeded(10)
+
+    monkeypatch.setenv("CHAT_DB_PATH", str(tmp_path / "budget.db"))
+    data = asyncio.run(recommend.run_recommendations("s", {"sector":"saas"}, FakeLLM(), BudgetCala()))
+    assert "error" not in data
+    assert store.get_recommendations("s")["status"] == "error"
+
+
+def test_recommendation_search_caches_and_normalizes_raw_payload(monkeypatch, tmp_path):
+    monkeypatch.setattr(recommend, "settings", SimpleNamespace(cache_dir=tmp_path))
+    cala = QuickCala()
+    first = asyncio.run(recommend._search(cala, "same question"))
+    second = asyncio.run(recommend._search(cala, "same question"))
+    assert first == second
+    assert first["answer"] == "A company raised seed funding."
+    assert len(cala.calls) == 1
 
 
 def test_prospects_excluyen_competidores_y_la_propia_startup():

@@ -2,6 +2,10 @@ import asyncio
 import hashlib
 import json
 import re
+from pathlib import Path
+from core.cala import CalaClient as LegacyCalaClient
+from core.config import settings
+from canonizador.client import CalaBudgetExceeded
 from . import store
 
 
@@ -94,12 +98,25 @@ async def _cards(kind, result, llm, profile):
     return output, dropped
 
 
+async def _search(cala, question):
+    """Cached recommendation search; normalize the canonizador's raw Cala payload."""
+    digest = hashlib.sha256(question.encode()).hexdigest()
+    path = Path(settings.cache_dir) / "chat-recommendations" / f"{digest}.json"
+    if path.exists():
+        return json.loads(path.read_text())
+    raw = await cala.search(question)
+    result = LegacyCalaClient.normalize(raw)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(result, ensure_ascii=False))
+    return result
+
+
 async def run_recommendations(session_id, profile, llm, cala):
     fp = fingerprint(profile)
     try:
         store.save_recommendations(session_id, "running", {}, fp)
         qs = queries(profile)
-        results = await asyncio.gather(*(cala.search(q) for q in qs.values()), return_exceptions=True)
+        results = await asyncio.gather(*(_search(cala, q) for q in qs.values()), return_exceptions=True)
         categories = {}
         dropped = 0
         failures = 0
@@ -114,7 +131,7 @@ async def run_recommendations(session_id, profile, llm, cala):
                 continue
             categories[kind], count = outcome
             dropped += count
-        status = "error" if failures == 3 else "ready"
+        status = "error" if failures == 3 or any(isinstance(result, CalaBudgetExceeded) for result in results) else "ready"
         data = {"updated_at":store.now_iso(), **categories, "queries":qs, "dropped_cards":dropped}
         store.save_recommendations(session_id, status, data, fp, data["updated_at"])
         return data
