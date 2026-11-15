@@ -364,6 +364,8 @@ def test_stats_catalog_counts_status_and_optional_cala(tmp_path, monkeypatch):
 
     backend_app.app.dependency_overrides[get_catalog] = lambda: catalog
     backend_app.app.dependency_overrides[get_cala] = Cala
+    from api import routes as api_routes
+    api_routes._refresh_stats(catalog, Cala(), None)
     monkeypatch.setenv("ADMIN_TOKEN", "test-admin")
     with TestClient(backend_app.app) as test_client:
         headers = {"X-Admin-Token": "test-admin"}

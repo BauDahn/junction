@@ -1,55 +1,122 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import { useRouter } from 'expo-router';
-import { useMode, type MatchMode } from '../src/mode';
 import { getEventById } from '../src/api/events';
-import { getContext, type ContextPayload } from '../src/api/context';
+import { getEntityDetail } from '../src/api/entities';
+import RawContextVoiceCard from '../src/components/RawContextVoiceCard';
 import { FavoritesReportButton } from '../src/components/FavoritesReportButton';
-import { getOrCreateSessionId } from '../src/session';
+import { useMode } from '../src/mode';
 import { font, maxWidth, pageMargin, radius, space, tabularNums, useTheme } from '../src/theme';
 
-const investors = [
-  ['eight-roads-ventures', 'Eight Roads Ventures', 'Global venture capital investor'],
-  ['chalfen-ventures', 'Chalfen Ventures', 'European software investor'],
-  ['northzone', 'Northzone', 'European venture capital firm'],
-  ['point-nine', 'Point Nine', 'European early-stage investor'],
-  ['lifeline-ventures', 'Lifeline Ventures', 'Nordic early-stage investor'],
-];
-
 export default function PerfilScreen() {
-  const router = useRouter();
   const { colors } = useTheme();
-  const { mode, setMode, userProfile, completeOnboarding, resetOnboarding, favoriteInvestorIds, myEventIds, toggleFavoriteInvestor } = useMode();
-  const s = useMemo(() => styles(colors), [colors]);
+  const router = useRouter();
+  const { mode, user, userProfile, completeOnboarding, favoriteInvestorIds, myEventIds, toggleFavoriteInvestor, logout } = useMode();
   const [name, setName] = useState(userProfile.name);
-  const [organization, setOrganization] = useState(userProfile.organization);
-  const [profileSaved, setProfileSaved] = useState(false);
-  const [context, setContext] = useState<ContextPayload | null>(null);
-  const [loadError, setLoadError] = useState('');
-  useEffect(() => { setName(userProfile.name); setOrganization(userProfile.organization); }, [userProfile.name, userProfile.organization]);
-  useEffect(() => { let active = true; void getOrCreateSessionId().then(getContext).then((value) => { if (active) setContext(value); }).catch(() => { if (active) setLoadError('Context summary is unavailable. Try again later.'); }); return () => { active = false; }; }, []);
-  const saveProfile = () => {
-    completeOnboarding({ name: name.trim(), organization: organization.trim(), role: mode });
-    setProfileSaved(true);
-    setTimeout(() => setProfileSaved(false), 2500);
-  };
-  const roleOptions: { value: MatchMode; label: string }[] = [{ value: 'raising', label: 'Raiser' }, { value: 'investing', label: 'Investor' }];
-  const value = (key: keyof NonNullable<ContextPayload['what_we_understood']>) => context?.what_we_understood[key]?.join(', ') || 'Not set';
-  const summaryRows: [string, string, boolean?][] = [
-    ['Sector focus', value('sector_focus')], ['Target stage', value('target_stage')], ['Target round size', value('target_round_size'), true], ['Geography', value('geography')], ['Context strength', context ? `${context.context_strength.score}%` : 'Not set', true],
-  ];
-  return <ScrollView style={s.page} contentContainerStyle={s.outer}>
-    <View style={s.canvas}>
-      <View style={s.section}><Text style={s.heading}>Personal details</Text><Text style={s.label}>Full name</Text><TextInput value={name} onChangeText={setName} style={s.input} /><Text style={s.label}>Startup or fund name</Text><TextInput value={organization} onChangeText={setOrganization} style={s.input} /><Text style={s.label}>Operating role</Text><View style={s.switch}>{roleOptions.map((option) => <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ selected: mode === option.value }} onPress={() => setMode(option.value)} style={[s.role, mode === option.value && s.roleActive]}><Text style={[s.roleText, mode === option.value && s.roleTextActive]}>{option.label}</Text></Pressable>)}</View><Pressable style={s.button} onPress={saveProfile}><Text style={s.buttonText}>{profileSaved ? 'Profile saved ✓' : 'Save profile'}</Text></Pressable><Pressable onPress={() => { resetOnboarding(); router.replace('/onboarding' as never); }} style={s.secondary}><Text style={s.link}>Re-open onboarding gate</Text></Pressable></View>
-      <View style={s.section}><Text style={s.heading}>Favorite investors</Text>{favoriteInvestorIds.length ? favoriteInvestorIds.map((id) => { const investor = investors.find((entry) => entry[0] === id); const label = investor?.[1] ?? id; return <View key={id} style={s.row}><View style={s.rowCopy}><Text style={s.rowTitle}>{label}</Text><Text style={s.muted}>{investor?.[2] ?? 'Saved investor'}</Text></View><Pressable onPress={() => router.push(`/entity/${id}`)}><Text style={s.link}>Open dossier</Text></Pressable><Pressable onPress={() => toggleFavoriteInvestor(id)}><Text style={s.link}>Remove</Text></Pressable></View>; }) : <Text style={s.empty}>No saved investors yet.</Text>}
-        <FavoritesReportButton />
-        <Text style={[s.heading, s.subheading]}>My events</Text>{myEventIds.length ? myEventIds.map((id) => { const event = getEventById(id); if (!event) return null; return <View key={id} style={s.row}><View style={s.rowCopy}><Text style={s.rowTitle}>{event.name}</Text><Text style={[s.muted, tabularNums]}>{event.date} · {event.city}</Text></View><Pressable onPress={() => router.push(`/event/${id}` as never)}><Text style={s.link}>Open event</Text></Pressable></View>; }) : <Text style={s.empty}>No events added yet.</Text>}
-      </View>
-      <View style={s.section}><Text style={s.heading}>Recommender context</Text><Text style={s.label}>What we understood</Text>{summaryRows.map(([label, val, numeric]) => <View key={label} style={s.summaryRow}><Text style={s.muted}>{label}</Text><Text style={[s.summaryValue, numeric ? tabularNums : null]}>{val}</Text></View>)}{loadError ? <Text style={s.error}>{loadError}</Text> : null}<Pressable style={s.secondary} onPress={() => router.push('/context')}><Text style={s.link}>Manage full context</Text></Pressable></View>
-    </View>
-  </ScrollView>;
-}
+  const [company, setCompany] = useState(userProfile.organization);
+  const [saved, setSaved] = useState(false);
+  const [resolvedInvestors, setResolvedInvestors] = useState<Record<string, { name: string; subtitle: string }>>({});
 
-const styles = (c: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
-  page: { flex: 1, backgroundColor: c.surface }, outer: { alignItems: 'center', paddingHorizontal: pageMargin, paddingBottom: space.xxl }, canvas: { width: '100%', maxWidth, backgroundColor: c.surface, borderLeftWidth: 1, borderRightWidth: 1, borderColor: c.border }, section: { padding: space.xl, borderBottomWidth: 1, borderBottomColor: c.border }, heading: { fontSize: font.h2, fontWeight: '600', color: c.text, marginBottom: space.lg }, label: { fontSize: font.small, color: c.textMuted, marginBottom: space.sm, marginTop: space.md }, input: { fontSize: 16, color: c.text, borderBottomWidth: 1, borderBottomColor: c.border, paddingVertical: space.sm }, switch: { flexDirection: 'row', gap: space.sm }, role: { borderWidth: 1, borderColor: c.border, borderRadius: radius.pill, paddingHorizontal: space.lg, paddingVertical: space.sm }, roleActive: { backgroundColor: c.accent, borderColor: c.accent }, roleText: { fontSize: font.small, color: c.text }, roleTextActive: { color: c.accentText }, button: { marginTop: space.lg, alignSelf: 'flex-start', backgroundColor: c.accent, borderRadius: radius.md, paddingHorizontal: space.lg, paddingVertical: space.md }, buttonText: { color: c.accentText, fontSize: font.small, fontWeight: '600' }, secondary: { marginTop: space.md, alignSelf: 'flex-start', paddingVertical: space.sm }, link: { color: c.accent, fontSize: font.small, fontWeight: '600' }, subheading: { marginTop: space.xl, marginBottom: space.sm }, row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: 1, borderBottomColor: c.border }, rowCopy: { flex: 1 }, rowTitle: { fontSize: font.body, color: c.text, fontWeight: '600' }, muted: { fontSize: font.small, color: c.textMuted, marginTop: space.xs }, empty: { fontSize: font.body, color: c.textMuted, paddingVertical: space.md }, summaryRow: { flexDirection: 'row', justifyContent: 'space-between', gap: space.md, paddingVertical: space.md, borderBottomWidth: 1, borderBottomColor: c.border }, summaryValue: { flex: 1, textAlign: 'right', fontSize: font.small, color: c.text }, error: { color: c.textMuted, fontSize: font.small, paddingTop: space.md },
-});
+  useEffect(() => {
+    let active = true;
+    void Promise.all(favoriteInvestorIds.map(async (id) => {
+      try {
+        const detail = await getEntityDetail(id, mode, user?.session_id);
+        return detail ? [id, { name: detail.name, subtitle: detail.description || 'Saved investor' }] as const : null;
+      } catch { return null; }
+    })).then((entries) => {
+      if (active) setResolvedInvestors(Object.fromEntries(entries.filter((entry): entry is NonNullable<typeof entry> => entry !== null)));
+    });
+    return () => { active = false; };
+  }, [favoriteInvestorIds, mode, user?.session_id]);
+
+  const investorFallbackName = (id: string) => id.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+  useEffect(() => {
+    setName(userProfile.name || user?.name || '');
+    setCompany(userProfile.organization || user?.company || '');
+  }, [user?.name, user?.company, userProfile.name, userProfile.organization]);
+
+  const roleLabel = user?.role === 'investor' || mode === 'investing' ? 'Investor' : 'Raiser';
+  const styles = StyleSheet.create({
+    page: { flex: 1, backgroundColor: colors.surface },
+    outer: { alignItems: 'center', paddingHorizontal: pageMargin, paddingBottom: 112 },
+    canvas: { width: '100%', maxWidth, borderLeftWidth: 1, borderRightWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+    section: { padding: space.xl, borderBottomWidth: 1, borderColor: colors.border, gap: space.md },
+    heading: { fontSize: font.h2, fontWeight: '600', color: colors.text },
+    label: { fontSize: font.small, color: colors.textMuted },
+    input: { fontSize: 16, color: colors.text, borderBottomWidth: 1, borderColor: colors.border, paddingVertical: space.sm },
+    roleRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+    actionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
+    primaryButton: { minHeight: 44, justifyContent: 'center', backgroundColor: colors.accent, borderRadius: radius.md, paddingHorizontal: space.lg, paddingVertical: space.md },
+    secondaryButton: { minHeight: 44, justifyContent: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: space.lg, paddingVertical: space.md },
+    primaryButtonText: { color: colors.accentText, fontWeight: '600' },
+    buttonText: { color: colors.text, fontWeight: '600' },
+    linkButton: { minHeight: 44, justifyContent: 'center' },
+    link: { color: colors.accent, fontSize: font.small, fontWeight: '600' },
+    row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: 1, borderColor: colors.border },
+    rowCopy: { flex: 1, minWidth: 120 },
+    rowTitle: { color: colors.text, fontWeight: '600' },
+    muted: { color: colors.textMuted, fontSize: font.small, marginTop: space.xs },
+    empty: { color: colors.textMuted },
+    eventDate: { color: colors.textMuted, fontSize: font.small },
+  });
+
+  return (
+    <ScrollView style={styles.page} contentContainerStyle={styles.outer}>
+      <View style={styles.canvas}>
+        <View style={styles.section}>
+          <Text style={styles.heading}>Account</Text>
+          <Text style={styles.label}>Full name</Text>
+          <TextInput accessibilityLabel="Full name" value={name} onChangeText={setName} placeholder="Full name" placeholderTextColor={colors.textFaint} style={styles.input} />
+          <Text style={styles.label}>Startup or fund name</Text>
+          <TextInput accessibilityLabel="Startup or fund name" value={company} onChangeText={setCompany} placeholder="Startup or fund name" placeholderTextColor={colors.textFaint} style={styles.input} />
+          <Text style={styles.label}>Email</Text>
+          <Text style={{ color: colors.text }}>{user?.email || 'Not signed in'}</Text>
+          <Text style={styles.label}>Operating role</Text>
+          <View style={styles.roleRow}>
+            <Text style={{ color: colors.text }}>{roleLabel}</Text>
+            <Feather name="lock" size={14} color={colors.textMuted} />
+            <Text style={styles.label}>Fixed at sign-up</Text>
+          </View>
+          <View style={styles.actionRow}>
+            <Pressable accessibilityRole="button" onPress={() => {
+              completeOnboarding({ name: name.trim(), organization: company.trim(), role: mode });
+              setSaved(true);
+              setTimeout(() => setSaved(false), 2500);
+            }} style={styles.primaryButton}><Text style={styles.primaryButtonText}>{saved ? 'Profile saved' : 'Save profile'}</Text></Pressable>
+            <Pressable accessibilityRole="button" onPress={async () => { await logout(); router.replace('/onboarding' as never); }} style={styles.secondaryButton}><Text style={styles.buttonText}>Sign out</Text></Pressable>
+          </View>
+        </View>
+
+        <View style={styles.section}><Text style={styles.heading}>Context</Text><RawContextVoiceCard /></View>
+        <View style={styles.section}>
+          <Text style={styles.heading}>Favorite investors</Text>
+          {favoriteInvestorIds.length ? favoriteInvestorIds.map((id) => {
+            const investor = resolvedInvestors[id];
+            return (
+              <View key={id} style={styles.row}>
+                <View style={styles.rowCopy}><Text style={styles.rowTitle}>{investor?.name ?? investorFallbackName(id)}</Text><Text style={styles.muted}>{investor?.subtitle ?? 'Saved investor'}</Text></View>
+                <Pressable accessibilityRole="button" style={styles.linkButton} onPress={() => router.push(`/entity/${id}`)}><Text style={styles.link}>Open dossier</Text></Pressable>
+                <Pressable accessibilityRole="button" style={styles.linkButton} onPress={() => toggleFavoriteInvestor(id)}><Text style={styles.link}>Remove</Text></Pressable>
+              </View>
+            );
+          }) : <Text style={styles.empty}>No saved investors yet.</Text>}
+          <FavoritesReportButton />
+          <Text style={[styles.heading, { marginTop: space.lg }]}>My events</Text>
+          {myEventIds.length ? myEventIds.map((id) => {
+            const event = getEventById(id);
+            if (!event) return null;
+            return (
+              <View key={id} style={styles.row}>
+                <View style={styles.rowCopy}><Text style={styles.rowTitle}>{event.name}</Text><Text style={[styles.eventDate, tabularNums]}>{event.date} · {event.city}</Text></View>
+                <Pressable accessibilityRole="button" style={styles.linkButton} onPress={() => router.push(`/event/${id}` as never)}><Text style={styles.link}>Open event</Text></Pressable>
+              </View>
+            );
+          }) : <Text style={styles.empty}>No events added yet.</Text>}
+        </View>
+      </View>
+    </ScrollView>
+  );
+}

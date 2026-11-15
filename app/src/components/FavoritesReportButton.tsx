@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { requestFavoritesReport } from '../api/favoritesReport';
+import { getAuthToken } from '../api/auth';
 import { useMode } from '../mode';
 import { getSessionId } from '../session';
 import { font, radius, space, useTheme } from '../theme';
 
 export function FavoritesReportButton() {
   const { colors } = useTheme();
-  const { favoriteInvestorIds, mode } = useMode();
+  const { favoriteInvestorIds, mode, user } = useMode();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -27,11 +27,10 @@ export function FavoritesReportButton() {
 
     setLoading(true);
     try {
-      const sessionId = await getSessionId();
-      // This key is the auth token key introduced by PR #121.
+      const sessionId = user?.session_id ?? await getSessionId();
       let authToken: string | null = null;
       try {
-        authToken = await AsyncStorage.getItem('cala_auth_token');
+        authToken = await getAuthToken();
       } catch {
         authToken = null;
       }

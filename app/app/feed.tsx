@@ -15,7 +15,7 @@ function EventTile({ event, attending, onToggle, onOpen, fullWidth }: { event: C
       </Pressable>
       <View style={{ position: 'absolute', left: space.xs, bottom: space.xs, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, paddingHorizontal: space.sm, paddingVertical: space.xs }}><Text numberOfLines={1} style={[{ fontSize: font.caption, color: colors.text }, tabularNums]}>{event.date}</Text></View>
       <Pressable accessibilityRole="button" accessibilityLabel={attending ? `Stop attending ${event.name}` : `Attend ${event.name}`} onPress={onToggle} style={({ pressed }) => ({ position: 'absolute', right: space.xs, top: space.xs, backgroundColor: attending ? colors.secondary : colors.surface, borderColor: attending ? colors.secondary : colors.border, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: space.sm, paddingVertical: space.xs, opacity: pressed ? 0.8 : 1 })}>
-        <Text style={{ fontSize: font.caption, fontWeight: '600', color: attending ? '#ffffff' : colors.secondary }}>{attending ? 'Attending ✓' : '+ Attend'}</Text>
+        <Text style={{ fontSize: font.caption, fontWeight: '600', color: attending ? colors.secondaryText : colors.secondary }}>{attending ? 'Attending ✓' : '+ Attend'}</Text>
       </Pressable>
     </View>
     <Pressable accessibilityRole="button" accessibilityLabel={`Open ${event.name}`} onPress={onOpen} style={({ pressed }) => ({ flex: 1, padding: space.sm, justifyContent: 'space-between', gap: space.xs, opacity: pressed ? 0.9 : 1 })}>

@@ -4,6 +4,35 @@ export type Source = {
   date?: string;
   source_rank?: 'FILING' | 'PRIMARY' | 'PRESS' | 'AGGREGATOR';
 };
+/** Normalizes one Cala source: backend may send the URL as `document`. Keeps only http/https URLs. */
+export function normalizeSource(raw: unknown): Source | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const s = raw as Record<string, unknown>;
+  const candidate = typeof s.url === 'string' && s.url ? s.url : typeof s.document === 'string' ? s.document : '';
+  if (!/^https?:\/\//i.test(candidate) || typeof s.name !== 'string') return null;
+  const rank = s.source_rank;
+  return {
+    name: s.name,
+    url: candidate,
+    ...(typeof s.date === 'string' && s.date ? { date: s.date } : {}),
+    ...(rank === 'FILING' || rank === 'PRIMARY' || rank === 'PRESS' || rank === 'AGGREGATOR' ? { source_rank: rank } : {}),
+  };
+}
+export function normalizeSources(raw: unknown): Source[] {
+  return Array.isArray(raw) ? raw.map(normalizeSource).filter((s): s is Source => s !== null) : [];
+}
+/** Walks a parsed payload and normalizes every `sources` array in place. */
+export function normalizeSourcesDeep<T>(body: T): T {
+  if (Array.isArray(body)) body.forEach(normalizeSourcesDeep);
+  else if (body && typeof body === 'object') {
+    const obj = body as Record<string, unknown>;
+    for (const key of Object.keys(obj)) {
+      if (key === 'sources' && Array.isArray(obj[key])) obj[key] = normalizeSources(obj[key]);
+      else normalizeSourcesDeep(obj[key]);
+    }
+  }
+  return body;
+}
 export type CalaCall = { tool: 'knowledge_query' | 'entity' | 'knowledge_search'; query: string };
 export type CalaTableBlock = {
   type: 'cala_table';
@@ -184,7 +213,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       response.status,
     );
   }
-  return body as T;
+  return normalizeSourcesDeep(body) as T;
 }
 export const health = () => request<HealthStatus>('/api/health');
 export async function createSession(): Promise<string> {
