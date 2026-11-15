@@ -2,10 +2,11 @@
 import asyncio
 import base64
 import json
+import os
 import unicodedata
 from collections import Counter
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Header, Response
 from pydantic import BaseModel, Field, field_validator
 from chat import store as chat_store
 from .affinity import format_amount, rank
@@ -395,6 +396,7 @@ def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
 
 @router.get("/api/entities/{entity_id}")
 async def entity(entity_id: str, mode: str | None = None, session_id: str | None = None,
+                 request: Request = None, authorization: str | None = Header(default=None),
                  catalog=Depends(get_catalog), graph=Depends(get_graph), cala=Depends(get_cala)):
     current_mode = _mode(mode, session_id)
     if session_id:
@@ -407,6 +409,29 @@ async def entity(entity_id: str, mode: str | None = None, session_id: str | None
             if not catalog.get_features(entity_id) and not cached_node:
                 raise HTTPException(404, "Entity not found in the graph or in Cala.")
         else:
+            from uuid import UUID
+            from core.abuse import account_for, enforce, identity, daily, account_daily, negative_hit, negative_put
+            try:
+                UUID(entity_id)
+            except (ValueError, TypeError):
+                raise HTTPException(422, "Entity id must be a UUID.")
+            user = account_for(authorization)
+            if os.getenv("CALA_REQUIRE_AUTH", "0") == "1" and user is None:
+                raise HTTPException(401, "unauthorized")
+            subject = identity(request, user)
+            enforce(request, "entity", subject, 20, 60)
+            daily(request, "entity", subject, 200)
+            if user:
+                account_daily(request, user)
+            negative = f"neg:v1:{entity_id}"
+            cache_remote = getattr(getattr(cala, "cache", None), "remote", None)
+            try:
+                if negative_hit(negative) or (cache_remote and cache_remote._run(lambda c: c.get(negative))[1]):
+                    raise HTTPException(404, "Entity not found in the graph or in Cala.")
+            except HTTPException:
+                raise
+            except Exception:
+                pass
             from graph.loader import expand_node
             stats = {"nodes": set(), "edges": set(), "cala_calls": 0, "skipped_expanded": 0,
                      "excluded": Counter(), "truncated": [], "errors": [], "levels": []}
@@ -432,28 +457,50 @@ async def entity(entity_id: str, mode: str | None = None, session_id: str | None
                 raise HTTPException(504, "Cala did not answer in time.") from exc
             except Exception as exc:
                 if exc.__class__.__name__ == "CalaBudgetExceeded":
+                    import logging
+                    logging.getLogger("uvicorn.error").warning("Cala call cap reached client=%s route=%s", subject, request.url.path)
                     raise HTTPException(503, "Cala call cap reached.") from exc
                 raise
         if cala is not None and not graph.get_node(entity_id):
             errors = stats.get("errors") or []
             message = " ".join(str(error.get("error", "")) for error in errors if isinstance(error, dict)).casefold()
             if "daily cala call cap reached" in message:
+                import logging
+                logging.getLogger("uvicorn.error").warning("Cala call cap reached client=%s route=%s", subject, request.url.path)
                 raise HTTPException(503, "Cala call cap reached.")
             missing = any(token in message for token in ("not found", "not exist", "unknown entity", "404", "doesn't exist"))
             missing = missing or any(str(error.get("error", "")).strip("'\"") == str(entity_id)
                                      for error in errors if isinstance(error, dict))
             if missing:
+                try:
+                    negative_put(negative)
+                    if cache_remote: cache_remote._run(lambda c: c.set(negative, "1", ex=3600))
+                except Exception: pass
                 raise HTTPException(404, "Entity not found in the graph or in Cala.")
             raise HTTPException(502, "Cala request failed.")
         if not graph.get_node(entity_id) and not catalog.get_features(entity_id):
+            if cala is not None and cache_remote:
+                try:
+                    negative_put(negative)
+                    cache_remote._run(lambda c: c.set(negative, "1", ex=3600))
+                except Exception: pass
             raise HTTPException(404, "Entity not found in the graph or in Cala.")
     return await asyncio.to_thread(_detail_sync, entity_id, session_id, profile, current_mode, catalog, graph)
 
 
 @router.post("/api/favorites/report")
-async def favorites_report(body: FavoritesReportRequest, catalog=Depends(get_catalog),
+async def favorites_report(body: FavoritesReportRequest, request: Request,
+                           authorization: str | None = Header(default=None), catalog=Depends(get_catalog),
                            graph=Depends(get_graph), cala=Depends(get_cala), llm=Depends(get_report_llm)):
     from .favorites_report import action_plan, render_pdf
+    from core.abuse import account_for, daily, enforce, identity
+
+    user = account_for(authorization)
+    if os.getenv("CALA_REQUIRE_AUTH", "0") == "1" and user is None:
+        raise HTTPException(401, "unauthorized")
+    subject = identity(request, user)
+    enforce(request, "report", subject, 3, 60)
+    daily(request, "report", subject, 30)
 
     current_mode = _mode(body.mode, body.session_id)
     if body.session_id:
@@ -463,33 +510,50 @@ async def favorites_report(body: FavoritesReportRequest, catalog=Depends(get_cat
     async def create_report():
         omitted_by_index = [None] * len(body.entity_ids)
         failure_codes = [None] * len(body.entity_ids)
+        failure_messages = [None] * len(body.entity_ids)
+        failure_headers = [None] * len(body.entity_ids)
         entries_by_index = [None] * len(body.entity_ids)
         semaphore = asyncio.Semaphore(2)
 
         async def load(index, entity_id):
             async with semaphore:
                 try:
-                    detail = await entity(entity_id, current_mode, body.session_id, catalog, graph, cala)
+                    detail = await entity(entity_id=entity_id, mode=current_mode, session_id=body.session_id,
+                                          request=request, authorization=authorization, catalog=catalog,
+                                          graph=graph, cala=cala)
                     entries_by_index[index] = {"detail": detail, "plan": None}
                 except HTTPException as exc:
                     failure_codes[index] = exc.status_code
-                    reason = {404: "Not found in the catalog or in Cala", 503: "Cala daily call cap reached",
+                    failure_messages[index] = str(exc.detail)
+                    failure_headers[index] = exc.headers
+                    reason = {404: "Not found in the catalog or in Cala", 422: "Invalid id (not a Cala id)",
+                              429: "Request limit reached", 503: "Cala daily call cap reached",
                               504: "Cala did not answer in time"}.get(exc.status_code, "Cala request failed")
                     omitted_by_index[index] = {"id": entity_id, "reason": reason}
                 except Exception:
                     failure_codes[index] = 502
+                    failure_messages[index] = "Cala request failed."
                     omitted_by_index[index] = {"id": entity_id, "reason": "Cala request failed"}
 
         await asyncio.gather(*(load(index, entity_id) for index, entity_id in enumerate(body.entity_ids)))
         entries = [entry for entry in entries_by_index if entry is not None]
         omitted = [row for row in omitted_by_index if row is not None]
         if not entries:
-            status = 404 if failure_codes and all(code == 404 for code in failure_codes) else (
-                503 if 503 in failure_codes else 504 if 504 in failure_codes else 502)
-            message = {404: "No favorites were found in the catalog or Cala.",
-                       503: "Cala's daily call cap was reached.", 504: "Cala did not answer in time.",
-                       502: "Cala request failed for all favorites."}[status]
-            raise HTTPException(status, message)
+            if failure_codes and all(code == 404 for code in failure_codes):
+                status, message = 404, "No favorites were found in the catalog or Cala."
+            elif failure_codes and all(code == 422 for code in failure_codes):
+                status, message = 422, failure_messages[failure_codes.index(422)]
+            elif 429 in failure_codes:
+                failed_index = failure_codes.index(429)
+                status, message = 429, failure_messages[failed_index]
+            elif 503 in failure_codes:
+                status, message = 503, "Cala's daily call cap was reached."
+            elif 504 in failure_codes:
+                status, message = 504, "Cala did not answer in time."
+            else:
+                status, message = 502, "Cala request failed for all favorites."
+            headers = failure_headers[failure_codes.index(429)] if status == 429 else None
+            raise HTTPException(status, message, headers=headers)
         plan_semaphore = asyncio.Semaphore(3)
 
         async def plan(entry):
@@ -516,7 +580,9 @@ def _fold_name(value):
 
 @router.get("/api/search")
 async def search(q: str = Query(..., min_length=2, max_length=80), limit: int = Query(8, ge=1, le=50),
-                 catalog=Depends(get_catalog), cala=Depends(get_cala)):
+                 request: Request = None, catalog=Depends(get_catalog), cala=Depends(get_cala)):
+    from core.abuse import enforce, client_ip
+    enforce(request, "search", f"ip:{client_ip(request)}", 30, 60)
     needle = _fold_name(q)
     local, seen = [], set()
     for kind in ("investor", "startup"):
@@ -530,6 +596,16 @@ async def search(q: str = Query(..., min_length=2, max_length=80), limit: int = 
     items = local[:limit]
     tried = ["catalog"]
     if len(items) < limit and cala is not None:
+        from core.abuse import daily, account_daily, account_for, identity
+        authorization = request.headers.get("authorization")
+        user = account_for(authorization)
+        if os.getenv("CALA_REQUIRE_AUTH", "0") == "1" and user is None:
+            raise HTTPException(401, "unauthorized")
+        subject = identity(request, user)
+        enforce(request, "entity", subject, 20, 60)
+        daily(request, "entity", subject, 200)
+        if user:
+            account_daily(request, user)
         tried.append("cala")
         async def get_entities(kind):
             try:
@@ -593,7 +669,11 @@ def _stats_snapshot(catalog, cala):
         except Exception:
             output["cala_usage"] = {}
     else:
-        output["cala_usage"] = {}
+        try:
+            from canonizador.client import cala_usage
+            output["cala_usage"] = cala_usage(None)
+        except Exception:
+            output["cala_usage"] = {}
     if stats is not None:
         try:
             output["cala"] = stats() if callable(stats) else stats
@@ -603,5 +683,12 @@ def _stats_snapshot(catalog, cala):
 
 
 @router.get("/api/stats")
-async def stats(catalog=Depends(get_catalog), cala=Depends(get_cala)):
-    return await asyncio.to_thread(_stats_snapshot, catalog, cala)
+async def stats(authorization: str | None = Header(default=None), x_admin_token: str | None = Header(default=None),
+                catalog=Depends(get_catalog), cala=Depends(get_cala)):
+    output = await asyncio.to_thread(_stats_snapshot, catalog, cala)
+    admin = os.getenv("ADMIN_TOKEN")
+    if not admin or x_admin_token != admin:
+        output.pop("cala", None)
+        usage = output.get("cala_usage") or {}
+        output["cala_usage"] = {key: value for key, value in usage.items() if key in ("total", "calls", "today")}
+    return output
