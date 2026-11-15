@@ -46,6 +46,21 @@ Cala Match. Detalle de cómo se calcula el puntaje en `docs/SPEC-grafo-afinidad.
 - Las etiquetas de sector y etapa generadas por Gemini a partir de la descripción de Cala llevan el sufijo ` (AI-tagged)` en `tags`, en `why_match` y en la etiqueta del `fact`.
 - `GET /api/stats` → `{catalog: {investors, startups, total, status}, cala?}`: tamaño y progreso del catálogo y, si el cliente de Cala las expone, sus métricas.
 
+## Contexto *(borrador, nuevo 14/11 noche)*
+Ingesta de contexto del usuario (deck PDF, nota de voz o texto libre) hacia el perfil de la sesión y edición manual de lo entendido.
+- `GET /api/sessions/{id}/context` → `ContextPayload`: `{session_id, profile, what_we_understood, sources: [ContextSource], context_strength, source?}`.
+- `POST /api/sessions/{id}/context/pdf` (multipart `file`: PDF ≤ 20 MB, hasta 15 páginas) → `ContextPayload` (incluye `source` con `kind: "pdf"`, `pages`).
+- `POST /api/sessions/{id}/context/voice` (multipart `audio` o `file`: `m4a|webm|wav|mp3|ogg`, ≤ 10 MB, ≤ 2 min) → `ContextPayload` (incluye `source` con `kind: "voice"`, `duration_s`, `transcript` literal; la extracción al perfil usa `text` limpio cuando el transcriptor lo devuelve).
+- `POST /api/sessions/{id}/context/note` (JSON `{text, title?}`, `text` no vacío ≤ 8000 caracteres) → `ContextPayload` (incluye `source` con `kind: "note"`).
+- `PATCH /api/sessions/{id}/context/understood` (JSON parcial con claves de `what_we_understood`, cada una `[string]`) → `ContextPayload`: actualiza `what_we_understood`, `seeking`, `sector`/`stage`/`location`, `ticket`/`raising.amount`/`ticket_range` (al enviar `target_round_size`) e `interests.{sectors, stages, regions}` conservando `interests.follows` (`companies`, `investors`) preexistente.
+- `DELETE /api/sessions/{id}/context/sources/{source_id}` → `ContextPayload`: elimina esa fuente de `sources` (`profile.context_sources`).
+- `what_we_understood`: `{sector_focus: [string], target_stage: [string], target_round_size: [string], geography: [string], seeking: [string]}`.
+- `sources` (`ContextSource`): `{id, kind: pdf|voice|note, title, subtitle, status: "ready", created_at, pages?, duration_s?, transcript?}`.
+- `context_strength`: `{score: 0-100, signals_added: int, signals_total: 6, label: "Needs Context"|"Calibrating"|"Good Calibration"|"High Signal"}`.
+- En `profile`: además de `ticket` (string para mostrar), se guarda `ticket_range?: {min: number, max: number, currency: "EUR"|"USD"|"GBP"|null}` en unidades base numéricas.
+- Códigos HTTP: `400` (PDF vacío, JSON o campos inválidos, nota vacía), `404` (sesión o `source_id` inexistente), `413` (PDF > 20 MB, audio > 10 MB o > 2 min, nota > 8000 caracteres), `415` (formato PDF o audio no admitido), `422` (PDF ilegible o audio vacío/ininteligible), `502` (fallo de extracción LLM o transcripción), `503` (transcripción no configurada).
+
+
 ## Perfil y recomendaciones *(borrador)*
 - `GET /api/sessions/{id}/profile` → `{startup_name?, one_liner?, sector?, stage?, location?, raising?: {amount?, round?}, competitors: [string], target_customers?, role?: founder|investor|other, interests?: {sectors: [string], regions: [string], stages: [string], follows: {companies: [string], investors: [string]}}, facts: [{text, origin: user}], updated_at}`
 - `GET /api/sessions/{id}/recommendations` → `{status: idle|running|ready|error, updated_at, investors: [Card], competitors: [Card], prospects: [Card]}`
