@@ -62,7 +62,7 @@ export function FavoritesReportButton() {
 
 const makeStyles = (c: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
   container: { gap: space.sm, paddingTop: space.md },
-  button: { minHeight: 44, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: c.accent, borderRadius: radius.md, paddingHorizontal: space.lg, paddingVertical: space.sm },
+  button: { minHeight: 44, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: c.accent, borderRadius: 6, paddingHorizontal: space.lg, paddingVertical: space.sm },
   buttonText: { color: c.accentText, fontSize: font.small, fontWeight: '600' },
   muted: { color: c.textMuted, fontSize: font.small },
   error: { color: c.danger, fontSize: font.small },

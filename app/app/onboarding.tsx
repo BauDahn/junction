@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMode, type MatchMode } from '../src/mode';
-import { font, pageMargin, radius, space, useTheme } from '../src/theme';
+import { font, space, useTheme } from '../src/theme';
 import Logo from '../src/ui/Logo';
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -10,12 +10,16 @@ const roles: { value: MatchMode; label: string; description: string }[] = [
   { value: 'raising', label: 'Raiser', description: 'Build investor outreach for your startup.' },
   { value: 'investing', label: 'Investor', description: 'Discover startups and co-investors.' },
 ];
+const RADIUS = 6;
+const TOP_BAR = 56;
 
 export default function OnboardingScreen() {
   const { colors } = useTheme();
   const { loginWithCredentials, registerWithCredentials, authLoading, sessionExpired } = useMode();
   const router = useRouter();
   const params = useLocalSearchParams<{ tab?: string }>();
+  const { width } = useWindowDimensions();
+  const desktop = width >= 900;
   const [tab, setTab] = useState<'register' | 'login'>(params.tab === 'login' ? 'login' : 'register');
   const [role, setRole] = useState<MatchMode>('raising');
   const [name, setName] = useState('');
@@ -23,34 +27,11 @@ export default function OnboardingScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [focused, setFocused] = useState('');
 
   useEffect(() => {
     if (sessionExpired) { setTab('login'); setError('Your session expired. Sign in again.'); }
   }, [sessionExpired]);
-
-  const styles = StyleSheet.create({
-    page: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: pageMargin, backgroundColor: colors.bg },
-    panel: { width: '100%', maxWidth: 480, backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.xl, gap: space.lg },
-    headingGroup: { gap: space.sm },
-    heading: { fontSize: 26, lineHeight: 32, fontWeight: '800', letterSpacing: -0.6, color: colors.text },
-    body: { fontSize: font.body, color: colors.textMuted, lineHeight: 22 },
-    tabs: { flexDirection: 'row', backgroundColor: colors.surfaceAlt, borderRadius: radius.pill, padding: 4 },
-    tab: { flex: 1, minWidth: 0, minHeight: 44, padding: space.md, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-    tabText: { fontWeight: '600' },
-    formGroup: { gap: space.md },
-    field: { gap: space.xs, minWidth: 0 },
-    label: { color: colors.text, fontSize: font.small, fontWeight: '600' },
-    input: { minHeight: 44, fontSize: 16, color: colors.text, borderRadius: radius.md, paddingHorizontal: space.md, paddingVertical: space.md, backgroundColor: colors.surfaceAlt },
-    roleGroup: { gap: space.xs },
-    roleMeta: { fontSize: font.small, color: colors.textMuted },
-    roleOptions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
-    roleOption: { flex: 1, minWidth: 120, minHeight: 44, padding: space.md, borderWidth: 1, borderRadius: radius.md, gap: space.xs, justifyContent: 'center' },
-    roleTitle: { color: colors.text, fontWeight: '600' },
-    roleDescription: { color: colors.textMuted, fontSize: font.small, lineHeight: 18 },
-    error: { color: colors.danger, fontSize: font.small },
-    primaryButton: { minHeight: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: radius.pill, paddingVertical: space.md },
-    primaryButtonText: { color: colors.accentText, fontSize: font.body, fontWeight: '600' },
-  });
 
   async function submit() {
     setError('');
@@ -70,56 +51,101 @@ export default function OnboardingScreen() {
     }
   }
 
-  const field = (label: string, value: string, setValue: (next: string) => void, placeholder: string, extra: Record<string, unknown> = {}) => (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput accessibilityLabel={label} value={value} onChangeText={setValue} placeholder={placeholder} placeholderTextColor={colors.textFaint} style={styles.input} {...extra} />
+  const switchTab = (next: 'register' | 'login') => { setTab(next); setError(''); };
+
+  const field = (key: string, label: string, value: string, setValue: (next: string) => void, placeholder: string, extra: Record<string, unknown> = {}) => (
+    <View style={{ gap: space.xs, minWidth: 0, flex: 1 }}>
+      <Text style={{ color: colors.text, fontSize: font.caption, fontWeight: '600' }}>{label}</Text>
+      <TextInput
+        accessibilityLabel={label}
+        value={value}
+        onChangeText={setValue}
+        onFocus={() => setFocused(key)}
+        onBlur={() => setFocused((current) => (current === key ? '' : current))}
+        placeholder={placeholder}
+        placeholderTextColor={colors.textFaint}
+        style={[{ minHeight: 44, fontSize: 16, color: colors.text, backgroundColor: colors.surface, borderWidth: 1, borderRadius: RADIUS, paddingHorizontal: space.md, paddingVertical: space.sm, borderColor: focused === key ? colors.accent : colors.border }, Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null]}
+        {...extra}
+      />
+    </View>
+  );
+
+  const pair = (children: React.ReactNode) => <View style={{ flexDirection: desktop ? 'row' : 'column', gap: space.lg }}>{children}</View>;
+
+  const topBar = (
+    <View style={{ height: TOP_BAR, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: desktop ? 40 : space.xl, borderBottomWidth: 1, borderColor: colors.border }}>
+      <Logo size={22} />
+      <View accessibilityRole="tablist" style={{ flexDirection: 'row', alignItems: 'stretch', gap: space.xl, height: '100%' }}>
+        {(['register', 'login'] as const).map((value) => (
+          <Pressable key={value} accessibilityRole="tab" accessibilityState={{ selected: tab === value }} onPress={() => switchTab(value)} style={{ justifyContent: 'center', borderBottomWidth: 2, borderBottomColor: tab === value ? colors.accent : 'transparent', marginBottom: -1 }}>
+            <Text style={{ fontSize: font.small, fontWeight: '600', color: tab === value ? colors.accent : colors.textMuted }}>{value === 'register' ? 'Create account' : 'Sign in'}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+
+  const intro = (
+    <View style={{ flex: desktop ? 42 : undefined, gap: space.xl, minWidth: 0 }}>
+      <View style={{ gap: space.md }}>
+        <Text accessibilityRole="header" style={{ fontSize: desktop ? 42 : 32, lineHeight: desktop ? 46 : 36, fontWeight: '800', letterSpacing: desktop ? -1.3 : -0.9, color: colors.text }}>
+          Stop networking by luck. Meet who matters.
+        </Text>
+        <Text style={{ fontSize: font.lead, lineHeight: 24, color: colors.textMuted }}>
+          {tab === 'register' ? 'The investors and startups worth your time at the event, with sources.' : 'Welcome back. Pick up where you left off.'}
+        </Text>
+      </View>
+      {tab === 'register' ? (
+        <View style={{ gap: space.sm }}>
+          <Text style={{ color: colors.text, fontSize: font.caption, fontWeight: '600' }}>Your role</Text>
+          <View accessibilityRole="radiogroup" style={{ flexDirection: desktop ? 'column' : 'row', gap: space.sm }}>
+            {roles.map((option) => {
+              const active = role === option.value;
+              return (
+                <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ selected: active }} onPress={() => setRole(option.value)} style={{ flex: desktop ? undefined : 1, minWidth: 0, borderWidth: 1, borderRadius: RADIUS, borderColor: active ? colors.accent : colors.border, paddingVertical: space.md, paddingHorizontal: space.lg, gap: 2 }}>
+                  <Text style={{ color: active ? colors.accent : colors.text, fontSize: font.body, fontWeight: '700' }}>{option.label}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: font.small, lineHeight: 18 }}>{option.description}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={{ color: colors.textMuted, fontSize: font.caption }}>Your role is permanent for this account.</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+
+  const form = (
+    <View style={{ flex: desktop ? 58 : undefined, gap: space.lg, minWidth: 0 }}>
+      {tab === 'register' ? pair(<>
+        {field('name', 'Full name', name, setName, 'Your full name', { autoCapitalize: 'words' })}
+        {field('company', 'Startup or fund name', company, setCompany, 'Your startup or fund', { autoCapitalize: 'words' })}
+      </>) : null}
+      {field('email', 'Email', email, setEmail, 'you@company.com', { keyboardType: 'email-address', autoCapitalize: 'none', autoCorrect: false })}
+      {field('password', tab === 'register' ? 'Password (min. 8 characters)' : 'Password', password, setPassword, tab === 'register' ? 'At least 8 characters' : 'Enter your password', { secureTextEntry: true, autoCapitalize: 'none', onSubmitEditing: () => void submit() })}
+      {error ? <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: font.small }}>{error}</Text> : null}
+      <View style={{ gap: space.md, alignItems: desktop ? 'flex-start' : 'stretch' }}>
+        <Pressable accessibilityRole="button" disabled={authLoading} onPress={() => void submit()} style={({ pressed }) => ({ minHeight: 44, minWidth: desktop ? 200 : undefined, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xl, backgroundColor: colors.accent, borderRadius: RADIUS, opacity: authLoading ? 0.55 : pressed ? 0.9 : 1 })}>
+          <Text style={{ color: colors.accentText, fontSize: font.body, fontWeight: '700' }}>{authLoading ? (tab === 'register' ? 'Creating account...' : 'Signing in...') : (tab === 'register' ? 'Create account' : 'Sign in')}</Text>
+        </Pressable>
+        <Pressable accessibilityRole="link" onPress={() => switchTab(tab === 'register' ? 'login' : 'register')} style={{ minHeight: 32, justifyContent: 'center' }}>
+          <Text style={{ color: colors.textMuted, fontSize: font.small }}>
+            {tab === 'register' ? 'Already have an account? ' : 'New to calado? '}
+            <Text style={{ color: colors.accent, fontWeight: '600' }}>{tab === 'register' ? 'Sign in' : 'Create account'}</Text>
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
-      <View style={styles.panel}>
-        <View style={styles.headingGroup}>
-          <Logo size={40} />
-          <Text accessibilityRole="header" style={styles.heading}>Meet the right investors at the right event.</Text>
-          <Text style={styles.body}>Create an account or sign in to continue.</Text>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.surface }} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+      <View style={[{ flex: 1, backgroundColor: colors.surface }, Platform.OS === 'web' ? ({ minHeight: '100vh' } as object) : null]}>
+        {topBar}
+        <View style={[{ flex: 1, width: '100%', maxWidth: 1080, alignSelf: 'center', flexDirection: desktop ? 'row' : 'column', alignItems: desktop ? 'center' : 'stretch', gap: desktop ? 72 : space.xxl, paddingHorizontal: desktop ? 40 : space.xl, paddingVertical: desktop ? space.xxl : space.xl }, desktop && Platform.OS === 'web' ? ({ minHeight: `calc(100vh - ${TOP_BAR}px)` } as object) : null]}>
+          {intro}
+          {form}
         </View>
-        <View style={styles.tabs}>
-          {(['register', 'login'] as const).map((value) => (
-            <Pressable key={value} accessibilityRole="tab" accessibilityState={{ selected: tab === value }} onPress={() => { setTab(value); setError(''); }} style={[styles.tab, tab === value && { backgroundColor: colors.surface }]}>
-              <Text style={[styles.tabText, { color: tab === value ? colors.accent : colors.textMuted }]}>{value === 'register' ? 'Create account' : 'Sign in'}</Text>
-            </Pressable>
-          ))}
-        </View>
-        {tab === 'register' ? (
-          <>
-            <View style={styles.roleGroup}>
-              <Text style={styles.label}>Your role</Text>
-              <Text style={styles.roleMeta}>Your role is permanent for this account.</Text>
-              <View style={styles.roleOptions}>
-                {roles.map((option) => (
-                  <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ selected: role === option.value }} onPress={() => setRole(option.value)} style={[styles.roleOption, { borderColor: role === option.value ? colors.accent : 'transparent', backgroundColor: role === option.value ? colors.accentSoft : colors.surfaceAlt }]}>
-                    <Text style={styles.roleTitle}>{option.label}</Text>
-                    <Text style={styles.roleDescription}>{option.description}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-            <View style={styles.formGroup}>
-              {field('Full name', name, setName, 'Your full name', { autoCapitalize: 'words' })}
-              {field('Startup or fund name', company, setCompany, 'Your startup or fund', { autoCapitalize: 'words' })}
-            </View>
-          </>
-        ) : null}
-        <View style={styles.formGroup}>
-          {field('Email', email, setEmail, 'you@company.com', { keyboardType: 'email-address', autoCapitalize: 'none', autoCorrect: false })}
-          {field(tab === 'register' ? 'Password (min. 8 characters)' : 'Password', password, setPassword, tab === 'register' ? 'At least 8 characters' : 'Enter your password', { secureTextEntry: true, autoCapitalize: 'none', onSubmitEditing: () => void submit() })}
-        </View>
-        {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
-        <Pressable accessibilityRole="button" disabled={authLoading} onPress={() => void submit()} style={[styles.primaryButton, { opacity: authLoading ? 0.55 : 1 }]}>
-          <Text style={styles.primaryButtonText}>{authLoading ? (tab === 'register' ? 'Creating account...' : 'Signing in...') : (tab === 'register' ? 'Create account' : 'Sign in')}</Text>
-        </Pressable>
       </View>
     </ScrollView>
   );

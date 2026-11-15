@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { getEventById } from '../../src/api/events';
 import { getFeed, type FeedResponse } from '../../src/api/feed';
@@ -7,15 +7,25 @@ import MatchCard from '../../src/components/MatchCard';
 import { getOrCreateSessionId } from '../../src/session';
 import { onContextChanged } from '../../src/contextEvents';
 import { useMode } from '../../src/mode';
-import { font, maxWidth, pageMargin, radius, space, tabularNums, useTheme } from '../../src/theme';
+import { font, space, tabularNums, useTheme } from '../../src/theme';
+import { ActionButton, CardGrid, GRID_RADIUS, Page, PageHeader, useDesktop } from '../../src/ui/Shell';
+
 export default function EventWorkspace() {
-  const router = useRouter(); const params = useLocalSearchParams<{ id?: string | string[] }>(); const id = Array.isArray(params.id) ? params.id[0] : params.id ?? '';
-  const event = getEventById(id); const { colors } = useTheme(); const { mode, myEventIds, toggleMyEvent } = useMode();
-  const [response, setResponse] = useState<FeedResponse | null>(null); const [error, setError] = useState(''); const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id ?? '';
+  const event = getEventById(id);
+  const { colors } = useTheme();
+  const desktop = useDesktop();
+  const { width } = useWindowDimensions();
+  const { mode, myEventIds, toggleMyEvent } = useMode();
+  const [response, setResponse] = useState<FeedResponse | null>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const load = useCallback(async (silent = false) => {
     if (!event || event.participantData !== 'cala') return;
     if (!silent) { setLoading(true); setError(''); }
-    try { const sessionId = await getOrCreateSessionId(); setResponse(await getFeed({ sessionId, mode, limit: 10, fallbackOnNetworkError: true })); if (silent) setError(''); }
+    try { const sessionId = await getOrCreateSessionId(); setResponse(await getFeed({ sessionId, mode, limit: 10, fallbackOnNetworkError: true })); }
     catch { if (!silent) setError('Matches could not be loaded. Check your connection and try again.'); }
     finally { if (!silent) setLoading(false); }
   }, [event, mode]);
@@ -26,18 +36,60 @@ export default function EventWorkspace() {
     void load(true);
   }, [load]));
   useEffect(() => onContextChanged(() => { void load(true); }), [load]);
-  const action = { backgroundColor: colors.surface, borderRadius: radius.pill, paddingHorizontal: space.lg, paddingVertical: space.sm } as const;
-  const back = <Pressable accessibilityRole="button" onPress={() => router.canGoBack() ? router.back() : router.replace('/feed')}><Text style={{ color: colors.accent, fontSize: font.small }}>Back to Events</Text></Pressable>;
-  if (!event) return <View style={{ flex: 1, backgroundColor: colors.bg, padding: pageMargin, gap: space.md }}>{back}<Text accessibilityRole="header" style={{ color: colors.text, fontSize: font.h1, fontWeight: '700' }}>Event not found</Text></View>;
-  const attending = myEventIds.includes(event.id); const title = mode === 'investing' ? 'Recommended startups' : 'Recommended investors';
-  return <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ alignItems: 'center', paddingBottom: 112 }}><View style={{ width: '100%', maxWidth }}>
-    <View style={{ padding: pageMargin, gap: space.md }}>{back}<Image source={{ uri: event.imageUrl }} resizeMode="cover" style={{ width: '100%', height: 170, borderRadius: radius.lg, backgroundColor: colors.accentSoft }} /><Text accessibilityRole="header" style={{ fontSize: 32, lineHeight: 38, fontWeight: '800', letterSpacing: -0.8, color: colors.text }}>{event.name}</Text><Text style={{ fontSize: font.body, color: colors.textMuted }}>{event.slogan}</Text><Text style={[{ fontSize: font.small, color: colors.textMuted }, tabularNums]}>{event.date} · {event.venue}, {event.city}</Text><Pressable accessibilityRole="button" onPress={() => toggleMyEvent(event.id)} style={[action, { alignSelf: 'flex-start', borderColor: attending ? colors.accent : colors.border, backgroundColor: attending ? colors.accent : colors.surface }]}><Text style={{ color: attending ? colors.accentText : colors.accent, fontSize: font.small, fontWeight: '600' }}>{attending ? 'Attending' : 'Save event'}</Text></Pressable></View>
-    <View style={{ paddingTop: space.sm }}><View style={{ paddingHorizontal: pageMargin, paddingBottom: space.xs, gap: space.xs }}><Text accessibilityRole="header" style={{ fontSize: 22, fontWeight: '800', letterSpacing: -0.4, color: colors.text }}>{title}</Text>{event.participantData === 'cala' && !response?.is_sample ? <Text style={{ fontSize: font.small, color: colors.textMuted, lineHeight: 19 }}>Top matches from the Cala catalog for your profile. Cala does not yet list which investors attend this event.</Text> : null}{response?.confidence_note && !response.is_sample ? <Text style={{ fontSize: font.small, color: colors.textMuted }}>{response.confidence_note}</Text> : null}</View>
-      {event.participantData === 'none' ? <View style={{ margin: pageMargin, padding: space.lg, backgroundColor: colors.surface, borderRadius: radius.lg, gap: space.xs }}><Text style={{ fontSize: font.body, color: colors.text, fontWeight: '600' }}>No participant data in Cala yet</Text><Text style={{ fontSize: font.small, color: colors.textMuted }}>We will show matches here once Cala has this event's participants.</Text></View> : null}
-      {event.participantData === 'cala' && loading ? <Text style={{ padding: pageMargin, color: colors.textMuted, fontSize: font.body }}>Loading matches…</Text> : null}
-      {event.participantData === 'cala' && error ? <View style={{ padding: pageMargin, gap: space.md }}><Text style={{ color: colors.textMuted, fontSize: font.body }}>{error}</Text><Pressable accessibilityRole="button" onPress={() => void load()} style={[action, { alignSelf: 'flex-start' }]}><Text style={{ color: colors.accent, fontSize: font.small }}>Retry</Text></Pressable></View> : null}
-      {response?.is_sample ? <View style={{ marginHorizontal: pageMargin, marginTop: space.md, padding: space.md, borderWidth: 1, borderColor: colors.accent, borderRadius: radius.md, backgroundColor: colors.accentSoft, gap: space.xs }}><Text style={{ color: colors.accent, fontWeight: '700', fontSize: font.small }}>Sample data</Text><Text style={{ color: colors.textMuted, fontSize: font.small }}>{response.confidence_note}</Text></View> : null}
-      {response?.items.map((card) => <MatchCard key={card.id} card={card} eventId={event.id} sample={response.is_sample} />)}
+  const back = (
+    <Pressable accessibilityRole="button" onPress={() => router.canGoBack() ? router.back() : router.replace('/feed')} style={{ minHeight: 40, justifyContent: 'center', alignSelf: 'flex-start' }}>
+      <Text style={{ color: colors.accent, fontSize: font.small, fontWeight: '600' }}>← Back to events</Text>
+    </Pressable>
+  );
+  if (!event) {
+    return (
+      <Page>
+        {back}
+        <PageHeader title="Event not found" />
+      </Page>
+    );
+  }
+  const attending = myEventIds.includes(event.id);
+  const title = mode === 'investing' ? 'Recommended startups' : 'Recommended investors';
+  const hasData = event.participantData === 'cala';
+  const columns = width >= 1100 ? 3 : desktop ? 2 : 1;
+  const notice = (heading: string, body: string, accent = false) => (
+    <View style={{ padding: space.lg, borderWidth: 1, borderRadius: GRID_RADIUS, borderColor: accent ? colors.accent : colors.border, backgroundColor: accent ? colors.accentSoft : 'transparent', gap: space.xs, maxWidth: 640 }}>
+      <Text style={{ fontSize: font.body, fontWeight: '700', color: accent ? colors.accent : colors.text }}>{heading}</Text>
+      <Text style={{ fontSize: font.small, color: colors.textMuted, lineHeight: 19 }}>{body}</Text>
     </View>
-  </View></ScrollView>;
+  );
+  return (
+    <Page>
+      {back}
+      <View style={{ height: desktop ? 240 : 160, borderRadius: GRID_RADIUS, overflow: 'hidden', backgroundColor: colors.accentSoft, marginTop: space.sm, marginBottom: space.xl }}>
+        <Image source={{ uri: event.imageUrl }} resizeMode="cover" accessibilityIgnoresInvertColors style={{ position: 'absolute', width: '100%', height: '100%' }} />
+      </View>
+      <PageHeader title={event.name} subtitle={event.slogan}>
+        <Text style={[{ fontSize: font.small, color: colors.textMuted }, tabularNums]}>{event.date} · {event.venue}, {event.city}</Text>
+        <ActionButton label={attending ? 'Attending ✓' : 'Save event'} onPress={() => toggleMyEvent(event.id)} selected={attending} primary={attending} />
+      </PageHeader>
+      <View style={{ gap: space.xs, marginBottom: space.xl, paddingTop: space.xl, borderTopWidth: 1, borderColor: colors.border }}>
+        <Text accessibilityRole="header" style={{ fontSize: font.h2, fontWeight: '800', letterSpacing: -0.3, color: colors.text }}>{title}</Text>
+        {hasData && !response?.is_sample ? <Text style={{ fontSize: font.small, color: colors.textMuted, lineHeight: 19, maxWidth: 640 }}>Top matches from the Cala catalog for your profile. Cala does not yet list which investors attend this event.</Text> : null}
+        {response?.confidence_note && !response.is_sample ? <Text style={{ fontSize: font.small, color: colors.textMuted, maxWidth: 640 }}>{response.confidence_note}</Text> : null}
+      </View>
+      {!hasData ? notice('No participant data in Cala yet', "We will show matches here once Cala has this event's participants.") : null}
+      {hasData && loading ? <Text style={[{ color: colors.textMuted, fontSize: font.body }, tabularNums]}>Loading matches…</Text> : null}
+      {hasData && error ? (
+        <View style={{ gap: space.md }}>
+          <Text style={{ color: colors.textMuted, fontSize: font.body }}>{error}</Text>
+          <ActionButton label="Retry" onPress={() => void load()} />
+        </View>
+      ) : null}
+      {response?.is_sample ? notice('Sample data', response.confidence_note ?? '', true) : null}
+      {response?.items.length ? (
+        <View style={{ marginTop: response.is_sample ? space.xl : 0 }}>
+          <CardGrid columns={columns}>
+            {response.items.map((card) => <MatchCard key={card.id} card={card} eventId={event.id} sample={response.is_sample} />)}
+          </CardGrid>
+        </View>
+      ) : null}
+    </Page>
+  );
 }
