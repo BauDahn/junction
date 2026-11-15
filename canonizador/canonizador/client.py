@@ -66,8 +66,8 @@ class CalaClient:
         self._wait_locks = {kind: asyncio.Lock() for kind in self.intervals}
         self._retry_base = float(os.getenv("CALA_429_WAIT", "5"))
         self.calls = 0
-        self.stats = {"knowledge_calls": 0, "entities_calls": 0, "429": 0,
-                      "pause_seconds": 0.0, "429_wait_seconds": 0.0, "cache_hits": 0,
+        self.stats = {"knowledge_calls": 0, "entities_calls": 0, "429": 0, "402": 0,
+                      "pause_seconds": 0.0, "429_wait_seconds": 0.0, "402_wait_seconds": 0.0, "cache_hits": 0,
                       "shared_limit_waits": 0, "shared_limit_errors": 0}
         self.cache = cache or make_cache(self.cache_dir)
         remote = getattr(self.cache, "remote", None)
@@ -163,15 +163,16 @@ class CalaClient:
                         self.stats[f"{kind}_calls"] += 1
                         response = await client.request(method, self.BASE + path, params=params, json=body,
                                                         headers={"X-API-KEY": self.api_key})
-                        if response.status_code == 429:
-                            self.stats["429"] += 1
+                        if response.status_code in (402, 429):
+                            code = str(response.status_code)
+                            self.stats[code] += 1
                             if attempt == 3:
                                 response.raise_for_status()
                             retry = self._retry_after(response)
                             delay = min(60.0, retry if retry is not None else self._retry_base * (2 ** attempt))
                             async with self._wait_locks[kind]:
                                 self._paused_until[kind] = max(self._paused_until[kind], asyncio.get_running_loop().time() + delay)
-                            self.stats["429_wait_seconds"] += delay
+                            self.stats[f"{code}_wait_seconds"] += delay
                             await self.sleep(delay)
                             # The sleep hook may be virtual in tests; production sleep advances loop.time().
                             if asyncio.get_running_loop().time() < self._paused_until[kind]:

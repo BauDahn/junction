@@ -10,6 +10,8 @@ os.environ["LLM_PROVIDER"] = "codex"
 def _sin_cache_remota(monkeypatch):
     """Los tests nunca usan la caché compartida real (Valkey), aunque VALKEY_URL esté en backend/.env."""
     monkeypatch.setenv("VALKEY_URL", "")
+    # Los tests nunca deben escribir en la base real de Aiven aunque DATABASE_URL esté en backend/.env.
+    monkeypatch.setenv("DATABASE_URL", "")
     monkeypatch.setenv("GEMINI_API_KEY", "test-only-not-a-key")
     monkeypatch.setenv("GOOGLE_API_KEY", "")
     monkeypatch.setenv("LLM_PROVIDER", "codex")
