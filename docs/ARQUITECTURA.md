@@ -28,7 +28,7 @@ Dos consecuencias: **(a)** leer de a un nodo en Valkey cuesta 28 ms por nodo, as
 
 ## 3. Componentes
 ```
- Expo app ──REST/polling──► FastAPI (un proceso, asyncio)
+ Web app ──REST/polling──► FastAPI (un proceso, asyncio)
                               │
         ┌─────────────────────┼─────────────────────────┐
    feed / detalle        chat (router + canonizador)   contexto (PDF, voz → Gemini)
@@ -77,7 +77,7 @@ Costo: 2.990 × ~1,3 s ≈ **65 min en secuencial; unos 22 min con 3 en paralelo
 | Pregunta en el chat que Cala debe resolver (canonizador) | 16–60 s, no se puede evitar | Se responde primero desde el grafo si está (ms) y se avisa "looking it up in Cala"; la respuesta de Cala completa la tarjeta cuando llega |
 | Pregunta sobre algo que ya está en el grafo (por ejemplo "who led Amenitiz's Series B?") | < 1 s | Sale del grafo con `is_lead` y fuentes, sin llamar a Cala |
 
-**Actualización de la pantalla**: polling cada 2 s mientras haya trabajo pendiente (igual que el journal); cada tarjeta trae `score` y `confidence` y se actualiza en su lugar. Si sobra tiempo, SSE.
+**Actualización de la pantalla**: polling cada 2 s mientras haya trabajo pendiente ; cada tarjeta trae `score` y `confidence` y se actualiza en su lugar. Si sobra tiempo, SSE.
 
 ## 6. Orden de construcción
 **Esta noche (lo que desbloquea todo)**
@@ -107,3 +107,15 @@ Costo: 2.990 × ~1,3 s ≈ **65 min en secuencial; unos 22 min con 3 en paralelo
 - ¿El límite de 429 es por clave, por IP o por endpoint? Cambia cuánta paralelización se puede usar. Lo mide #63.
 - ¿Cuántos de los 2.990 son inversores? Lo dice la etapa 2; si son pocos, el modo Raising tiene un catálogo corto y conviene sumar los fondos vecinos (los inversores de las rondas de los asistentes).
 - ¿`is_lead` viene siempre en las rondas? Lo pregunta `bau` en el stand de Cala.
+
+## 9. Si algo no está en el grafo (en main desde el 15/11)
+Regla: nunca se inventa y nunca se abandona tras el primer fallo.
+| Dónde | Qué hace |
+|---|---|
+| **Chat** (`cala_core/executor.py`) | `execute` no lanza nunca. Canonizador → búsqueda de entidad (`entities`, `retrieve`) → `knowledge_search` → `not_found` con la lista de lo intentado, incluido el paso que falló |
+| **Detalle** (`GET /api/entities/{id}`) | Fuera del catálogo y del grafo: `graph.loader.expand_node` trae la entidad de Cala (un retrieve, sin introspección) y la guarda con TTL; la segunda vez, cero llamadas. 404 si Cala no la conoce, 502 si falla, 504 si tarda más de ~25 s |
+| **Búsqueda** (`GET /api/search?q=`) | Primero el catálogo local, después Cala (`entities` de Company y Organization), sin duplicados y sin 500. Los resultados de Cala salen como tipo `other` hasta abrir su detalle |
+Medido contra Cala real el 15/11: búsqueda 1,5 s; detalle de Amenitiz en vivo con 7 personas; 215 tests.
+
+## 10. Eventos (siguiente cambio de arquitectura)
+La web nueva trabaja por **eventos** (Explorar y Mis eventos). Hoy el catálogo es **uno solo, el de Slush 2026**: el id del evento está fijo en `backend/catalog/ingest.py` y las claves `cat:v1:*` son globales. Para guardar varios eventos hay que parametrizar el evento y hacer las claves y el estado **por evento**. Datos reales en Cala: Slush 2026 tiene 2.990 empresas participantes; Slush 2025 solo 8 speakers y ninguna lista de participantes.
