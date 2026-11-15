@@ -1,5 +1,6 @@
 import { ApiError, type MobileFile, type Profile } from './index';
 import { authFetch } from './auth';
+import { emitContextChanged } from '../contextEvents';
 
 export const UNDERSTOOD_KEYS = [
   'sector_focus',
@@ -304,7 +305,7 @@ function applyTextSignals(state: MockSessionState, text: string) {
 }
 
 export async function getContext(sessionId: string): Promise<ContextPayload> {
-  return withFallback(
+  const result = await withFallback(
     async () => {
       const payload = await request<ContextPayload>(
         `/api/sessions/${encodeURIComponent(sessionId)}/context`,
@@ -316,6 +317,8 @@ export async function getContext(sessionId: string): Promise<ContextPayload> {
       return buildDemoPayload(sessionId, getDemoState(sessionId));
     },
   );
+  emitContextChanged();
+  return result;
 }
 
 export async function uploadContextPdf(
@@ -327,7 +330,7 @@ export async function uploadContextPdf(
       ? file.name || 'Pitch_Deck.pdf'
       : file.name || 'Pitch_Deck.pdf';
 
-  return withFallback(
+  const result = await withFallback(
     async () => {
       const form = new FormData();
       if (typeof File !== 'undefined' && file instanceof File) {
@@ -363,6 +366,8 @@ export async function uploadContextPdf(
       return buildDemoPayload(sessionId, state, source);
     },
   );
+  emitContextChanged();
+  return result;
 }
 
 export async function uploadContextVoice(
@@ -370,7 +375,7 @@ export async function uploadContextVoice(
   audio: Blob | MobileFile,
   durationSeconds?: number,
 ): Promise<ContextPayload> {
-  return withFallback(
+  const result = await withFallback(
     async () => {
       const form = new FormData();
       if (typeof Blob !== 'undefined' && audio instanceof Blob) {
@@ -419,6 +424,8 @@ export async function uploadContextVoice(
       return buildDemoPayload(sessionId, state, source);
     },
   );
+  emitContextChanged();
+  return result;
 }
 
 export async function addContextNote(
@@ -429,7 +436,7 @@ export async function addContextNote(
   const cleanText = text.trim();
   const cleanTitle = title?.trim();
 
-  return withFallback(
+  const result = await withFallback(
     async () => {
       const payload = await request<ContextPayload>(
         `/api/sessions/${encodeURIComponent(sessionId)}/context/note`,
@@ -461,6 +468,8 @@ export async function addContextNote(
       return buildDemoPayload(sessionId, state, source);
     },
   );
+  emitContextChanged();
+  return result;
 }
 
 export async function updateUnderstood(
@@ -474,7 +483,7 @@ export async function updateUnderstood(
     }
   }
 
-  return withFallback(
+  const result = await withFallback(
     async () => {
       const payload = await request<ContextPayload>(
         `/api/sessions/${encodeURIComponent(sessionId)}/context/understood`,
@@ -502,6 +511,8 @@ export async function updateUnderstood(
       return buildDemoPayload(sessionId, state);
     },
   );
+  emitContextChanged();
+  return result;
 }
 
 export async function deleteContextSource(
