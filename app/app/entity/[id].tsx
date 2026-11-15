@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Animated, Linking, Pressable, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Source } from '../../src/api';
 import { ApiError } from '../../src/api';
 import { fetchEntityDetail, type EntityDetail } from '../../src/api/entities';
 import { useMode } from '../../src/mode';
 import { getOrCreateSessionId } from '../../src/session';
-import { font, maxWidth, pageMargin, radius, space, tabularNums, useTheme } from '../../src/theme';
+import { font, radius, space, tabularNums, useTheme } from '../../src/theme';
+import { GRID_RADIUS, Page, Stack, useDesktop } from '../../src/ui/Shell';
 
 function host(url: string) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } }
 
@@ -18,7 +19,7 @@ function Sources({ sources }: { sources: Source[] }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   const { colors } = useTheme();
-  return <View style={{ paddingVertical: space.xl, borderBottomWidth: 1, borderBottomColor: colors.border, gap: space.md }}><Text accessibilityRole="header" style={{ fontSize: font.h2, fontWeight: '700', color: colors.text }}>{title}</Text>{children}</View>;
+  return <View style={{ gap: space.md }}><Text accessibilityRole="header" style={{ fontSize: font.h2, fontWeight: '800', letterSpacing: -0.3, color: colors.text }}>{title}</Text>{children}</View>;
 }
 
 function Skeleton() {
@@ -57,23 +58,24 @@ export default function EntityDossier() {
   useEffect(() => { void load(); }, [load]);
   const currentDetail = detail?.id === id ? detail : null;
   const saved = currentDetail ? favoriteInvestorIds.includes(currentDetail.id) : false;
-  const actionStyle = { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: space.md, paddingVertical: space.sm } as const;
+  const actionStyle = { borderWidth: 1, borderColor: colors.border, borderRadius: GRID_RADIUS, paddingHorizontal: space.md, paddingVertical: space.sm } as const;
   const back = <Pressable accessibilityRole="button" onPress={() => router.canGoBack() ? router.back() : router.replace('/feed')}><Text style={{ color: colors.accent, fontSize: font.small }}>Back</Text></Pressable>;
   const retry = <Pressable accessibilityRole="button" onPress={() => void load()} style={[actionStyle, { alignSelf: 'flex-start' }]}><Text style={{ color: colors.accent, fontSize: font.small, fontWeight: '600' }}>Retry</Text></Pressable>;
   const signIn = <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/onboarding', params: { tab: 'login' } })} style={[actionStyle, { alignSelf: 'flex-start' }]}><Text style={{ color: colors.accent, fontSize: font.small, fontWeight: '600' }}>Sign in</Text></Pressable>;
+  const desktop = useDesktop();
+  const cols = desktop ? 2 : 1;
   const hasContent = Boolean(currentDetail && (currentDetail.description || currentDetail.facts.length || currentDetail.rounds.length || currentDetail.people.length || currentDetail.portfolio.length || currentDetail.why_match.length));
-  return <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ alignItems: 'center', paddingBottom: space.xxl }}><View style={{ width: '100%', maxWidth, paddingHorizontal: pageMargin, backgroundColor: colors.surface }}>
-    <View style={{ paddingVertical: space.xl, borderBottomWidth: 1, borderBottomColor: colors.border, gap: space.md }}>{back}
+  return <Page><View style={{ paddingBottom: space.xl, gap: space.md }}>{back}
       {loading ? <Skeleton /> : null}
       {error ? <><Text style={{ color: colors.text, fontSize: font.body, lineHeight: 22 }}>{error}</Text>{!user && error === 'Sign in to see this page.' ? signIn : retry}</> : null}
       {notFound ? <Text style={{ color: colors.textMuted, fontSize: font.body }}>Not found in the graph or in Cala</Text> : null}
-      {currentDetail ? <><View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: space.md }}><Text accessibilityRole="header" style={{ flex: 1, fontSize: font.h1, lineHeight: 34, color: colors.text, fontWeight: '700' }}>{currentDetail.name}</Text><Text style={{ color: colors.textMuted, fontSize: font.small, paddingTop: space.xs }}>{currentDetail.type === 'investor' ? 'Investor' : 'Startup'}</Text></View>
+      {currentDetail ? <><View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: space.md }}><Text accessibilityRole="header" style={{ flex: 1, fontSize: 36, lineHeight: 40, color: colors.text, fontWeight: '800', letterSpacing: -1 }}>{currentDetail.name}</Text><Text style={{ color: colors.textMuted, fontSize: font.small, paddingTop: space.xs }}>{currentDetail.type === 'investor' ? 'Investor' : 'Startup'}</Text></View>
         {currentDetail.score !== undefined || currentDetail.confidence !== undefined ? <Text style={[{ color: colors.accent, fontSize: font.small, fontWeight: '600' }, tabularNums]}>{currentDetail.score !== undefined ? `Match ${currentDetail.score}` : ''}{currentDetail.confidence !== undefined ? ` · ${Math.round(currentDetail.confidence * 100)}% confidence` : ''}</Text> : null}
         <Pressable accessibilityRole="button" accessibilityState={{ selected: saved }} onPress={() => toggleFavoriteInvestor(currentDetail.id)} style={[actionStyle, { alignSelf: 'flex-start', borderColor: saved ? colors.accent : colors.border }]}><Text style={{ fontSize: font.small, color: colors.accent, fontWeight: '600' }}>{saved ? 'Saved' : 'Save'}</Text></Pressable>
       </> : null}
     </View>
-    {isSample && currentDetail ? <View style={{ marginTop: space.md, padding: space.md, borderWidth: 1, borderColor: colors.accent, borderRadius: radius.md, backgroundColor: colors.accentSoft }}><Text style={{ color: colors.accent, fontWeight: '700', fontSize: font.small }}>Sample data</Text></View> : null}
-    {currentDetail ? <>
+    {isSample && currentDetail ? <View style={{ marginBottom: space.xl, padding: space.md, borderWidth: 1, borderColor: colors.accent, borderRadius: GRID_RADIUS, backgroundColor: colors.accentSoft }}><Text style={{ color: colors.accent, fontWeight: '700', fontSize: font.small }}>Sample data</Text></View> : null}
+    {currentDetail ? <Stack columns={cols}>
       {currentDetail.description ? <Section title="About"><Text style={{ color: colors.text, fontSize: font.body, lineHeight: 23 }}>{currentDetail.description}</Text></Section> : null}
       {currentDetail.facts.length ? <Section title="Key facts">{currentDetail.facts.map((fact, i) => <View key={`${fact.label}-${i}`} style={{ gap: space.xs }}><Text style={{ color: colors.textMuted, fontSize: font.caption, textTransform: 'uppercase', letterSpacing: 0.5 }}>{fact.label}</Text><Text style={{ color: colors.text, fontSize: font.body, lineHeight: 22 }}>{fact.value}</Text><Sources sources={fact.sources} /></View>)}</Section> : null}
       {currentDetail.rounds.length ? <Section title="Funding rounds">{(() => {
@@ -88,6 +90,6 @@ export default function EntityDossier() {
       {currentDetail.portfolio.length ? <Section title="Portfolio">{currentDetail.portfolio.map((company) => <Pressable key={company.id} accessibilityRole="link" onPress={() => router.push({ pathname: '/entity/[id]', params: { id: company.id, session_id: user?.session_id ?? '', mode } })}><Text style={{ color: colors.accent, fontSize: font.body, textDecorationLine: 'underline' }}>{company.name}</Text></Pressable>)}</Section> : null}
       {currentDetail.why_match.length ? <Section title="Why it matches">{currentDetail.why_match.map((item, i) => <View key={`${item.signal}-${i}`} style={{ gap: space.xs }}><Text style={{ fontSize: font.body, color: colors.text, lineHeight: 22 }}>{item.text}</Text><Sources sources={item.sources} /></View>)}</Section> : null}
       {!hasContent ? <Text style={{ paddingVertical: space.xl, color: colors.textMuted, fontSize: font.body }}>Not available in Cala</Text> : null}
-    </> : null}
-  </View></ScrollView>;
+    </Stack> : null}
+  </Page>;
 }
