@@ -1,0 +1,99 @@
+<!-- Twenty CRM Entity Grid Pattern
+     Source: https://twenty.com (extracted 2026-11-15)
+     Assets observed:
+       - Favicon: https://twenty.com/favicon.ico?favicon.edb81dbd.ico
+       - Company Logos:
+         - https://twenty.com/images/shared/companies/logos/linkedin.webp
+         - https://twenty.com/images/shared/companies/logos/slack.webp
+         - https://twenty.com/images/shared/companies/logos/notion.webp
+       - Avatars:
+         - https://twenty.com/images/shared/people/avatars/dario-amodei.webp
+         - https://twenty.com/images/shared/people/avatars/reid-hoffman.webp
+         - https://twenty.com/images/shared/people/avatars/stewart-butterfield.webp
+         - https://twenty.com/images/shared/people/avatars/ivan-zhao.webp
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Twenty CRM Grid Reference Pattern</title>
+  <style>
+    .twenty-grid-shell {
+      background: #f8f9fc;
+      color: #0f172a;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+      border: 1px solid #e2e8f0;
+    }
+    .twenty-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #ffffff;
+      font-size: 13px;
+    }
+    .twenty-count {
+      font-variant-numeric: tabular-nums;
+      color: #64748b;
+      margin-left: 6px;
+    }
+    .twenty-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #ffffff;
+      font-size: 13px;
+    }
+    .twenty-table th,
+    .twenty-table td {
+      padding: 8px 12px;
+      border-right: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .twenty-table th {
+      font-weight: 500;
+      color: #64748b;
+      text-align: left;
+    }
+    .twenty-num {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="twenty-grid-shell">
+    <div class="twenty-toolbar">
+      <div><strong>All Companies</strong><span class="twenty-count">9</span></div>
+      <div>Filter · Sort · Options</div>
+    </div>
+    <table class="twenty-table">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Main Contact</th>
+          <th>Opportunity</th>
+          <th class="twenty-num">Deal Value</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Slack (slack.com)</td>
+          <td>Stewart Butterfield</td>
+          <td>Collaboration Software</td>
+          <td class="twenty-num">$2,300,000</td>
+          <td class="twenty-num" style="text-align:left;">Jul 3, 2023</td>
+        </tr>
+        <tr>
+          <td>Notion (notion.com)</td>
+          <td>Ivan Zhao</td>
+          <td>Workspace Renewal</td>
+          <td class="twenty-num">$750,000</td>
+          <td class="twenty-num" style="text-align:left;">Jul 5, 2023</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
