@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def _db_path():
-    return Path(os.getenv("CHAT_DB_PATH", Path(__file__).resolve().parents[1] / "data" / "chat.db"))
+    return Path(os.getenv("APP_DB_PATH", os.getenv("CHAT_DB_PATH", Path(__file__).resolve().parents[1] / "data" / "chat.db")))
 
 
 @contextmanager

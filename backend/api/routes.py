@@ -375,6 +375,10 @@ class ModeInput(BaseModel):
 async def save_mode(session_id: str, body: ModeInput):
     _session(session_id)
     current_mode = _mode(body.mode)
+    from accounts.store import get_user_by_session_id
+    owner = get_user_by_session_id(session_id)
+    if owner and current_mode != ("raising" if owner["role"] == "raiser" else "investing"):
+        raise HTTPException(409, "role_locked")
     chat_store.save_mode(session_id, current_mode)
     return {"mode": current_mode}
 

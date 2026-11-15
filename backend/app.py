@@ -13,6 +13,7 @@ from chat.routes import router as chat_router
 from chat import transcribe
 from api.routes import router as match_router
 from context.routes import router as context_router
+from accounts.routes import router as accounts_router
 
 app = FastAPI(title="Cala Match")
 
@@ -32,7 +33,10 @@ async def warmup_valkey():
 app.include_router(chat_router)
 app.include_router(match_router)
 app.include_router(context_router)
+app.include_router(accounts_router)
 ERROR_CODES = {
+    401: "unauthorized",
+    409: "conflict",
     400: "bad_request",
     404: "not_found",
     405: "method_not_allowed",
@@ -51,6 +55,8 @@ def _error(status: int, message: str) -> JSONResponse:
 
 @app.exception_handler(StarletteHTTPException)
 async def http_error(_: Request, exc: StarletteHTTPException):
+    if isinstance(exc.detail, str) and exc.detail in {"email_taken", "invalid_credentials", "unauthorized", "role_locked"}:
+        return JSONResponse({"error": {"code": exc.detail, "message": exc.detail.replace("_", " ").capitalize()}}, status_code=exc.status_code)
     return _error(exc.status_code, str(exc.detail))
 
 
