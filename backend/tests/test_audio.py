@@ -59,7 +59,7 @@ def test_rejects_audio_over_10mb(client):
     (None, RuntimeError("decoder failed"), 502),
     ({"text": "  ", "duration_s": 1}, None, 422),
     ({"text": "hola", "duration_s": 121}, None, 413),
-    (None, RuntimeError("Transcripción no configurada"), 503),
+    (None, RuntimeError("Transcription is not configured."), 503),
 ])
 def test_transcription_errors_and_temp_cleanup(client, result, error, status):
     test_client, _ = client
@@ -122,6 +122,53 @@ def test_audio_message_uses_intent_and_keeps_literal(client):
     assert message["text"] == intended and message["transcript"] == literal
     saved = test_client.get(f"/api/sessions/{sid}/messages").json()["messages"]
     assert saved[0]["text"] == intended and saved[0]["transcript"] == literal
+
+
+def test_voice_profile_prompt_and_pipeline_preserve_uncertain_names(client, monkeypatch, tmp_path):
+    import asyncio
+    from chat import transcribe
+
+    transcript = "Saiflow, software for hotels in Barcelona. We are raising a seed round of 2 million euros."
+    cleaned = "Saiflow, hotel software in Barcelona. We are raising a seed round of 2 million euros."
+
+    class AudioLLM:
+        async def complete_json(self, system, user, schema, audio=None):
+            assert "Preserve ALL factual information" in system
+            assert "Keep uncertain or possibly misrecognized proper names exactly as heard" in system
+            assert "Do not turn statements into questions" in system
+            assert "transcript" in schema["required"] and audio
+            return {"transcript": transcript, "text": cleaned, "language": "en"}
+
+    async def fake_audio_llm():
+        return AudioLLM()
+
+    monkeypatch.setattr(transcribe, "_gemini_llm", fake_audio_llm)
+    path = tmp_path / "founder.wav"
+    path.write_bytes(b"audio")
+    result = asyncio.run(transcribe._gemini_transcribe(path, None, "audio/wav"))
+    assert result["text"] == cleaned
+
+    class RouterLLM:
+        async def complete_json(self, system, user, schema):
+            assert cleaned in user
+            assert "Stayflow" not in user  # router gets the uncertain ASR spelling as-is
+            return {"parts": [{"type": "profile", "text": cleaned, "claim": None, "subject": None,
+                "attribute": None, "user_value": None, "profile_patch": {
+                    "startup_name": "Saiflow", "one_liner": "Hotel software", "sector": "hotel tech",
+                    "location": "Barcelona", "raising_round": "seed", "raising_amount": "2 million euros"}}]}
+
+    backend_app.app.dependency_overrides[get_llm] = lambda: RouterLLM()
+    async def fake_transcriber(audio_path, hint=None): return result
+    backend_app.app.dependency_overrides[get_transcriber] = lambda: fake_transcriber
+    test_client, _ = client
+    sid = test_client.post("/api/sessions").json()["session_id"]
+    response = test_client.post(f"/api/sessions/{sid}/messages", files={"audio": ("founder.wav", b"audio", "audio/wav")})
+    assert response.status_code == 200
+    message = response.json()["message"]
+    assert message["text"] == cleaned and message["transcript"] == transcript
+    profile = test_client.get(f"/api/sessions/{sid}/profile").json()
+    assert profile["startup_name"] == "Saiflow"
+    assert profile["one_liner"] == "Hotel software" and profile["location"] == "Barcelona"
 
 
 def test_gemini_fallbacks(monkeypatch, tmp_path):

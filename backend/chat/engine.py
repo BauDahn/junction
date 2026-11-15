@@ -10,7 +10,7 @@ SCHEMA = {"type": "object", "properties": {"reply": {"type": "string"}, "used_ca
     "startup_name": {"type": "string"}, "one_liner": {"type": "string"}, "sector": {"type": "string"}, "stage": {"type": "string"}, "location": {"type": "string"}, "raising_amount": {"type": "string"}, "raising_round": {"type": "string"}, "competitors": {"type": "array", "items": {"type": "string"}}, "target_customers": {"type": "string"}, "new_facts": {"type": "array", "items": {"type": "string"}}
 }}}}
 
-SYSTEM = "You help a startup founder build a factual startup profile. Extract only information the founder explicitly said; never invent. Reply in the user's language, briefly in 2-4 sentences, confirm what you understood and ask exactly ONE question about a field listed in missing_fields (never about a field already in current_profile); if missing_fields is empty, ask what they need help with. Never assert market facts, investors, or external figures except from supplied recommendation cards. Use only supplied card data, cite used_cards by zero-based card index, and say you don't know when unsupported. If recommendations_ready is true, mention recommendations are ready in one sentence."
+SYSTEM = "You help a startup founder build a factual startup profile. Extract only information the founder explicitly said; never invent. Reply in English, briefly in 2-4 sentences, confirm what you understood and ask exactly ONE question about a field listed in missing_fields (never about a field already in current_profile); if missing_fields is empty, ask what they need help with. Never assert market facts, investors, or external figures except from supplied recommendation cards. Use only supplied card data, cite used_cards by zero-based card index, and say you don't know when unsupported. If recommendations_ready is true, mention recommendations are ready in one sentence."
 
 
 def missing_fields(profile):
@@ -52,17 +52,17 @@ async def handle_text(session_id, text, llm, transcript=None, cala=None, context
     elif (answers := [b["answer"] for b in blocks if b.get("answer")]) and len(answers) == 1:
         reply_text = answers[0]
     elif any(b.get("type") == "cala_table" or b.get("type") == "cala_answer" for b in blocks):
-        reply_text = "Esto es lo que tiene Cala."
+        reply_text = "Here is what Cala found."
     elif any(b.get("type") == "claim_check" for b in blocks):
-        reply_text = "Contrasté tu afirmación con Cala."
+        reply_text = "I checked your statement against Cala."
     elif any(b.get("type") == "profile_update" for b in blocks):
-        reply_text = "Actualicé tu perfil."
+        reply_text = "I updated your profile."
     elif any(b.get("type") == "not_found" for b in blocks):
-        reply_text = "Cala no tiene datos sobre esto; abajo lo que se buscó."
+        reply_text = "Cala has no data on this; see what we searched below."
     else:
-        reply_text = "De acuerdo."
+        reply_text = "Got it."
     if pending_notice:
-        reply_text = f"{reply_text} Tus recomendaciones están listas."
+        reply_text = f"{reply_text} Your recommendations are ready."
     reply_msg = {"id": uuid.uuid4().hex, "session_id": session_id, "role": "assistant", "text": reply_text, "transcript": None, "sources": reply_sources, "cards": [], "blocks": blocks, "created_at": store.now_iso()}
     if pending_notice:
         selected = []

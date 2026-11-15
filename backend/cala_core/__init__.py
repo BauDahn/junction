@@ -102,7 +102,7 @@ async def handle_message(text, profile, llm, cala=None, cache_dir=None):
             return None
         if kind == "chitchat":
             # part["text"] es el texto del usuario: no devolverlo como respuesta (eco).
-            return {"type": "text", "text": "No he encontrado nada que consultar en Cala. Pregúntame por una empresa, un inversor o una ronda, o cuéntame un dato para verificarlo."}
+            return {"type": "text", "text": "I couldn't find anything to check in Cala. Ask about a company, investor, or funding round, or share a fact for me to verify."}
         evidence = await execute(part, cala=cala, llm=llm, cache_dir=cache_dir)
         if kind == "claim":
             return await check(part, evidence, llm)

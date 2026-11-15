@@ -59,16 +59,16 @@ def _title(part, intent):
     entities = intent.get("entities") or []
     subject = entities[0].get("name") if entities and isinstance(entities[0], dict) else None
     attribute = intent.get("attribute") or "other"
-    labels = {"funding_round": "ronda", "total_funding": "financiación total", "investors": "inversores",
-              "lead_investors": "inversores líderes", "founders": "fundadores", "executives": "directivos",
-              "headcount": "equipo", "acquisitions": "adquisiciones", "company_list": "startups"}
+    labels = {"funding_round": "funding round", "total_funding": "total funding", "investors": "investors",
+              "lead_investors": "lead investors", "founders": "founders", "executives": "executives",
+              "headcount": "team size", "acquisitions": "acquisitions", "company_list": "startups"}
     if attribute == "funding_round":
-        label = "ronda"
+        label = "funding round"
         round_label = (intent.get("filters") or {}).get("round_label")
         if round_label:
             label += " " + str(round_label).replace("_", " ").title()
     else:
-        label = labels.get(attribute, "datos")
+        label = labels.get(attribute, "data")
     if attribute == "company_list":
         filters = intent.get("filters") or {}
         pieces = ["Startups"]
@@ -105,8 +105,8 @@ def _table_from_entity(data, call):
             for item in node: visit(item, prefix)
     visit(data)
     if not rows: return None
-    return {"type": "cala_table", "title": "Datos de Cala", "call": call,
-            "columns": ["campo", "valor", "fuente", "fecha", "source_rank"], "rows": rows, "sources": sources}
+    return {"type": "cala_table", "title": "Cala data", "call": call,
+            "columns": ["field", "value", "source", "date", "source_rank"], "rows": rows, "sources": sources}
 
 
 async def _safe(call, default):
@@ -222,7 +222,7 @@ async def execute(part, *, cala=None, llm=None, cache_dir=None):
             {"tool": "executor", "error": type(exc).__name__}]}
 
 
-async def _search_block(client, canonical, text, *, title="Datos", tried=None, closest=None):
+async def _search_block(client, canonical, text, *, title="Data", tried=None, closest=None):
     tried = list(tried or [])
     tried.append(_call("knowledge_search", canonical))
     searched = await _safe_call(client.search, canonical, default={}) if client is not None else {}

@@ -4,7 +4,7 @@ import json
 SCHEMA = {"type": "object", "additionalProperties": False, "required": ["verdict", "explanation"],
           "properties": {"verdict": {"type": "string", "enum": ["confirmed", "partially_confirmed", "contradicted", "no_data"]},
                          "explanation": {"type": "string"}}}
-SYSTEM = "Compara la afirmación del usuario exclusivamente con la evidencia estructurada de Cala. Sin evidencia pertinente: no_data (nunca contradicción). Redondeo y moneda equivalente cuentan como confirmed. Si solo parte de la afirmación coincide, partially_confirmed. Si evidencia suficiente contradice el valor, contradicted. Una frase breve; no agregues datos."
+SYSTEM = "Compare the user's claim exclusively with Cala's structured evidence. If there is no relevant evidence, use no_data (never contradiction). Rounding and equivalent currencies count as confirmed. If only part of the claim matches, use partially_confirmed. If sufficient evidence contradicts the value, use contradicted. Write the brief explanation in English and add no facts."
 
 
 async def check(part, evidence, llm):
@@ -16,5 +16,5 @@ async def check(part, evidence, llm):
     if verdict not in {"confirmed", "partially_confirmed", "contradicted", "no_data"}: verdict = "no_data"
     block = evidence if evidence and evidence.get("type") in {"cala_table", "cala_answer"} else None
     return {"type": "claim_check", "claim": claim, "verdict": verdict,
-            "explanation": result.get("explanation", "Sin evidencia suficiente de Cala."), "evidence": block,
+            "explanation": result.get("explanation", "Not enough evidence from Cala."), "evidence": block,
             "sources": (block or {}).get("sources", [])}
