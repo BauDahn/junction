@@ -20,7 +20,7 @@ Gemini (Antigravity) is building the new web app. **Product items NOT in that pr
 - **Google Gemini** (secondary, from 14/11): Gemini is the product's AI (router, audio, intent, judge). The challenge asks for a meaningful and innovative use and an explanation of why Gemini matters to the solution.
 - **Aiven** (secondary): shared cache for Cala queries in Aiven Valkey (`VALKEY_URL`, see `canonizador/README.md`).
 - NVIDIA Nemotron: ruled out as the primary model (the endpoint they gave us never responded); the provider remains in the code as an alternative.
-- **OpenAI Codex** (secondary): we are building with Codex; evidence is in `docs/CODEX.md` (task log exported from `cx log` on each machine) and `docs/PROCESS.md`.
+- **OpenAI Codex** (secondary): we are building with Codex; evidence is in `docs/CODEX.md` (task log exported from `cx log` on each machine).
 - Candidates not yet decided: Context.dev, CRACI. Ruled out: WhatsApp/Telegram bot (replaced by the in-app assistant).
 
 ## Team and coordination
@@ -67,7 +67,7 @@ Current workstreams (15/11).
 **Less quantity, more quality. A simple app that looks and feels good is worth more than many half-finished features.**
 - The app has a **bottom bar with three tabs**: My events, Explore events, and Profile (context lives inside the profile). The assistant is a floating bubble (icon only) that opens the chat. Plus the event page and company profile.
 - **Out of the app and repo:** Deck, Journal, and the status screen. The files for those screens are deleted, not hidden.
-- Before adding a feature, ask whether it improves the demo's first screen. If not, it does not go in; it goes on the "later" list in `docs/PITCH.md`.
+- Before adding a feature, ask whether it improves the demo's first screen. If not, it does not go in; it goes on a later list.
 - A screen is finished when it looks good on a phone, has empty, loading, and error states with human-friendly text, and has been tested with real data. A half-finished screen is not merged even if it "already works."
 - **Minimal, human design.** The rules are in the app redesign issue (one accent color, no gradients or glow, minimal shadow, specific text instead of slogans, no cards inside cards). Interface PRs include screenshots at 390 px wide, and Claude reviews them before merging.
 
@@ -109,7 +109,6 @@ Current workstreams (15/11).
 | `docs/design/` | Stitch prototype (screens and design system) |
 | `docs/internal/IDEAS-CALA.md` | Ideas evaluated when choosing the project |
 | `docs/CODEX.md` | Record of what Codex built (Codex challenge) |
-| `docs/PROCESS.md` | Decision log |
 
 ## Status and handoff (15/11, morning)
 **Fabricio is leading.** `bau` handed him coordination; this section is the handoff.
