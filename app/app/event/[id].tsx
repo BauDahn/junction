@@ -1,24 +1,31 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { getEventById } from '../../src/api/events';
 import { getFeed, type FeedResponse } from '../../src/api/feed';
 import MatchCard from '../../src/components/MatchCard';
 import { getOrCreateSessionId } from '../../src/session';
+import { onContextChanged } from '../../src/contextEvents';
 import { useMode } from '../../src/mode';
 import { font, maxWidth, pageMargin, radius, space, tabularNums, useTheme } from '../../src/theme';
 export default function EventWorkspace() {
   const router = useRouter(); const params = useLocalSearchParams<{ id?: string | string[] }>(); const id = Array.isArray(params.id) ? params.id[0] : params.id ?? '';
   const event = getEventById(id); const { colors } = useTheme(); const { mode, myEventIds, toggleMyEvent } = useMode();
   const [response, setResponse] = useState<FeedResponse | null>(null); const [error, setError] = useState(''); const [loading, setLoading] = useState(false);
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     if (!event || event.participantData !== 'cala') return;
-    setLoading(true); setError('');
-    try { const sessionId = await getOrCreateSessionId(); setResponse(await getFeed({ sessionId, mode, limit: 10, fallbackOnNetworkError: true })); }
-    catch { setError('Matches could not be loaded. Check your connection and try again.'); }
-    finally { setLoading(false); }
+    if (!silent) { setLoading(true); setError(''); }
+    try { const sessionId = await getOrCreateSessionId(); setResponse(await getFeed({ sessionId, mode, limit: 10, fallbackOnNetworkError: true })); if (silent) setError(''); }
+    catch { if (!silent) setError('Matches could not be loaded. Check your connection and try again.'); }
+    finally { if (!silent) setLoading(false); }
   }, [event, mode]);
   useEffect(() => { setResponse(null); void load(); }, [load]);
+  const firstFocus = useRef(true);
+  useFocusEffect(useCallback(() => {
+    if (firstFocus.current) { firstFocus.current = false; return; }
+    void load(true);
+  }, [load]));
+  useEffect(() => onContextChanged(() => { void load(true); }), [load]);
   const action = { backgroundColor: colors.surface, borderRadius: radius.pill, paddingHorizontal: space.lg, paddingVertical: space.sm } as const;
   const back = <Pressable accessibilityRole="button" onPress={() => router.canGoBack() ? router.back() : router.replace('/feed')}><Text style={{ color: colors.accent, fontSize: font.small }}>Back to Events</Text></Pressable>;
   if (!event) return <View style={{ flex: 1, backgroundColor: colors.bg, padding: pageMargin, gap: space.md }}>{back}<Text accessibilityRole="header" style={{ color: colors.text, fontSize: font.h1, fontWeight: '700' }}>Event not found</Text></View>;
