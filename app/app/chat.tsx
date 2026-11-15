@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { Link } from 'expo-router';
 import { RecordingPresets, requestRecordingPermissionsAsync, useAudioRecorder } from 'expo-audio';
 import { getOrCreateSessionId, resetSessionId } from '../src/session';
 import {
@@ -32,14 +32,7 @@ type ChatMessage = Message & {
   error?: string;
   retryText?: string;
   retryAudio?: Blob | MobileFile;
-  retryContext?: { journal_item_id: string };
 };
-
-const SUGGESTIONS = [
-  "Who led Amenitiz's Series B?",
-  'Finnish seed fintech rounds in 2025',
-  'Check investors matching B2B SaaS in Nordics',
-];
 
 const BACKEND_ERROR = 'Could not reach the backend. Check your connection and try again.';
 
@@ -79,8 +72,6 @@ function host(url: string): string {
 export default function ChatScreen() {
   const { colors } = useTheme();
   const s = useMemo(() => chatStyles(colors), [colors]);
-  const params = useLocalSearchParams<{ journal_item_id?: string; journal_title?: string }>();
-  const [attachedContext, setAttachedContext] = useState<{ id: string; title: string } | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState('');
   const [draft, setDraft] = useState('');
@@ -103,15 +94,6 @@ export default function ChatScreen() {
       mounted.current = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (params.journal_item_id) {
-      setAttachedContext({
-        id: params.journal_item_id,
-        title: params.journal_title || 'attached item',
-      });
-    }
-  }, [params.journal_item_id, params.journal_title]);
 
   const loadConversation = useCallback(async () => {
     setLoading(true);
@@ -158,7 +140,6 @@ export default function ChatScreen() {
       text?: string,
       audio?: Blob | MobileFile,
       optimistic?: ChatMessage,
-      context?: { journal_item_id: string },
     ) => {
       if (!sessionId || sending) return;
       setSending(true);
@@ -181,7 +162,7 @@ export default function ChatScreen() {
       try {
         const result = audio
           ? await sendAudio(sessionId, audio)
-          : await sendText(sessionId, text ?? '', context);
+          : await sendText(sessionId, text ?? '');
         setMessages((current) => [
           ...current.filter((item) => item.id !== pending.id),
           result.message,
@@ -199,7 +180,6 @@ export default function ChatScreen() {
                   error: message,
                   retryText: text,
                   retryAudio: audio,
-                  retryContext: context,
                 }
               : item,
           ),
@@ -215,9 +195,7 @@ export default function ChatScreen() {
     const text = (override ?? draft).trim();
     if (!text || sending || !sessionId) return;
     if (!override) setDraft('');
-    const context = attachedContext ? { journal_item_id: attachedContext.id } : undefined;
-    setAttachedContext(null);
-    await transmit(text, undefined, undefined, context);
+    await transmit(text);
   }
 
   async function toggleRecording() {
@@ -289,7 +267,7 @@ export default function ChatScreen() {
               <Pressable
                 accessibilityRole="button"
                 onPress={() =>
-                  void transmit(item.retryText, item.retryAudio, item, item.retryContext)
+                  void transmit(item.retryText, item.retryAudio, item)
                 }
               >
                 <Text style={s.retry}>Retry</Text>
@@ -348,21 +326,6 @@ export default function ChatScreen() {
           <Text style={s.subtitle}>Every fact and figure is grounded in Cala sources.</Text>
         </View>
 
-        {attachedContext ? (
-          <View style={s.contextBar}>
-            <Text style={s.contextText} numberOfLines={1}>
-              Context: {attachedContext.title}
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Remove context"
-              onPress={() => setAttachedContext(null)}
-            >
-              <Text style={s.contextClear}>Clear</Text>
-            </Pressable>
-          </View>
-        ) : null}
-
         {loading ? (
           <View style={s.stateWrap}>
             <StateView kind="loading" title="Loading conversation…" />
@@ -398,24 +361,6 @@ export default function ChatScreen() {
                 <Text style={s.emptyBody}>
                   Answers pull structured records and citations directly from Cala.
                 </Text>
-                <View style={s.suggestions}>
-                  <Text style={s.suggestionsLabel}>Suggestions</Text>
-                  {SUGGESTIONS.map((prompt) => (
-                    <Pressable
-                      key={prompt}
-                      accessibilityRole="button"
-                      disabled={sending || !sessionId}
-                      style={({ pressed }) => [
-                        s.suggestionRow,
-                        pressed && { opacity: 0.75 },
-                      ]}
-                      onPress={() => void submitText(prompt)}
-                    >
-                      <Text style={s.suggestionText}>{prompt}</Text>
-                      <Text style={s.suggestionAction}>Ask</Text>
-                    </Pressable>
-                  ))}
-                </View>
               </View>
             }
             ListFooterComponent={
@@ -538,30 +483,6 @@ function chatStyles(c: Colors) {
       fontSize: font.small,
       lineHeight: 18,
     },
-    contextBar: {
-      marginHorizontal: pageMargin,
-      marginTop: space.sm,
-      paddingVertical: space.sm,
-      paddingHorizontal: space.md,
-      borderWidth: 1,
-      borderColor: c.border,
-      borderRadius: radius.md,
-      backgroundColor: c.surface,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      gap: space.md,
-    },
-    contextText: {
-      color: c.textMuted,
-      fontSize: font.small,
-      flexShrink: 1,
-    },
-    contextClear: {
-      color: c.accent,
-      fontSize: font.small,
-      fontWeight: '600',
-    },
     stateWrap: {
       flex: 1,
       paddingHorizontal: pageMargin,
@@ -589,38 +510,6 @@ function chatStyles(c: Colors) {
       fontSize: font.body,
       lineHeight: 20,
       marginTop: -8,
-    },
-    suggestions: {
-      gap: space.sm,
-    },
-    suggestionsLabel: {
-      color: c.textFaint,
-      fontSize: font.caption,
-      fontWeight: '600',
-      letterSpacing: 0,
-    },
-    suggestionRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: space.md,
-      paddingHorizontal: space.lg,
-      paddingVertical: space.md,
-      borderWidth: 1,
-      borderColor: c.border,
-      borderRadius: radius.md,
-      backgroundColor: c.surface,
-    },
-    suggestionText: {
-      color: c.text,
-      fontSize: font.body,
-      lineHeight: 20,
-      flex: 1,
-    },
-    suggestionAction: {
-      color: c.accent,
-      fontSize: font.small,
-      fontWeight: '600',
     },
     userRow: {
       alignItems: 'flex-end',
