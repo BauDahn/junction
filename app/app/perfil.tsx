@@ -93,7 +93,7 @@ export default function PerfilScreen() {
         <View style={styles.section}><Text style={styles.heading}>Context</Text><RawContextVoiceCard /></View>
         <View style={styles.section}><Text style={styles.heading}>Appearance</Text><View style={{ flexDirection: 'row', gap: space.sm }}>{([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']] as const).map(([value, label]) => <Pressable key={value} accessibilityRole="radio" accessibilityState={{ selected: preference === value }} onPress={() => setPreference(value)} style={[styles.themeOption, preference === value && styles.themeOptionActive]}><Text style={[styles.themeText, preference === value && styles.themeTextActive]}>{label}</Text></Pressable>)}</View></View>
         <View style={styles.section}>
-          <Text style={styles.heading}>Favorite investors</Text>
+          <Text style={styles.heading}>{mode === 'investing' ? 'Favorite startups' : 'Favorite investors'}</Text>
           {favoriteInvestorIds.length ? favoriteInvestorIds.map((id) => {
             const investor = resolvedInvestors[id];
             return (
@@ -103,7 +103,7 @@ export default function PerfilScreen() {
                 <Pressable accessibilityRole="button" style={styles.linkButton} onPress={() => toggleFavoriteInvestor(id)}><Text style={styles.link}>Remove</Text></Pressable>
               </View>
             );
-          }) : <Text style={styles.empty}>No saved investors yet.</Text>}
+          }) : <Text style={styles.empty}>{mode === 'investing' ? 'No saved startups yet.' : 'No saved investors yet.'}</Text>}
           <FavoritesReportButton />
           <Text style={[styles.heading, { marginTop: space.lg }]}>My events</Text>
           {myEventIds.length ? myEventIds.map((id) => {
