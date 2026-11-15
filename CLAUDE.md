@@ -117,7 +117,7 @@ Frentes de trabajo en este momento (15/11).
 - Equipo: los cuatro activos; `bau` es la central y reparte.
 
 ## Pendientes
-- [ ] Web nueva (Gemini): registro con rol, eventos, asistente en burbuja, perfil; borrar del `app/` las pantallas viejas (Deck, Journal, Estado, Ask).
+- [x] Web nueva (Gemini): registro con rol, eventos, asistente en burbuja, perfil; pantallas viejas (Deck, Journal, Estado) ya borradas del `app/`.
 - [ ] Parametrizar el catálogo por evento y correr el de Slush 2026 completo contra Valkey (~55 min); exportar el respaldo.
 - [ ] Textos del backend en inglés y no perder nombres en las notas de voz (#83).
 - [ ] Prueba de punta a punta de la web nueva contra el backend en vivo (#53).
