@@ -28,8 +28,8 @@ La nueva web la construye Gemini (Antigravity). **Pendientes de producto que NO 
 |---|---|---|---|
 | `bau` | Bau | Claude (orquestador), Codex, Gemini | **Central:** reparte, revisa y mergea todo, documentación y presentación |
 | `fabricio` | Fabricio | Claude, Codex, Gemini | **Activo:** backend de datos (errores 402 de Cala, inversores de Slush, eventos reales), #111 |
-| `gabriel` | Gabriel | Antigravity (Gemini) y Codex | **Activo:** interfaz v3 (#104 y #107) |
-| `adrian` | Adrian | Antigravity | **Activo:** registro con correo, perfil con contexto en texto y voz con vista previa (#112) |
+| `gabriel` | Gabriel | Antigravity (Gemini) y Codex | **Activo:** cerrar los bloqueantes de su PR #104 (datos reales en vez de simulados); después no toca la interfaz |
+| `adrian` | Adrian | Antigravity | **Activo:** toda la lista de la interfaz (#107 y #112), sobre la rama de `gabriel` |
 
 - **Todo se coordina por GitHub**, que es lo único que ven las cuatro máquinas: issue fijo #1 "Estado del equipo" (estado de cada máquina y mensajes), issues con label `maquina:<nombre>` (tareas) y PRs.
 - Con [claude-central](https://github.com/BauDahn/claude-central) instalado se usa el comando `equipo` (`equipo mias`, `equipo mensajes`, `equipo avisar bau "..."`, `equipo publicar`). **Sin claude-central** (por ejemplo, con un agente de Google) se hace lo mismo con `gh`: `gh issue list --label maquina:<nombre>` para ver tus tareas, y un comentario en el issue #1 que empiece con `**<nombre> → bau:**` para avisar. El script `equipo` es un solo archivo de Python que solo necesita `gh`; se puede usar suelto.
@@ -39,8 +39,8 @@ La nueva web la construye Gemini (Antigravity). **Pendientes de producto que NO 
 ### Dueños de cada área (15/11, los cuatro activos)
 | Área | Dueño |
 |---|---|
-| `app/`: interfaz v3 (navegación, tema, eventos, inversores, asistente) | `gabriel` |
-| `app/`: registro, perfil con contexto en texto, voz con vista previa | `adrian` (sobre la rama de `gabriel`, coordinando) |
+| `app/`: toda la interfaz (tema, navegación, eventos, inversores, asistente, registro, perfil, voz) | `adrian` |
+| `app/`: el PR #104 hasta mergearse | `gabriel` |
 | `backend/catalog/`, `backend/graph/`, `backend/api/` (feed, eventos), `canonizador/` | `fabricio` |
 | `backend/accounts/`, `backend/context/`, `backend/chat/`, `docs/`, `CLAUDE.md`, `README.md` | `bau` con Codex |
 
@@ -59,8 +59,8 @@ Frentes de trabajo en este momento (15/11).
 
 | Frente | Qué es | Quién |
 |---|---|---|
-| **Interfaz v3** | Navegación con iconos, modo oscuro, color #006CFF, eventos, inversores, asistente en burbuja vacío y solo icono | `gabriel` (#104, #107) |
-| **Cuentas y contexto en la interfaz** | Registro con correo y rol fijo, perfil con el contexto como texto, voz con vista previa y 'Add to context' | `adrian` (#112) |
+| **Interfaz** | Modo oscuro, color #006CFF, barra con iconos, eventos, inversores, asistente vacío y solo icono, registro con correo, perfil con texto y voz con vista previa | `adrian` (#107, #112) |
+| **PR #104 de Gabriel** | Bloqueantes: datos del backend en lugar de simulados | `gabriel` |
 | **Datos** | Errores 402 de Cala en el catálogo, inversores de Slush desde el grafo, eventos reales y guardados por usuario | `fabricio` (#111) |
 | **Central** | Revisión y merge, backend de cuentas y contexto (hecho: #109, #110), documentación, presentación | `bau` |
 
