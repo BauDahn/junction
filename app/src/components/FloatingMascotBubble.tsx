@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { RecordingPresets, requestRecordingPermissionsAsync, useAudioRecorder } from 'expo-audio';
@@ -8,7 +9,7 @@ import { addContextNote, getContext, type ContextPayload } from '../api/context'
 import { sendAudio, sendText, type Message } from '../api';
 import { getOrCreateSessionId } from '../session';
 import BlockView from './BlockView';
-import { font, maxWidth, radius, space, useTheme } from '../theme';
+import { font, maxWidth, radius, space, tabBarHeight, useTheme } from '../theme';
 
 type LocalItem = { id: string; kind: 'message' | 'action'; text?: string; message?: Message; eventId?: string; investorId?: string };
 const investors = [
@@ -31,6 +32,7 @@ function Mascot({ accent, ink }: { accent: string; ink: string }) {
 
 export default function FloatingMascotBubble() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { addMyEvent, addFavoriteInvestor } = useMode();
   const router = useRouter();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -119,24 +121,23 @@ export default function FloatingMascotBubble() {
       }
     } catch { setRecording(false); action('Could not send the recording.'); }
   };
-  const quick = (label: string, run: () => void) => <Pressable key={label} onPress={run} style={s.chip}><Text style={s.chipText}>{label}</Text></Pressable>;
 
-  return <View pointerEvents="box-none" style={s.anchor}>
+  return <View pointerEvents="box-none" style={[s.anchor, { marginBottom: insets.bottom }]}>
     {open ? <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[s.panel, { width: Math.min(380, windowWidth - 32), maxHeight: Math.min(540, windowHeight - 100) }]}>
       <View style={s.header}><Mascot accent={colors.accent} ink={colors.accent} /><View style={s.headerCopy}><Text style={s.title}>Cala assistant</Text><Text style={s.muted}>Verified Cala graph, context & event shortcuts</Text></View><Pressable accessibilityRole="button" onPress={() => setOpen(false)}><Text style={s.link}>Close</Text></Pressable></View>
-      <View style={s.context}><Text style={s.contextText}>{[context?.what_we_understood.sector_focus.join(', ') || 'ClimateTech', context?.what_we_understood.target_stage.join(', ') || 'Seed', context?.what_we_understood.geography.join(', ') || 'Nordics'].join(' · ')}</Text><TextInput value={contextNote} onChangeText={setContextNote} placeholder="Update recommender context" placeholderTextColor={colors.textMuted} style={s.contextInput} onSubmitEditing={async () => { if (!contextNote.trim()) return; try { await addContextNote(sessionId, contextNote); await refreshContext(sessionId); action('Recommender context updated'); setContextNote(''); } catch { action('Could not update context.'); } }} returnKeyType="send" /></View>
+      <View style={s.context}><Text style={s.contextText}>{[context?.what_we_understood.sector_focus.join(', ') || 'Sector: any', context?.what_we_understood.target_stage.join(', ') || 'Stage: any', context?.what_we_understood.geography.join(', ') || 'Region: any'].join(' · ')}</Text><TextInput value={contextNote} onChangeText={setContextNote} placeholder="Update recommender context" placeholderTextColor={colors.textMuted} style={s.contextInput} onSubmitEditing={async () => { if (!contextNote.trim()) return; try { await addContextNote(sessionId, contextNote); await refreshContext(sessionId); action('Recommender context updated'); setContextNote(''); } catch { action('Could not update context.'); } }} returnKeyType="send" /></View>
       <ScrollView style={s.content} contentContainerStyle={s.contentInner} keyboardShouldPersistTaps="handled">
-        <View style={s.chips}>{quick('+ Attend Slush 2026', () => attend('slush-2026'))}{quick('+ Attend Arctic15', () => attend('arctic15-helsinki'))}{quick('★ Save Eight Roads', () => saveInvestor('eight-roads-ventures', 'Eight Roads Ventures'))}{quick('Ask: Amenitiz Series B lead', () => void transmit("Who led Amenitiz's Series B?"))}</View>
         {items.map((item) => item.kind === 'action' ? <View key={item.id} style={s.actionRow}><Text style={s.body}>{item.text}</Text>{item.eventId ? <Pressable onPress={() => router.push(`/event/${item.eventId}` as never)}><Text style={s.link}>Open event</Text></Pressable> : null}{item.investorId ? <Pressable onPress={() => router.push(`/entity/${item.investorId}` as never)}><Text style={s.link}>Open dossier</Text></Pressable> : null}</View> : <View key={item.id} style={s.reply}>{item.message?.text ? <Text style={s.body}>{item.message.text}</Text> : null}{item.message?.blocks?.map((block, i) => <BlockView key={`${block.type}-${i}`} block={block} />)}{(item.message?.sources ?? []).map((source, i) => <Pressable key={`${source.url}-${i}`} onPress={() => source.url && void import('react-native').then(({ Linking }) => Linking.openURL(source.url))}><Text style={s.link}>{source.name}</Text></Pressable>)}</View>)}
       </ScrollView>
       <View style={s.composer}><TextInput value={draft} onChangeText={setDraft} placeholder="Ask Cala or update your events" placeholderTextColor={colors.textMuted} style={s.input} multiline blurOnSubmit={false} onSubmitEditing={() => void submit()} onKeyPress={(event) => { const native = event.nativeEvent as { key?: string; shiftKey?: boolean }; if (Platform.OS === 'web' && native.key === 'Enter' && !native.shiftKey) { event.preventDefault(); void submit(); } }} /><Pressable accessibilityRole="button" accessibilityLabel={recording ? 'Stop recording' : 'Record a question'} onPress={() => void (recording ? stopRecording() : startRecording())}><Text style={s.link}>{recording ? 'Stop' : 'Voice'}</Text></Pressable><Pressable accessibilityRole="button" onPress={() => void submit()} disabled={!draft.trim() || busy}><Text style={s.link}>{busy ? 'Sending' : 'Send'}</Text></Pressable></View>
-    </KeyboardAvoidingView> : <Pressable accessibilityRole="button" accessibilityLabel="Ask Cala" onPress={() => { setOpen(true); void getOrCreateSessionId().then((id) => { setSessionId(id); return refreshContext(id); }).catch(() => {}); }} style={s.trigger}><Mascot accent={colors.accent} ink={colors.accentText} /><Text style={s.triggerText}>Ask Cala</Text></Pressable>}
+    </KeyboardAvoidingView> : <Pressable accessibilityRole="button" accessibilityLabel="Ask Cala" onPress={() => { setOpen(true); void getOrCreateSessionId().then((id) => { setSessionId(id); return refreshContext(id); }).catch(() => {}); }} style={s.trigger}><Mascot accent={colors.accent} ink={colors.accentText} /></Pressable>}
   </View>;
 }
 
 const styles = (c: ReturnType<typeof useTheme>['colors']) => StyleSheet.create({
-  anchor: { position: 'absolute', right: 16, bottom: 20, zIndex: 100, alignItems: 'flex-end' },
-  trigger: { height: 48, paddingHorizontal: space.md, borderRadius: radius.pill, backgroundColor: c.accent, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', gap: space.sm }, triggerText: { fontSize: font.small, fontWeight: '600', color: c.accentText },
+  anchor: { position: 'absolute', right: 16, bottom: tabBarHeight + 16, // más el safe area (marginBottom)
+    zIndex: 100, alignItems: 'flex-end' },
+  trigger: { width: 48, height: 48, borderRadius: radius.pill, backgroundColor: c.accent, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' },
   panel: { height: 540, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: radius.lg, overflow: 'hidden' },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderBottomWidth: 1, borderBottomColor: c.border }, headerCopy: { flex: 1 }, title: { fontSize: font.body, fontWeight: '600', color: c.text }, muted: { fontSize: font.caption, color: c.textMuted, marginTop: space.xs },
   context: { padding: space.md, borderBottomWidth: 1, borderBottomColor: c.border }, contextText: { fontSize: font.small, color: c.text }, contextInput: { marginTop: space.sm, fontSize: 16, color: c.text, paddingVertical: space.xs },
