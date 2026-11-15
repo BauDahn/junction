@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMode, type MatchMode } from '../src/mode';
 import { font, pageMargin, radius, space, useTheme } from '../src/theme';
 import Logo from '../src/ui/Logo';
@@ -13,15 +13,20 @@ const roles: { value: MatchMode; label: string; description: string }[] = [
 
 export default function OnboardingScreen() {
   const { colors } = useTheme();
-  const { loginWithCredentials, registerWithCredentials, authLoading } = useMode();
+  const { loginWithCredentials, registerWithCredentials, authLoading, sessionExpired } = useMode();
   const router = useRouter();
-  const [tab, setTab] = useState<'register' | 'login'>('register');
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const [tab, setTab] = useState<'register' | 'login'>(params.tab === 'login' ? 'login' : 'register');
   const [role, setRole] = useState<MatchMode>('raising');
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (sessionExpired) { setTab('login'); setError('Your session expired. Sign in again.'); }
+  }, [sessionExpired]);
 
   const styles = StyleSheet.create({
     page: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: pageMargin, backgroundColor: colors.bg },

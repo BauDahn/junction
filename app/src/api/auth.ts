@@ -10,9 +10,27 @@ const KEY = 'cala_auth_token';
 export const getAuthToken = () => AsyncStorage.getItem(KEY);
 export async function setAuthToken(token: string) { await AsyncStorage.setItem(KEY, token); }
 export async function clearAuthToken() { await AsyncStorage.removeItem(KEY); }
+type AuthExpiredListener = () => void;
+const authExpiredListeners = new Set<AuthExpiredListener>();
+export function onAuthExpired(listener: AuthExpiredListener) {
+ authExpiredListeners.add(listener);
+ return () => { authExpiredListeners.delete(listener); };
+}
+/** Adds the stored bearer token to API requests and clears an expired session on 401. */
+export async function authFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+ const token = await getAuthToken();
+ const headers = new Headers(init.headers);
+ if (token) headers.set('Authorization', `Bearer ${token}`);
+ const response = await fetch(input, { ...init, headers });
+ if (response.status === 401 && token) {
+  await clearAuthToken();
+  authExpiredListeners.forEach((listener) => listener());
+ }
+ return response;
+}
 async function request<T>(path: string, init: RequestInit = {}, kind = ''): Promise<T> {
  let res: Response;
- try { res = await fetch(baseUrl + path, init); } catch { throw new ApiError('network_error', 'Could not connect. Check your internet connection and try again.', 0); }
+ try { res = await authFetch(baseUrl + path, init); } catch { throw new ApiError('network_error', 'Could not connect. Check your internet connection and try again.', 0); }
  if (res.status === 204) return undefined as T;
  const body: any = await res.json().catch(() => null);
  if (!res.ok) {

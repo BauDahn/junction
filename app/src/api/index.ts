@@ -1,3 +1,5 @@
+import { authFetch } from './auth';
+
 export type Source = {
   name: string;
   url: string;
@@ -203,7 +205,7 @@ export class ApiError extends Error {
 const baseUrl = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
 const mockEnabled = process.env.EXPO_PUBLIC_MOCK === '1';
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${baseUrl}${path}`, init);
+  const response = await authFetch(`${baseUrl}${path}`, init);
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok) {
     const payload = body as { error?: { code?: string; message?: string }; detail?: string } | null;

@@ -1,4 +1,5 @@
 import { ApiError } from './index';
+import { authFetch } from './auth';
 
 const baseUrl = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
 const REPORT_TIMEOUT_MS = 100_000;
@@ -28,7 +29,7 @@ export async function requestFavoritesReport(
   try {
     let response: Response;
     try {
-      response = await fetch(`${baseUrl}/api/favorites/report`, {
+      response = await authFetch(`${baseUrl}/api/favorites/report`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

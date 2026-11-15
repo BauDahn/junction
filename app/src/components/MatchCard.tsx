@@ -6,9 +6,9 @@ import { font, pageMargin, radius, space, tabularNums, useTheme } from '../theme
 
 function host(url: string) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } }
 export default function MatchCard({ card, eventId, sample = false }: { card: FeedCard; eventId?: string; sample?: boolean }) {
-  const router = useRouter(); const { colors } = useTheme(); const { favoriteInvestorIds, toggleFavoriteInvestor } = useMode();
+  const router = useRouter(); const { colors } = useTheme(); const { favoriteInvestorIds, toggleFavoriteInvestor, user, mode } = useMode();
   const saved = favoriteInvestorIds.includes(card.id);
-  const openDossier = () => router.push(eventId ? { pathname: '/entity/[id]', params: { id: card.id, eventId } } : { pathname: '/entity/[id]', params: { id: card.id } });
+  const openDossier = () => router.push({ pathname: '/entity/[id]', params: { id: card.id, ...(eventId ? { eventId } : {}), session_id: user?.session_id ?? '', mode } });
   const action = { backgroundColor: colors.accentSoft, borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: space.xs + 2 } as const;
   return <View style={{ marginHorizontal: pageMargin, marginTop: space.md, padding: space.lg, borderRadius: radius.lg, backgroundColor: colors.surface, gap: space.md }}>
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space.sm }}>

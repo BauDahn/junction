@@ -1,4 +1,5 @@
 import { ApiError, normalizeSources, type Source } from './index';
+import { authFetch } from './auth';
 
 export type EntityMode = 'raising' | 'investing';
 
@@ -182,7 +183,7 @@ export async function fetchEntityDetail(
   const timer = controller ? setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS) : null;
 
   try {
-    const response = await fetch(url, controller ? { signal: controller.signal } : undefined);
+    const response = await authFetch(url, controller ? { signal: controller.signal } : undefined);
     if (response.status === 504) throw CALA_TIMEOUT();
     const body: unknown = await response.json().catch(() => null);
 
@@ -192,7 +193,7 @@ export async function fetchEntityDetail(
       if (/session/i.test(msg)) {
         throw new ApiError('session_not_found', msg, 404);
       }
-      return { detail: null, isSample: false };
+      throw new ApiError(payload?.error?.code ?? 'not_found', 'Cala has no data for this company.', 404);
     }
 
     if (!response.ok) {

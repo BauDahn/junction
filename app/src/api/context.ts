@@ -1,4 +1,5 @@
 import { ApiError, type MobileFile, type Profile } from './index';
+import { authFetch } from './auth';
 
 export const UNDERSTOOD_KEYS = [
   'sector_focus',
@@ -125,7 +126,7 @@ function normalizePayload(raw: ContextPayload): ContextPayload {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${baseUrl}${path}`, init);
+  const response = await authFetch(`${baseUrl}${path}`, init);
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok) {
     const payload = body as {
