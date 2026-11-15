@@ -1,8 +1,10 @@
-# How Cala Match uses Aiven for Valkey
+# How calado uses Aiven (Valkey and PostgreSQL)
 
 **Short version:** Cala is a knowledge graph with slow, rate-limited endpoints (1 to 60 s per call, HTTP 429 after about ten calls in three seconds). We put **Aiven Valkey** in front of it as a shared memory for every machine and user. What anyone asks once is answered in ~30 ms for everyone else, with **zero calls to Cala**.
 
-All numbers below were measured on 14 November 2026 against the real Cala API and our real Aiven service. Status tags: **In main** (running today), **In progress** (open pull request) and **Planned**.
+We also use **Aiven for PostgreSQL** to store user accounts on the public backend (section 7).
+
+All numbers below were measured on 14 November 2026 against the real Cala API and our real Aiven service. Status tags: **In main** (running today) and **Planned**.
 
 ## 1. The problem Valkey solves
 
@@ -91,9 +93,9 @@ Because the policy is `noeviction` (Valkey never silently drops data), **every k
 - **Secrets stay out of the repo.** `VALKEY_URL` lives only in `backend/.env` (git-ignored). Tests turn the remote cache off.
 - **Observable.** Hit counters per layer, and `ping()` for health.
 
-## 6. The next step: Valkey as the product's graph store
+## 6. Valkey as the product's graph store and control plane
 
-Today Valkey stores answers. The next step stores the **graph itself**, so one shared graph grows with every user and the feed is computed with zero live Cala calls. Design in [ARQUITECTURA.md](ARQUITECTURA.md) and [SPEC-grafo-afinidad.md](SPEC-grafo-afinidad.md).
+Beyond answers, Valkey stores the **graph itself**, so one shared graph grows with every user and the event feed is computed with zero live Cala calls. It also holds the counters that protect Cala's quota. Design in [ARQUITECTURA.md](ARQUITECTURA.md) and [SPEC-grafo-afinidad.md](SPEC-grafo-afinidad.md).
 
 ```mermaid
 flowchart TB
@@ -115,6 +117,7 @@ flowchart TB
 | Graph store on Valkey (nodes, edges with sources, duplicate merging, per-user views; `graph:v1:*`) | **In main** (issue #64) |
 | Slush catalog ingestion into the graph, resumable (`cat:v1:*`) | **In main** (issue #72) |
 | Rate limit shared through Valkey (`ratelimit:v1:cala:*`; one counter per second across machines) | **In main** |
+| Daily Cala call counter per endpoint class and per machine (`calls:v1:<date>:*`), enforcing `CALA_DAILY_CALL_CAP` | **In main** |
 | `/api/stats` with cached summary | **In main** |
 | Shared Valkey accounts (`acct:v1:*`) | **In main** (#139) |
 | Negative cache and abuse limits (`neg:v1:*`, `abuse:v1:*`) | **In main** (#134) |
@@ -125,7 +128,11 @@ flowchart TB
 - **TTL and sets.** Expiry handles freshness (`loaded_at` is also stored and shown), and sets give per-user views without copying data.
 - **Local compute stays local.** Once loaded, a breadth-first search over the subgraph takes 0.13 ms in memory (185 nodes), so Valkey is the shared memory and the process is the fast calculator.
 
-## 7. Try it
+## 7. Aiven for PostgreSQL: accounts
+
+Accounts (email, scrypt password hash, fixed role) and their Bearer tokens live in `backend/accounts/store.py`. The store is chosen with `ACCOUNTS_STORE` (`valkey`, `postgres` or `sqlite`); with `postgres` it connects to `DATABASE_URL` using `psycopg` and creates the `users` and `tokens` tables if they do not exist. The public demo backend runs with `ACCOUNTS_STORE=postgres` against an Aiven for PostgreSQL service, so accounts survive restarts of the laptop that hosts the backend. Tests clear `DATABASE_URL` so they never write to the real database (`backend/tests/conftest.py`).
+
+## 8. Try it
 
 ```bash
 # 1. Put the service URI in backend/.env (never commit it)

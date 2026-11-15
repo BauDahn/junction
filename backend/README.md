@@ -31,9 +31,11 @@ uv run pytest
 | `GEMINI_API_KEY`, `GOOGLE_API_KEY` | Clave para Gemini (se acepta cualquiera de los dos nombres) |
 | `GEMINI_MODEL`, `GEMINI_FAST_MODEL` | Modelos Gemini fuerte (`gemini-flash-latest`) y rápido (`gemini-3.5-flash-lite`) |
 | `NVIDIA_API_KEY`, `NVIDIA_BASE_URL`, `NVIDIA_MODEL` | Nemotron. build.nvidia.com: `https://integrate.api.nvidia.com/v1` con `nvidia/nemotron-3.5-super-vl-120b-a12b` y una clave `nvapi-` |
-| `TRANSCRIPTION_PROVIDER`, `WHISPER_MODEL` | `whisper` (local, por defecto `small`), `nvidia` o `none` |
+| `TRANSCRIPTION_PROVIDER`, `WHISPER_MODEL` | `gemini` (por defecto si hay clave Gemini), `whisper` (local, `uv sync --extra audio`, modelo por defecto `small`), `nvidia` o `none` |
 | `CHAT_DB_PATH` | Base SQLite del chat (por defecto `data/chat.db`) |
 | `ACCOUNTS_STORE` | `valkey`, `postgres` o `sqlite`; por defecto usa `VALKEY_URL` si está configurada y, si no, `DATABASE_URL` o SQLite (`data/app.db`). Valkey comparte cuentas y tokens entre máquinas; si no está disponible, la API devuelve `503`. |
+| `DATABASE_URL` | PostgreSQL para cuentas (en la demo pública, Aiven for PostgreSQL) cuando `ACCOUNTS_STORE=postgres` |
+| `TRUST_PROXY` | `1` para tomar la IP del cliente de `X-Forwarded-For` (detrás del túnel) |
 | `VALKEY_URL` | Valkey compartido para cuentas cuando `ACCOUNTS_STORE` no fuerza otro backend |
 | `CALA_REQUIRE_AUTH` | Exige Bearer para chat y respaldo en vivo a Cala (`0` por defecto) |
 | `CALA_DAILY_CALL_CAP` | Tope diario de llamadas a Cala |
