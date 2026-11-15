@@ -1,6 +1,6 @@
 import uuid
 from cala_core import handle_message as cala_handle_message
-from verifier.config import settings
+from core.config import settings
 from . import store
 from .focus import focus_table
 from .followup import self_contained

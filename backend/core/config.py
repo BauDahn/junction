@@ -17,7 +17,7 @@ class Settings:
     gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
     gemini_fast_model: str = os.getenv("GEMINI_FAST_MODEL", "gemini-3.5-flash-lite")
     llm_provider: str = os.getenv("LLM_PROVIDER", "").lower()
-    cache_dir: Path = Path(os.getenv("VERIFIER_CACHE_DIR", str(DEMO_DIR / "cache")))
+    cache_dir: Path = Path(os.getenv("CALA_CACHE_DIR", str(DEMO_DIR / "cache")))
 
     def __post_init__(self):
         provider = self.llm_provider or ("gemini" if self.gemini_api_key else ("nvidia" if self.nvidia_api_key else "codex"))

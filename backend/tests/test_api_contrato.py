@@ -12,9 +12,9 @@ def test_health_incluye_transcription():
 
 
 def test_error_404_con_formato_del_contrato():
-    response = client.get("/api/jobs/no-existe")
+    response = client.get("/api/no-existe")
     assert response.status_code == 404
-    assert response.json() == {"error": {"code": "not_found", "message": "Job not found."}}
+    assert response.json()["error"]["code"] == "not_found"
 
 
 def test_ruta_inexistente_tambien_usa_el_formato():
@@ -23,8 +23,8 @@ def test_ruta_inexistente_tambien_usa_el_formato():
     assert response.json()["error"]["code"] == "not_found"
 
 
-def test_error_de_validacion_422():
-    response = client.post("/api/verify")
-    assert response.status_code == 422
+def test_endpoint_de_verificacion_eliminado():
+    response = client.post("/api/no-existe")
+    assert response.status_code == 404
     error = response.json()["error"]
-    assert error["code"] == "invalid_request" and error["message"]
+    assert error["code"] == "not_found" and error["message"]

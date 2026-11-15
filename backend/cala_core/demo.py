@@ -1,7 +1,7 @@
 import asyncio
 import json
 
-from verifier.llm import make_llm
+from core.llm import make_llm
 from . import handle_message
 
 
