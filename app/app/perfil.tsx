@@ -99,7 +99,7 @@ export default function PerfilScreen() {
             return (
               <View key={id} style={styles.row}>
                 <View style={styles.rowCopy}><Text style={styles.rowTitle}>{investor?.name ?? investorFallbackName(id)}</Text><Text style={styles.muted}>{investor?.subtitle ?? 'Saved investor'}</Text></View>
-                <Pressable accessibilityRole="button" style={styles.linkButton} onPress={() => router.push(`/entity/${id}`)}><Text style={styles.link}>Open dossier</Text></Pressable>
+                <Pressable accessibilityRole="button" style={styles.linkButton} onPress={() => router.push({ pathname: '/entity/[id]', params: { id, session_id: user?.session_id ?? '', mode } })}><Text style={styles.link}>Open dossier</Text></Pressable>
                 <Pressable accessibilityRole="button" style={styles.linkButton} onPress={() => toggleFavoriteInvestor(id)}><Text style={styles.link}>Remove</Text></Pressable>
               </View>
             );

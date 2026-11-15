@@ -1,7 +1,8 @@
 import { Feather } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
+import { useEffect } from 'react';
 import { ModeProvider, useMode } from '../src/mode';
 import { font, tabBarHeight, ThemeProvider, useTheme } from '../src/theme';
 import FloatingMascotBubble from '../src/components/FloatingMascotBubble';
@@ -14,7 +15,11 @@ export default function RootLayout() {
 
 function ThemedTabs() {
   const { colors, mode } = useTheme();
-  const { onboarded, hydrated } = useMode();
+  const { onboarded, hydrated, sessionExpired } = useMode();
+  const router = useRouter();
+  useEffect(() => {
+    if (sessionExpired) router.replace({ pathname: '/onboarding', params: { tab: 'login' } });
+  }, [router, sessionExpired]);
   if (!hydrated) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
   if (!onboarded) return <><StatusBar style={mode === 'dark' ? 'light' : 'dark'} /><OnboardingScreen /></>;
   return <>

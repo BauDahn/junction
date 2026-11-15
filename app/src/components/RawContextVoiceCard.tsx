@@ -6,6 +6,7 @@ import { RecordingPresets, requestRecordingPermissionsAsync, useAudioRecorder } 
 import Feather from '@expo/vector-icons/Feather';
 import { ApiError } from '../api';
 import { appendRawContext, getRawContext, putRawContext, transcribePreview } from '../api/auth';
+import { authFetch } from '../api/auth';
 import { getOrCreateSessionId } from '../session';
 import { font, radius, space, tabularNums, useTheme } from '../theme';
 
@@ -185,7 +186,7 @@ export default function RawContextVoiceCard() {
       if ('uri' in file) form.append('file', { uri: file.uri, name: file.name, type: file.mimeType || 'application/pdf' } as any);
       else form.append('file', file);
       const baseUrl = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
-      const response = await fetch(`${baseUrl}/api/sessions/${encodeURIComponent(sessionId)}/context/pdf`, { method: 'POST', body: form });
+      const response = await authFetch(`${baseUrl}/api/sessions/${encodeURIComponent(sessionId)}/context/pdf`, { method: 'POST', body: form });
       if (!response.ok) {
         const body = await response.json().catch(() => null);
         throw new ApiError(body?.error?.code || 'upload_error', body?.error?.message || body?.detail || 'Could not analyze this PDF.', response.status);

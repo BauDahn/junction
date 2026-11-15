@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ApiError } from './api';
-import { clearAuthToken, getAuthToken, getMe, loginAccount, logoutAccount, registerAccount, type AccountRole, type AuthUser } from './api/auth';
+import { clearAuthToken, getAuthToken, getMe, loginAccount, logoutAccount, registerAccount, authFetch, onAuthExpired, type AccountRole, type AuthUser } from './api/auth';
 import { clearSessionId, getOrCreateSessionId, setSessionId } from './session';
 
 export type MatchMode = 'raising' | 'investing';
@@ -19,6 +19,7 @@ export type ModeContextValue = PersistedState & {
   user: AuthUser | null;
   isAuthenticated: boolean;
   authLoading: boolean;
+  sessionExpired: boolean;
   setMode: (mode: MatchMode) => void;
   completeOnboarding: (profile: UserProfile) => void;
   resetOnboarding: () => void;
@@ -42,7 +43,7 @@ const apiBase = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000').rep
 const modeFor = (user: AuthUser): MatchMode => user.role === 'investor' ? 'investing' : 'raising';
 
 const ModeContext = createContext<ModeContextValue>({
-  ...DEFAULT_STATE, hydrated: false, user: null, isAuthenticated: false, authLoading: false,
+  ...DEFAULT_STATE, hydrated: false, user: null, isAuthenticated: false, authLoading: false, sessionExpired: false,
   setMode: () => {}, completeOnboarding: () => {}, resetOnboarding: () => {},
   toggleMyEvent: () => {}, addMyEvent: () => {}, toggleFavoriteInvestor: () => {}, addFavoriteInvestor: () => {},
   loginWithCredentials: async () => { throw new Error('ModeProvider is missing.'); },
@@ -54,6 +55,7 @@ export function ModeProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PersistedState>(DEFAULT_STATE);
   const [hydrated, setHydrated] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const commit = useCallback((updater: (current: PersistedState) => PersistedState) => {
     setState((current) => {
@@ -66,13 +68,14 @@ export function ModeProvider({ children }: { children: ReactNode }) {
   const syncAnonymousMode = useCallback(async (mode: MatchMode) => {
     try {
       const sessionId = await getOrCreateSessionId();
-      await fetch(`${apiBase}/api/sessions/${encodeURIComponent(sessionId)}/mode`, {
+      await authFetch(`${apiBase}/api/sessions/${encodeURIComponent(sessionId)}/mode`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }),
       });
     } catch { /* Keep local mode available while offline. */ }
   }, []);
 
   const applyUser = useCallback((user: AuthUser) => {
+    setSessionExpired(false);
     const mode = modeFor(user);
     commit((current) => ({
       ...current, mode, onboarded: true, authUser: user,
@@ -96,6 +99,12 @@ export function ModeProvider({ children }: { children: ReactNode }) {
       return null;
     }
   }, [applyUser, commit]);
+
+  useEffect(() => onAuthExpired(() => {
+    void clearSessionId();
+    setSessionExpired(true);
+    commit((current) => ({ ...current, onboarded: false, authUser: null, userProfile: DEFAULT_PROFILE, mode: 'raising' }));
+  }), [commit]);
 
   useEffect(() => {
     let active = true;
@@ -201,10 +210,10 @@ export function ModeProvider({ children }: { children: ReactNode }) {
   const addFavoriteInvestor = useCallback((id: string) => commit((current) => current.favoriteInvestorIds.includes(id) ? current : ({ ...current, favoriteInvestorIds: [...current.favoriteInvestorIds, id] })), [commit]);
 
   const value = useMemo(() => ({
-    ...state, hydrated, user: state.authUser ?? null, isAuthenticated: Boolean(state.authUser), authLoading,
+    ...state, hydrated, user: state.authUser ?? null, isAuthenticated: Boolean(state.authUser), authLoading, sessionExpired,
     setMode, completeOnboarding, resetOnboarding, toggleMyEvent, addMyEvent,
     toggleFavoriteInvestor, addFavoriteInvestor, loginWithCredentials, registerWithCredentials, logout, refreshMe,
-  }), [state, hydrated, authLoading, setMode, completeOnboarding, resetOnboarding, toggleMyEvent, addMyEvent, toggleFavoriteInvestor, addFavoriteInvestor, loginWithCredentials, registerWithCredentials, logout, refreshMe]);
+  }), [state, hydrated, authLoading, sessionExpired, setMode, completeOnboarding, resetOnboarding, toggleMyEvent, addMyEvent, toggleFavoriteInvestor, addFavoriteInvestor, loginWithCredentials, registerWithCredentials, logout, refreshMe]);
 
   return <ModeContext.Provider value={value}>{children}</ModeContext.Provider>;
 }

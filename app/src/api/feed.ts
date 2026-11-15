@@ -1,5 +1,6 @@
 import { ApiError, normalizeSourcesDeep, type Source } from './index';
 import type { MatchMode } from '../mode';
+import { authFetch } from './auth';
 
 export type FeedCard = {
   id: string;
@@ -79,7 +80,7 @@ export async function getFeed({
   }
 
   try {
-    const response = await fetch(`${baseUrl}/api/feed?${query.toString()}`);
+    const response = await authFetch(`${baseUrl}/api/feed?${query.toString()}`);
     const body: unknown = await response.json().catch(() => null);
     if (!response.ok) {
       const payload = body as { error?: { code?: string; message?: string }; detail?: string } | null;
