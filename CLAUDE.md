@@ -26,22 +26,23 @@ La nueva web la construye Gemini (Antigravity). **Pendientes de producto que NO 
 ## Equipo y coordinación
 | Máquina | Persona | Agentes | Rol |
 |---|---|---|---|
-| `bau` | Bau | Claude (orquestador), Codex, Gemini | **Activo:** revisa y mergea todo, limpia el repo, mantiene la documentación, el pitch y la coordinación |
-| `fabricio` | Fabricio | Claude, Codex, Gemini | **En pausa** (decisión del 14/11 noche): su trabajo (feed, grafo, optimizador) ya está en `main` |
-| `gabriel` | Gabriel | Antigravity y Codex | **Activo:** la interfaz de la app (#80), el catálogo de Slush y el contexto (PDF y voz) |
-| `adrian` | Adrian | Antigravity | **En pausa** (decisión del 14/11 noche) |
+| `bau` | Bau | Claude (orquestador), Codex, Gemini | **Central:** reparte, revisa y mergea todo, documentación y presentación |
+| `fabricio` | Fabricio | Claude, Codex, Gemini | **Activo:** backend de datos (errores 402 de Cala, inversores de Slush, eventos reales), #111 |
+| `gabriel` | Gabriel | Antigravity (Gemini) y Codex | **Activo:** interfaz v3 (#104 y #107) |
+| `adrian` | Adrian | Antigravity | **Activo:** registro con correo, perfil con contexto en texto y voz con vista previa (#112) |
 
 - **Todo se coordina por GitHub**, que es lo único que ven las cuatro máquinas: issue fijo #1 "Estado del equipo" (estado de cada máquina y mensajes), issues con label `maquina:<nombre>` (tareas) y PRs.
 - Con [claude-central](https://github.com/BauDahn/claude-central) instalado se usa el comando `equipo` (`equipo mias`, `equipo mensajes`, `equipo avisar bau "..."`, `equipo publicar`). **Sin claude-central** (por ejemplo, con un agente de Google) se hace lo mismo con `gh`: `gh issue list --label maquina:<nombre>` para ver tus tareas, y un comentario en el issue #1 que empiece con `**<nombre> → bau:**` para avisar. El script `equipo` es un solo archivo de Python que solo necesita `gh`; se puede usar suelto.
 - **Antes de empezar algo que no te asignaron, avisá al orquestador** (comentario en #1 o `equipo avisar bau`), para no duplicar trabajo. Ya pasó.
 - El orquestador responde y reparte por el mismo canal. Las claves (`CALA_API_KEY`, `GEMINI_API_KEY`, `VALKEY_URL`) se pasan por privado, nunca por GitHub.
 
-### Dueños de cada área (desde el 14/11 noche: solo `bau` y `gabriel` están activos)
+### Dueños de cada área (15/11, los cuatro activos)
 | Área | Dueño |
 |---|---|
-| `app/` (la interfaz) | `gabriel` |
-| `backend/catalog/` y `backend/context/` | `gabriel` |
-| Todo lo demás (`backend/`, `canonizador/`, `docs/`, `CLAUDE.md`, `README.md`) | `bau`, con Codex |
+| `app/`: interfaz v3 (navegación, tema, eventos, inversores, asistente) | `gabriel` |
+| `app/`: registro, perfil con contexto en texto, voz con vista previa | `adrian` (sobre la rama de `gabriel`, coordinando) |
+| `backend/catalog/`, `backend/graph/`, `backend/api/` (feed, eventos), `canonizador/` | `fabricio` |
+| `backend/accounts/`, `backend/context/`, `backend/chat/`, `docs/`, `CLAUDE.md`, `README.md` | `bau` con Codex |
 
 **Quién mergea:** `bau` revisa y mergea todos los PRs (squash), después de correr los tests. `gabriel` abre PRs chicos, uno por pantalla, con capturas a 390 px. Al mergear, `bau` avisa en el issue #1.
 
@@ -58,10 +59,10 @@ Frentes de trabajo en este momento (15/11).
 
 | Frente | Qué es | Quién |
 |---|---|---|
-| **Web nueva** | Registro con rol Raiser o Investor, Explorar y Mis eventos, asistente en burbuja, perfil (ver Producto) | Gemini, con `gabriel` |
-| **Backend** | Feed, detalle, búsqueda, respaldo en Cala, catálogo y grafo en Valkey | `bau` con Codex |
-| **Eventos en el catálogo** | Parametrizar el evento y las claves `cat:v1:*` por evento (hoy fijo a Slush 2026), ver `docs/ARQUITECTURA.md` sección 10 | siguiente, `bau` con Codex |
-| **Presentación** | PowerPoint y PDF del proyecto en `docs/presentation/`, pitch y demo en `docs/PITCH.md` | `bau` |
+| **Interfaz v3** | Navegación con iconos, modo oscuro, color #006CFF, eventos, inversores, asistente en burbuja vacío y solo icono | `gabriel` (#104, #107) |
+| **Cuentas y contexto en la interfaz** | Registro con correo y rol fijo, perfil con el contexto como texto, voz con vista previa y 'Add to context' | `adrian` (#112) |
+| **Datos** | Errores 402 de Cala en el catálogo, inversores de Slush desde el grafo, eventos reales y guardados por usuario | `fabricio` (#111) |
+| **Central** | Revisión y merge, backend de cuentas y contexto (hecho: #109, #110), documentación, presentación | `bau` |
 
 ## Principios de calidad (decisión del 14/11 noche)
 **Menos cantidad, más calidad. Una app simple que se vea y se sienta bien vale más que muchas funciones a medias.**
@@ -114,7 +115,7 @@ Frentes de trabajo en este momento (15/11).
 ## Estado (14/11, noche)
 - En `main`: canonizador con límite de tasa compartido en Valkey, grafo compartido (`backend/graph/`), catálogo de Slush (`backend/catalog/`), feed y detalle con afinidad (`backend/api/`), chat con audio de Gemini y las páginas de cada reto (`docs/AIVEN.md`, `docs/CODEX.md`, `docs/GOOGLE-GEMINI.md`, `docs/PITCH.md`).
 - En construcción: la web nueva, con Gemini (`gabriel`). Quedan abiertos los PRs viejos de interfaz #90 a #93 y el de contexto #73, que la nueva web reemplaza o reabsorbe.
-- Equipo activo: `bau` y `gabriel`. `fabricio` y `adrian` en pausa.
+- Equipo: los cuatro activos; `bau` es la central y reparte.
 
 ## Pendientes
 - [ ] Web nueva (Gemini): registro con rol, eventos, asistente en burbuja, perfil; borrar del `app/` las pantallas viejas (Deck, Journal, Estado, Ask).
