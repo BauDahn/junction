@@ -149,13 +149,16 @@ def _entity_type(features, node, edges, mode):
         return "investor" if mode == "raising" else "startup"
     if node:
         ident = str(node.get("id"))
-        is_investor = any(edge.get("rel") == "INVESTED_IN" and str(edge.get("src")) == ident
+        investments = sum(edge.get("rel") == "INVESTED_IN" and str(edge.get("src")) == ident
                           for edge, _ in edges)
-        is_startup = any(
-            (edge.get("rel") == "INVESTED_IN" and str(edge.get("dst")) == ident)
-            or (edge.get("rel") == "PARTICIPATES_IN_FUNDING_ROUND"
-                and str(edge.get("src")) == ident and edge.get("role") == "ISSUER")
-            for edge, _ in edges)
+        issued_rounds = sum(edge.get("rel") == "PARTICIPATES_IN_FUNDING_ROUND"
+                            and str(edge.get("src")) == ident and edge.get("role") == "ISSUER"
+                            for edge, _ in edges)
+        is_investor = investments > 0
+        is_startup = any(edge.get("rel") == "INVESTED_IN" and str(edge.get("dst")) == ident
+                         for edge, _ in edges) or issued_rounds > 0
+        if issued_rounds:
+            return "investor" if mode == "investing" and investments > issued_rounds else "startup"
         if is_investor and is_startup:
             return "investor" if mode == "raising" else "startup"
         if is_investor:
@@ -181,16 +184,51 @@ def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
     sources = feature_sources or node_sources
     detail = {"id": entity_id, "type": entity_type, "name": name, "why_match": [], "facts": [],
               "rounds": [], "portfolio": [], "people": [],
-              "loaded_at": features.get("loaded_at") if features else node.get("loaded_at")}
-    description = features.get("description") if features else props.get("description")
-    if isinstance(description, dict):
-        description = description.get("value")
-    if description and sources:
+              "loaded_at": (features or {}).get("loaded_at") or (node or {}).get("loaded_at")}
+    description_prop = props.get("description")
+    description = features.get("description") if features else (description_prop or {}).get("value") if isinstance(description_prop, dict) else None
+    description_sources = (description_prop or {}).get("sources", []) if isinstance(description_prop, dict) else feature_sources
+    if description and description_sources:
         detail["description"] = description
 
-    def add_fact(label, value):
-        if value is not None and value != "" and feature_sources:
-            detail["facts"].append({"label": label, "value": str(value), "sources": feature_sources})
+    def add_fact(label, value, fact_sources=None):
+        if fact_sources is None:
+            fact_sources = feature_sources
+        if value is not None and value != "" and fact_sources:
+            rendered = str(value)
+            existing = next((fact for fact in detail["facts"] if fact["label"] == label), None)
+            if existing is None:
+                detail["facts"].append({"label": label, "value": rendered, "sources": _union(fact_sources, limit=10000)})
+            else:
+                values = list(dict.fromkeys(existing["value"].split(", ") + rendered.split(", ")))
+                existing["value"] = ", ".join(values)
+                existing["sources"] = _union(existing["sources"], fact_sources, limit=10000)
+
+    def prop_value(key):
+        value = props.get(key)
+        return (value.get("value"), value.get("sources") or []) if isinstance(value, dict) else (None, [])
+
+    def add_prop(label, key, transform=lambda value: value):
+        value, src = prop_value(key)
+        if value is not None:
+            add_fact(label, transform(value), src)
+
+    if node:
+        add_prop("Website", "website")
+        add_prop("Founded", "founding_date", lambda value: str(value)[:4])
+        add_prop("Stage", "funding_stage", lambda value: str(value).replace("_", " ").title())
+        funding, funding_sources = prop_value("total_funding")
+        units, units_sources = prop_value("total_funding_units")
+        if funding is not None:
+            add_fact("Total funding", f"{funding} {units}".strip() if units else funding, _union(funding_sources, units_sources))
+        add_prop("Employees", "employee_count_range")
+        add_prop("Status", "operational_status", lambda value: str(value).replace("_", " ").title())
+        for item in props.get("industries", []) if isinstance(props.get("industries"), list) else []:
+            if isinstance(item, dict):
+                add_fact("Industry", str(item.get("name", "")).replace("_", " ").title(), item.get("sources"))
+        hq = props.get("hq")
+        if isinstance(hq, dict):
+            add_fact("Headquarters", hq.get("name"), hq.get("sources"))
 
     if features and feature_sources:
         ai_tagged = features.get("ai_tagged", False)
@@ -262,19 +300,60 @@ def _detail_sync(entity_id, session_id, profile, mode, catalog, graph):
             group["sources"] = _union(group["sources"], edge.get("sources"))
         detail["rounds"] = list(grouped.values())
 
+    if not features:
+        company_investors = [(neighbor.get("name"), bool(edge.get("is_lead")), edge.get("sources") or [])
+                             for edge, neighbor in edges
+                             if edge.get("rel") == "INVESTED_IN" and str(edge.get("dst")) == entity_id]
+        for edge, round_ref in edges:
+            if (edge.get("rel") != "PARTICIPATES_IN_FUNDING_ROUND"
+                    or str(edge.get("src")) != entity_id or edge.get("role") != "ISSUER"):
+                continue
+            round_node = graph.get_node(round_ref.get("id")) or {}
+            round_props = round_node.get("props") or {}
+            round_sources = _union(edge.get("sources"), *(value.get("sources", []) for value in round_props.values() if isinstance(value, dict)))
+            if not round_sources:
+                continue
+            def round_prop(key):
+                value = round_props.get(key)
+                return value.get("value") if isinstance(value, dict) else None
+            rtype = round_prop("round_label") or round_prop("instrument") or round_ref.get("name")
+            amount = round_prop("transaction_value")
+            units = round_prop("transaction_value_units")
+            date = round_prop("announcement_date") or round_prop("event_date")
+            item = {"round_type": str(rtype), "leads": [], "investors": [], "sources": round_sources}
+            if amount is not None:
+                item["amount"] = f"{amount} {units}".strip() if units else str(amount)
+            if date is not None:
+                item["date"] = str(date)
+            for investor_name, is_lead, investor_sources in company_investors:
+                if investor_sources:
+                    item["investors"].append(investor_name)
+                    if is_lead:
+                        item["leads"].append(investor_name)
+            detail["rounds"].append(item)
+        detail["rounds"].sort(key=lambda item: str(item.get("date", "")), reverse=True)
+
     roles = {"FOUNDED": "Founder", "IS_CEO_OF": "CEO", "IS_CTO_OF": "CTO",
              "IS_BOARD_MEMBER_OF": "Board member", "WORKS_AT": "Employee", "IS_MEMBER_OF": "Member"}
     for edge, neighbor in edges:
         if not edge.get("sources"):
             continue
         if edge.get("rel") == "INVESTED_IN" and str(edge.get("src")) == entity_id:
-            detail["portfolio"].append({"id": str(neighbor["id"]), "name": neighbor.get("name")})
+            portfolio_item = {"id": str(neighbor["id"]), "name": neighbor.get("name")}
+            if edge.get("event_date"):
+                portfolio_item["event_date"] = str(edge["event_date"])
+            detail["portfolio"].append(portfolio_item)
         role = roles.get(edge.get("rel"))
         if role and str(edge.get("dst")) == entity_id:
             person = {"id": str(neighbor["id"]), "name": neighbor.get("name"), "role": role}
             if edge.get("valid_since"):
                 person["since"] = edge["valid_since"]
             detail["people"].append(person)
+
+    detail["portfolio"].sort(key=lambda item: str(item.get("event_date", "")), reverse=True)
+    detail["portfolio"] = detail["portfolio"][:10]
+    for item in detail["portfolio"]:
+        item.pop("event_date", None)
 
     if session_id:
         scored = candidate_for_entity(entity_id, session_id, profile, mode, catalog, graph)
@@ -296,21 +375,41 @@ async def entity(entity_id: str, mode: str | None = None, session_id: str | None
     if session_id:
         _session(session_id)
     profile = chat_store.get_profile(session_id) or {} if session_id else {}
-    if not catalog.get_features(entity_id) and not graph.get_node(entity_id):
+    cached_node = graph.get_node(entity_id)
+    expanded = bool(cached_node and getattr(graph, "is_expanded", lambda *_: False)(entity_id, "biz:v1"))
+    if not expanded:
         if cala is None:
-            raise HTTPException(404, "Entity not found in the graph or in Cala.")
-        from graph.loader import expand_node
-        stats = {"nodes": set(), "edges": set(), "cala_calls": 0, "skipped_expanded": 0,
-                 "excluded": Counter(), "truncated": [], "errors": [], "levels": []}
-        try:
-            expanded = await asyncio.wait_for(expand_node(graph, cala, entity_id, stats), timeout=25)
-        except asyncio.TimeoutError as exc:
-            raise HTTPException(504, "Cala did not answer in time.") from exc
-        except Exception as exc:
-            if exc.__class__.__name__ == "CalaBudgetExceeded":
-                raise HTTPException(503, "Cala call cap reached.") from exc
-            raise
-        if expanded is None:
+            if not catalog.get_features(entity_id) and not cached_node:
+                raise HTTPException(404, "Entity not found in the graph or in Cala.")
+        else:
+            from graph.loader import expand_node
+            stats = {"nodes": set(), "edges": set(), "cala_calls": 0, "skipped_expanded": 0,
+                     "excluded": Counter(), "truncated": [], "errors": [], "levels": []}
+            try:
+                expanded_id = await asyncio.wait_for(expand_node(graph, cala, entity_id, stats), timeout=25)
+                if expanded_id is not None:
+                    issuer_rounds = [(edge, neighbor) for edge, neighbor in neighbors_batch(graph, [entity_id]).get(str(entity_id), [])
+                                     if edge.get("rel") == "PARTICIPATES_IN_FUNDING_ROUND"
+                                     and str(edge.get("src")) == str(entity_id) and edge.get("role") == "ISSUER"]
+                    issuer_rounds.sort(key=lambda row: str(row[0].get("event_date") or ""), reverse=True)
+                    for _, round_node in issuer_rounds[:3]:
+                        round_id = str(round_node.get("id"))
+                        if not getattr(graph, "is_expanded", lambda *_: False)(round_id, "biz:v1"):
+                            await asyncio.wait_for(expand_node(graph, cala, round_id, stats), timeout=25)
+                    loaded_node = graph.get_node(entity_id)
+                    if loaded_node is not None:
+                        loaded_node["loaded_at"] = datetime.now(timezone.utc).isoformat()
+                        if hasattr(graph, "put_node"):
+                            graph.put_node(loaded_node)
+                        elif hasattr(graph, "add_node"):
+                            graph.add_node(loaded_node)
+            except asyncio.TimeoutError as exc:
+                raise HTTPException(504, "Cala did not answer in time.") from exc
+            except Exception as exc:
+                if exc.__class__.__name__ == "CalaBudgetExceeded":
+                    raise HTTPException(503, "Cala call cap reached.") from exc
+                raise
+        if cala is not None and not graph.get_node(entity_id):
             errors = stats.get("errors") or []
             message = " ".join(str(error.get("error", "")) for error in errors if isinstance(error, dict)).casefold()
             if "daily cala call cap reached" in message:
@@ -321,10 +420,8 @@ async def entity(entity_id: str, mode: str | None = None, session_id: str | None
             if missing:
                 raise HTTPException(404, "Entity not found in the graph or in Cala.")
             raise HTTPException(502, "Cala request failed.")
-        if not graph.get_node(entity_id):
+        if not graph.get_node(entity_id) and not catalog.get_features(entity_id):
             raise HTTPException(404, "Entity not found in the graph or in Cala.")
-        node = graph.get_node(entity_id)
-        node["loaded_at"] = datetime.now(timezone.utc).isoformat()
     return await asyncio.to_thread(_detail_sync, entity_id, session_id, profile, current_mode, catalog, graph)
 
 
