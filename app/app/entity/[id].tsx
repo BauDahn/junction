@@ -81,7 +81,7 @@ export default function EntityDossier() {
   const retry = <Pressable accessibilityRole="button" onPress={() => void load()} style={[actionStyle, { alignSelf: 'flex-start' }]}><Text style={{ color: colors.accent, fontSize: font.small, fontWeight: '600' }}>Retry</Text></Pressable>;
   const signIn = <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/onboarding', params: { tab: 'login' } })} style={[actionStyle, { alignSelf: 'flex-start' }]}><Text style={{ color: colors.accent, fontSize: font.small, fontWeight: '600' }}>Sign in</Text></Pressable>;
   const hasContent = Boolean(currentDetail && (currentDetail.description || currentDetail.facts.length || currentDetail.rounds.length || currentDetail.people.length || currentDetail.portfolio.length || currentDetail.why_match.length));
-  return <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ alignItems: 'center', paddingBottom: space.xxl }}><View style={{ width: '100%', maxWidth, paddingHorizontal: pageMargin, backgroundColor: colors.surface }}>
+  return <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ alignItems: 'center', paddingBottom: 112 }}><View style={{ width: '100%', maxWidth, paddingHorizontal: pageMargin, backgroundColor: colors.surface }}>
     <View style={{ paddingVertical: space.xl, borderBottomWidth: 1, borderBottomColor: colors.border, gap: space.md }}>{back}
       {loading ? <Skeleton /> : null}
       {error ? <><Text style={{ color: colors.text, fontSize: font.body, lineHeight: 22 }}>{error}</Text>{!user && error === 'Sign in to see this page.' ? signIn : retry}</> : null}
