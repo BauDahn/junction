@@ -90,6 +90,17 @@ El perfil muestra el contexto como **el texto del usuario, tal cual**, no como e
 - `GET /api/sessions/{id}/profile` → `{startup_name?, one_liner?, sector?, stage?, location?, raising?: {amount?, round?}, competitors: [string], target_customers?, role?: founder|investor|other, interests?: {sectors: [string], regions: [string], stages: [string], follows: {companies: [string], investors: [string]}}, facts: [{text, origin: user}], updated_at}`
 - `GET /api/sessions/{id}/recommendations` → `{status: idle|running|ready|error, updated_at, investors: [Card], competitors: [Card], prospects: [Card]}`
 
+## Eventos *(borrador, 15/11, #111 parte 3)*
+Cada evento tiene su propio catálogo en Cala (claves `cat:v1:<event_id>:*`, ver `docs/ARQUITECTURA.md` sección 10). Solo Slush 2026 tiene participantes; los demás eventos solo tienen speakers.
+- `GET /api/events` → `{items: [Event]}`. Público; con `Authorization: Bearer <token>` cada evento trae además `saved`. Orden: fecha ascendente.
+- `Event`: `{id, name, slogan?, date, city, image_url?, counts: {participants, speakers, investors, startups}, has_participants: bool, status: loading|ready|empty, saved?: bool}`. `date` es `YYYY-MM-DD` (inicio). `counts` son los datos que hay hoy en el catálogo de ese evento (0 si no hay); `has_participants` es `counts.participants > 0`. `status`: `loading` si la carga sigue en curso, `empty` si no hay nada. Las claves opcionales se omiten, no van en `null`.
+- `POST /api/me/events/{id}` → `204`: guarda el evento para el usuario (idempotente). `404 event_not_found` si el id no existe.
+- `DELETE /api/me/events/{id}` → `204`: lo quita (idempotente, también si no estaba guardado). `404 event_not_found` si el id no existe.
+- `GET /api/me/events` → `{items: [Event]}`: solo los guardados (con `saved: true`).
+- Los tres `/api/me/events*` requieren `Authorization: Bearer <token>` (cuentas, ver *Cuentas*); sin token o vencido, `401`. Se guardan en la misma base de las cuentas (tabla `saved_events`: `user_id`, `event_id`, `created_at`).
+- `GET /api/events/{id}/feed?session_id=&mode=raising|investing&limit=20&cursor=` → misma forma y reglas que `GET /api/feed` (`{mode, items: [FeedCard], next_cursor?, confidence_note?}`), pero con candidatos solo de ese evento y puntuados con el perfil de la sesión. `404 event_not_found` si el evento no existe; `404` si la sesión no existe; `422` con modo inválido. Un evento sin participantes devuelve `items` solo con speakers y `confidence_note` lo avisa (en inglés).
+- Compatibilidad: `GET /api/feed` sin evento sigue igual y equivale al evento por defecto (Slush 2026).
+
 ## Reglas
 - Todo dato que venga de Cala viaja con `sources`, y la app siempre las muestra.
 - El modelo nunca escribe cifras ni nombres que no vengan de Cala. Si Cala no tiene el dato después de probar todas sus herramientas, se devuelve `not_found` con lo que se buscó.
