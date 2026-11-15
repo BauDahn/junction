@@ -142,6 +142,50 @@ def test_graph_entity_type_uses_mode_when_both_roles_are_evident(client):
     assert client.get("/api/entities/hybrid?mode=investing").json()["type"] == "startup"
 
 
+def test_issuer_round_classifies_as_startup_unless_investing_edges_outnumber_issuances(client):
+    graph = MemoryGraph()
+    graph.add_node({"id": "hybrid", "type": "Company", "name": "Hybrid", "props": {}})
+    graph.add_node({"id": "round", "type": "FundingRound", "name": "Series B", "props": {}})
+    graph.add_node({"id": "round-b", "type": "FundingRound", "name": "Series C", "props": {}})
+    graph.add_node({"id": "portfolio-a", "type": "Company", "name": "Portfolio A", "props": {}})
+    graph.add_node({"id": "portfolio-b", "type": "Company", "name": "Portfolio B", "props": {}})
+    graph.add_edge({"id": "issuer", "src": "hybrid", "dst": "round", "rel": "PARTICIPATES_IN_FUNDING_ROUND",
+                    "role": "ISSUER", "sources": [SOURCE]})
+    graph.add_edge({"id": "investment-a", "src": "hybrid", "dst": "portfolio-a", "rel": "INVESTED_IN", "sources": [SOURCE]})
+    graph.add_edge({"id": "investment-b", "src": "hybrid", "dst": "portfolio-b", "rel": "INVESTED_IN", "sources": [SOURCE]})
+    backend_app.app.dependency_overrides[get_graph] = lambda: graph
+    assert client.get("/api/entities/hybrid?mode=raising").json()["type"] == "startup"
+    assert client.get("/api/entities/hybrid?mode=investing").json()["type"] == "investor"
+    graph.add_edge({"id": "issuer-b", "src": "hybrid", "dst": "round-b", "rel": "PARTICIPATES_IN_FUNDING_ROUND",
+                    "role": "ISSUER", "sources": [SOURCE]})
+    assert client.get("/api/entities/hybrid?mode=investing").json()["type"] == "startup"
+
+
+def test_repeated_fact_labels_merge_values_and_unique_sources(client):
+    source_a = {"name": "Cala", "url": "https://cala.test/a"}
+    source_b = {"name": "Cala", "url": "https://cala.test/b"}
+    graph = MemoryGraph()
+    graph.add_node({"id": "company", "type": "Company", "name": "Company", "props": {
+        "industries": [
+            {"name": "HOSPITALITY_AND_TOURISM", "sources": [source_a]},
+            {"name": "HOSPITALITY_AND_TOURISM", "sources": [source_a]},
+            {"name": "SOFTWARE_AND_SERVICES", "sources": [source_b]},
+        ],
+        "hq": {"name": "Spain", "sources": [source_a]},
+    }})
+    backend_app.app.dependency_overrides[get_graph] = lambda: graph
+    backend_app.app.dependency_overrides[get_catalog] = lambda: MemoryCatalog([{
+        "id": "company", "name": "Company", "hq": "Spain", "sources": [source_b],
+    }])
+    facts = client.get("/api/entities/company").json()["facts"]
+    by_label = {fact["label"]: fact for fact in facts}
+    assert by_label["Industry"]["value"] == "Hospitality And Tourism, Software And Services"
+    assert by_label["Industry"]["sources"] == [source_a, source_b]
+    assert by_label["Headquarters"]["value"] == "Spain"
+    assert by_label["Headquarters"]["sources"] == [source_a, source_b]
+    assert len(facts) == len(by_label)
+
+
 def test_startup_rounds_group_by_event_date_and_omit_empty_date(client):
     graph = MemoryGraph()
     graph.add_node({"id": "startup", "type": "Company", "name": "Startup", "props": {}})
@@ -227,6 +271,63 @@ def test_detail_loads_unknown_entity_once_and_reuses_graph(client):
     assert first.json()["rounds"] == [{"date": "2025", "leads": [], "investors": ["Live Fund"], "sources": [SOURCE]}]
     assert graph.get_node("excluded-round") is None and graph.get_node("product") is None
     assert cala.calls == 1
+
+
+def test_unknown_company_detail_uses_sourced_cala_properties_and_round_cache(client):
+    graph = GraphStore(MemoryKV())
+    def neighbor(ident, name, entity_type, edge_id, **props):
+        return {"id": ident, "name": name, "entity_type": entity_type,
+                "properties": {"id": edge_id, "sources": [SOURCE], **props}}
+    round_ref = neighbor("round-live", "Series A", "FundingRound", "issuer-edge", role="ISSUER")
+    person_ref = neighbor("person-live", "A. Founder", "Person", "founder-edge")
+    company = {"id": "uncatalogued", "name": "Cala Company", "entity_type": "Company",
+               "properties": {
+                   "description": {"value": "Useful summary", "sources": [SOURCE]},
+                   "website": {"value": "example.test", "sources": [SOURCE]},
+                   "founding_date": {"value": "2020-04-01", "sources": [SOURCE]},
+                   "funding_stage": {"value": "series_a", "sources": [SOURCE]},
+                   "total_funding": {"value": 12000000, "sources": [SOURCE]},
+                   "total_funding_units": {"value": "USD", "sources": [SOURCE]},
+                   "employee_count_range": {"value": "51-100", "sources": [SOURCE]},
+                   "operational_status": {"value": "active", "sources": [SOURCE]},
+               }, "relationships": {
+                   "incoming": {"FOUNDED": [person_ref]},
+                   "outgoing": {
+                       "PARTICIPATES_IN_FUNDING_ROUND": [round_ref],
+                       "OPERATES_IN_INDUSTRY": [neighbor("industry", "Hospitality", "Industry", "industry-edge")],
+                       "HAS_HEADQUARTERS_IN": [neighbor("country", "Spain", "Country", "hq-edge")],
+                   }}}
+    funding_round = {"id": "round-live", "name": "Series A", "entity_type": "FundingRound",
+                     "properties": {
+                         "round_label": {"value": "Series A", "sources": [SOURCE]},
+                         "transaction_value": {"value": 12000000, "sources": [SOURCE]},
+                         "transaction_value_units": {"value": "USD", "sources": [SOURCE]},
+                         "announcement_date": {"value": "2024-06-01", "sources": [SOURCE]},
+                     }, "relationships": {"incoming": {}, "outgoing": {}}}
+    class Cala:
+        def __init__(self): self.calls = []
+        async def retrieve(self, ident, **kwargs):
+            self.calls.append(ident)
+            return {"uncatalogued": company, "round-live": funding_round}[ident]
+    cala = Cala()
+    backend_app.app.dependency_overrides[get_graph] = lambda: graph
+    backend_app.app.dependency_overrides[get_cala] = lambda: cala
+    first = client.get("/api/entities/uncatalogued").json()
+    second = client.get("/api/entities/uncatalogued").json()
+    assert first["description"] == "Useful summary"
+    facts = {fact["label"]: fact["value"] for fact in first["facts"]}
+    assert facts == {"Website": "example.test", "Founded": "2020", "Stage": "Series A",
+                     "Total funding": "12000000 USD", "Employees": "51-100", "Industry": "Hospitality",
+                     "Headquarters": "Spain", "Status": "Active"}
+    assert len(first["rounds"]) == 1
+    assert first["rounds"][0]["round_type"] == "Series A"
+    assert first["rounds"][0]["amount"] == "12000000 USD"
+    assert first["rounds"][0]["date"] == "2024-06-01"
+    assert first["people"] == [{"id": "person-live", "name": "A. Founder", "role": "Founder"}]
+    assert all(fact["sources"] for fact in first["facts"])
+    assert first["rounds"][0]["sources"] and first["loaded_at"]
+    assert second["facts"] == first["facts"] and second["rounds"] == first["rounds"]
+    assert cala.calls == ["uncatalogued", "round-live"]
 
 
 def test_detail_live_cala_request_error_is_502(client):
