@@ -11,6 +11,7 @@ dependencies = [
     "python-multipart>=0.0.33",
     "uvicorn>=0.54.0",
     "cala-canonizador",
+    "psycopg[binary]>=3.2",
 ]
 
 [tool.uv.sources]
