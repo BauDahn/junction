@@ -489,9 +489,18 @@ async def entity(entity_id: str, mode: str | None = None, session_id: str | None
 
 
 @router.post("/api/favorites/report")
-async def favorites_report(body: FavoritesReportRequest, catalog=Depends(get_catalog),
+async def favorites_report(body: FavoritesReportRequest, request: Request,
+                           authorization: str | None = Header(default=None), catalog=Depends(get_catalog),
                            graph=Depends(get_graph), cala=Depends(get_cala), llm=Depends(get_report_llm)):
     from .favorites_report import action_plan, render_pdf
+    from core.abuse import account_for, daily, enforce, identity
+
+    user = account_for(authorization)
+    if os.getenv("CALA_REQUIRE_AUTH", "0") == "1" and user is None:
+        raise HTTPException(401, "unauthorized")
+    subject = identity(request, user)
+    enforce(request, "report", subject, 3, 60)
+    daily(request, "report", subject, 30)
 
     current_mode = _mode(body.mode, body.session_id)
     if body.session_id:
@@ -501,33 +510,50 @@ async def favorites_report(body: FavoritesReportRequest, catalog=Depends(get_cat
     async def create_report():
         omitted_by_index = [None] * len(body.entity_ids)
         failure_codes = [None] * len(body.entity_ids)
+        failure_messages = [None] * len(body.entity_ids)
+        failure_headers = [None] * len(body.entity_ids)
         entries_by_index = [None] * len(body.entity_ids)
         semaphore = asyncio.Semaphore(2)
 
         async def load(index, entity_id):
             async with semaphore:
                 try:
-                    detail = await entity(entity_id, current_mode, body.session_id, catalog, graph, cala)
+                    detail = await entity(entity_id=entity_id, mode=current_mode, session_id=body.session_id,
+                                          request=request, authorization=authorization, catalog=catalog,
+                                          graph=graph, cala=cala)
                     entries_by_index[index] = {"detail": detail, "plan": None}
                 except HTTPException as exc:
                     failure_codes[index] = exc.status_code
-                    reason = {404: "Not found in the catalog or in Cala", 503: "Cala daily call cap reached",
+                    failure_messages[index] = str(exc.detail)
+                    failure_headers[index] = exc.headers
+                    reason = {404: "Not found in the catalog or in Cala", 422: "Invalid id (not a Cala id)",
+                              429: "Request limit reached", 503: "Cala daily call cap reached",
                               504: "Cala did not answer in time"}.get(exc.status_code, "Cala request failed")
                     omitted_by_index[index] = {"id": entity_id, "reason": reason}
                 except Exception:
                     failure_codes[index] = 502
+                    failure_messages[index] = "Cala request failed."
                     omitted_by_index[index] = {"id": entity_id, "reason": "Cala request failed"}
 
         await asyncio.gather(*(load(index, entity_id) for index, entity_id in enumerate(body.entity_ids)))
         entries = [entry for entry in entries_by_index if entry is not None]
         omitted = [row for row in omitted_by_index if row is not None]
         if not entries:
-            status = 404 if failure_codes and all(code == 404 for code in failure_codes) else (
-                503 if 503 in failure_codes else 504 if 504 in failure_codes else 502)
-            message = {404: "No favorites were found in the catalog or Cala.",
-                       503: "Cala's daily call cap was reached.", 504: "Cala did not answer in time.",
-                       502: "Cala request failed for all favorites."}[status]
-            raise HTTPException(status, message)
+            if failure_codes and all(code == 404 for code in failure_codes):
+                status, message = 404, "No favorites were found in the catalog or Cala."
+            elif failure_codes and all(code == 422 for code in failure_codes):
+                status, message = 422, failure_messages[failure_codes.index(422)]
+            elif 429 in failure_codes:
+                failed_index = failure_codes.index(429)
+                status, message = 429, failure_messages[failed_index]
+            elif 503 in failure_codes:
+                status, message = 503, "Cala's daily call cap was reached."
+            elif 504 in failure_codes:
+                status, message = 504, "Cala did not answer in time."
+            else:
+                status, message = 502, "Cala request failed for all favorites."
+            headers = failure_headers[failure_codes.index(429)] if status == 429 else None
+            raise HTTPException(status, message, headers=headers)
         plan_semaphore = asyncio.Semaphore(3)
 
         async def plan(entry):

@@ -29,9 +29,11 @@ class FakeLLM:
         return self.result
 
 
-def setup_client(monkeypatch, features=(), llm=None):
+def setup_client(monkeypatch, features=(), llm=None, tmp_path=None):
     from fastapi.testclient import TestClient
     monkeypatch.setenv("CHAT_DB_PATH", ":memory:")
+    if tmp_path is not None:
+        monkeypatch.setenv("APP_DB_PATH", str(tmp_path / "report-accounts.db"))
     backend_app.app.dependency_overrides[get_catalog] = lambda: MemoryCatalog(list(features))
     backend_app.app.dependency_overrides[get_graph] = lambda: MemoryGraph()
     backend_app.app.dependency_overrides[get_cala] = lambda: None
@@ -218,7 +220,7 @@ def test_action_plan_prompt_contains_mode_and_concrete_requirements():
 
 def test_report_preserves_request_order_and_catches_generic_load_errors(monkeypatch):
     client = setup_client(monkeypatch)
-    async def fake_entity(entity_id, mode, session_id, catalog, graph, cala):
+    async def fake_entity(entity_id, mode, session_id, request, authorization, catalog, graph, cala):
         if entity_id == "broken":
             raise RuntimeError("unexpected detail failure")
         await asyncio.sleep(0.03 if entity_id == "first" else 0)
@@ -235,6 +237,125 @@ def test_report_preserves_request_order_and_catches_generic_load_errors(monkeypa
         assert response.headers["x-favorites-not-included"] == "broken"
     finally:
         api_routes.entity = original
+        client.close()
+        backend_app.app.dependency_overrides.clear()
+
+
+def test_report_invalid_ids_are_not_included_and_never_call_cala(monkeypatch):
+    valid_id = "11111111-1111-4111-8111-111111111111"
+    invalid_id = "not-a-cala-id"
+    calls = []
+    graph = MemoryGraph()
+    class Cala:
+        pass
+    cala = Cala()
+    client = setup_client(monkeypatch, [{"id": valid_id, "name": "Valid company", "kinds": ["startup"], "sources": []}])
+    backend_app.app.dependency_overrides[api_routes.get_graph] = lambda: graph
+    backend_app.app.dependency_overrides[get_cala] = lambda: cala
+
+    async def fake_expand(store, client, entity_id, stats, **kwargs):
+        calls.append(entity_id)
+        store.add_node({"id": entity_id, "name": "Valid company", "props": {}})
+        return entity_id
+
+    monkeypatch.setattr("graph.loader.expand_node", fake_expand)
+    try:
+        response = client.post("/api/favorites/report", json={"entity_ids": [invalid_id, valid_id]})
+        assert response.status_code == 200
+        assert response.headers["x-favorites-not-included"] == invalid_id
+        assert "Invalid id (not a Cala id)" in "\n".join(p.get_text() for p in fitz.open(stream=response.content, filetype="pdf"))
+        assert calls == [valid_id]
+        all_invalid = client.post("/api/favorites/report", json={"entity_ids": [invalid_id]})
+        assert all_invalid.status_code == 422
+        assert all_invalid.json()["error"]["message"] == "Entity id must be a UUID."
+        assert calls == [valid_id]
+    finally:
+        client.close()
+        backend_app.app.dependency_overrides.clear()
+
+
+def test_report_requires_auth_even_when_entity_is_local(monkeypatch, tmp_path):
+    monkeypatch.setenv("CALA_REQUIRE_AUTH", "1")
+    feature = {"id": "local-only", "name": "Local", "kinds": ["investor"], "sources": []}
+    client = setup_client(monkeypatch, [feature], tmp_path=tmp_path)
+    try:
+        denied = client.post("/api/favorites/report", json={"entity_ids": ["local-only"]})
+        assert denied.status_code == 401
+        registered = client.post("/api/auth/register", json={"email": "report@example.test", "password": "secret-pass-123",
+            "name": "Report User", "company": "Acme", "role": "raiser"})
+        assert registered.status_code == 201
+        token = registered.json()["token"]
+        allowed = client.post("/api/favorites/report", headers={"Authorization": f"Bearer {token}"},
+                              json={"entity_ids": ["local-only"]})
+        assert allowed.status_code == 200
+    finally:
+        client.close()
+        backend_app.app.dependency_overrides.clear()
+
+
+def test_report_has_three_requests_per_minute(monkeypatch):
+    monkeypatch.setenv("REPORT_LIMIT", "3")
+    feature = {"id": "local-only", "name": "Local", "kinds": ["investor"], "sources": []}
+    client = setup_client(monkeypatch, [feature])
+    try:
+        for _ in range(3):
+            assert client.post("/api/favorites/report", json={"entity_ids": ["local-only"]}).status_code == 200
+        limited = client.post("/api/favorites/report", json={"entity_ids": ["local-only"]})
+        assert limited.status_code == 429
+        assert "Retry-After" in limited.headers
+    finally:
+        client.close()
+        backend_app.app.dependency_overrides.clear()
+
+
+def test_ten_report_ids_use_same_cala_expansions_as_ten_entity_gets(monkeypatch):
+    ids = [f"10000000-0000-4000-8000-{index:012d}" for index in range(1, 11)]
+
+    def run_gets():
+        counts = []
+        graph = MemoryGraph()
+        class Cala:
+            pass
+        client = setup_client(monkeypatch, [{"id": ident, "name": f"Company {index}", "kinds": ["startup"], "sources": []}
+                                             for index, ident in enumerate(ids)])
+        backend_app.app.dependency_overrides[api_routes.get_graph] = lambda: graph
+        backend_app.app.dependency_overrides[get_cala] = lambda: Cala()
+
+        async def fake_expand(store, cala, entity_id, stats, **kwargs):
+            counts.append(entity_id)
+            store.add_node({"id": entity_id, "name": "Company", "props": {}})
+            return entity_id
+
+        monkeypatch.setattr("graph.loader.expand_node", fake_expand)
+        try:
+            responses = [client.get(f"/api/entities/{ident}") for ident in ids]
+            assert all(response.status_code == 200 for response in responses)
+            return counts
+        finally:
+            client.close()
+            backend_app.app.dependency_overrides.clear()
+
+    get_counts = run_gets()
+    report_counts = []
+    graph = MemoryGraph()
+    class Cala:
+        pass
+    client = setup_client(monkeypatch, [{"id": ident, "name": f"Company {index}", "kinds": ["startup"], "sources": []}
+                                         for index, ident in enumerate(ids)])
+    backend_app.app.dependency_overrides[api_routes.get_graph] = lambda: graph
+    backend_app.app.dependency_overrides[get_cala] = lambda: Cala()
+
+    async def fake_expand(store, cala, entity_id, stats, **kwargs):
+        report_counts.append(entity_id)
+        store.add_node({"id": entity_id, "name": "Company", "props": {}})
+        return entity_id
+
+    monkeypatch.setattr("graph.loader.expand_node", fake_expand)
+    try:
+        response = client.post("/api/favorites/report", json={"entity_ids": ids})
+        assert response.status_code == 200
+        assert report_counts == get_counts == ids
+    finally:
         client.close()
         backend_app.app.dependency_overrides.clear()
 
