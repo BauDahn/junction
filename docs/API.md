@@ -61,6 +61,28 @@ Ingesta de contexto del usuario (deck PDF, nota de voz o texto libre) hacia el p
 - Códigos HTTP: `400` (PDF vacío, JSON o campos inválidos, nota vacía), `404` (sesión o `source_id` inexistente), `413` (PDF > 20 MB, audio > 10 MB o > 2 min, nota > 8000 caracteres), `415` (formato PDF o audio no admitido), `422` (PDF ilegible o audio vacío/ininteligible), `502` (fallo de extracción LLM o transcripción), `503` (transcripción no configurada).
 
 
+## Cuentas *(borrador, 15/11)*
+Registro real con correo. El rol se elige al registrarse y **no se puede cambiar**.
+- `POST /api/auth/register` con `{email, password, name, company, role: raiser|investor}` → `201 {token, user}`. Contraseña de 8 caracteres o más. `409 email_taken` si el correo ya existe; `422` si falta algo o el correo no es válido.
+- `POST /api/auth/login` con `{email, password}` → `{token, user}`; `401 invalid_credentials`.
+- `POST /api/auth/logout` → `204`.
+- `GET /api/me` → `User`.
+- `User`: `{id, email, name, company, role: raiser|investor, session_id, created_at}`. `session_id` es la sesión de chat, contexto y feed de ese usuario: la app la usa en lugar de crear una sesión anónima.
+- Autenticación: cabecera `Authorization: Bearer <token>` en `/api/me/*` y `/api/auth/logout`; sin token o con uno vencido, `401`.
+- **Rol fijo:** ningún endpoint lo cambia. `POST /api/sessions/{id}/mode` con un modo distinto del rol del usuario dueño de la sesión responde `409 role_locked`.
+- Almacenamiento: tabla de usuarios en `DATABASE_URL` (Aiven for PostgreSQL) o, si no está definida, en SQLite (`backend/data/app.db`). Contraseñas con scrypt; tokens aleatorios guardados como hash, con 30 días de vida. No se envían correos (sin verificación por ahora).
+
+## Contexto en texto *(borrador, 15/11)*
+El perfil muestra el contexto como **el texto del usuario, tal cual**, no como etiquetas. Las etiquetas siguen existiendo por debajo para el motor de recomendación.
+- `GET /api/me/context/raw` → `{text, updated_at}`.
+- `PUT /api/me/context/raw` con `{text}` → `{text, updated_at, profile_updated: bool}`. Guarda el texto sin tocarlo y vuelve a extraer el perfil (sector, etapa, región, ticket) con Gemini.
+- `POST /api/me/context/raw/append` con `{text}` → lo mismo, agregando el texto al final (una línea nueva). Lo usan la nota de voz confirmada y el asistente cuando el usuario cuenta algo de sí mismo.
+- Un PDF subido por `POST /api/sessions/{id}/context/pdf` agrega una línea propia al texto (`From <archivo>: <resumen de una línea>`).
+
+## Voz con vista previa *(borrador, 15/11)*
+- `POST /api/transcribe` (multipart `audio`) → `{transcript, text}`. **No modifica nada**: sirve para mostrar lo que se entendió. Si el usuario lo confirma con el botón "Add to context", la app llama a `POST /api/me/context/raw/append` con `text`.
+- Mientras el usuario habla, la vista en vivo la hace el navegador (reconocimiento de voz del propio navegador, con resultados parciales); la transcripción del backend es la que vale al confirmar.
+
 ## Perfil y recomendaciones *(borrador)*
 - `GET /api/sessions/{id}/profile` → `{startup_name?, one_liner?, sector?, stage?, location?, raising?: {amount?, round?}, competitors: [string], target_customers?, role?: founder|investor|other, interests?: {sectors: [string], regions: [string], stages: [string], follows: {companies: [string], investors: [string]}}, facts: [{text, origin: user}], updated_at}`
 - `GET /api/sessions/{id}/recommendations` → `{status: idle|running|ready|error, updated_at, investors: [Card], competitors: [Card], prospects: [Card]}`
