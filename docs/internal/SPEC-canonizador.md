@@ -12,7 +12,7 @@ Misma intención → mismas llamadas a Cala → misma respuesta, sin importar ac
    `{entities: [{name, type: Company|Person|Event|Investor}], attribute: funding_round|total_funding|investors|lead_investors|founders|executives|headcount|acquisitions|profile|event_attendees|other, filters: {round_label?, year?}}`.
    Reglas: nombres propios tal cual aparecen (sin traducir), `round_label` en el código de Cala (SEED, SERIES_A, SERIES_B…). Proveedor de LLM configurable como en `backend/verifier/llm.py` (por defecto `codex exec` con `gpt-5.6-luna` y esfuerzo low; también NVIDIA), con caché en disco.
 3. `resolve.py`: resuelve cada entidad a su id con `GET /v1/entities?name=&entity_types=` (ya ignora acentos). Si hay varias candidatas, elegir de forma determinista (coincidencia exacta de nombre o alias normalizado; si no, la primera) y devolver las alternativas.
-4. `plan.py`: para atributos conocidos, **plan determinista sobre los endpoints de entidades** (ver `docs/CALA-CAMPOS.md`), que es el camino que Cala recomienda:
+4. `plan.py`: para atributos conocidos, **plan determinista sobre los endpoints de entidades** (ver `docs/internal/CALA-CAMPOS.md`), que es el camino que Cala recomienda:
    - `funding_round` / `lead_investors`: empresa → `PARTICIPATES_IN_FUNDING_ROUND` (role ISSUER) → ronda que cumpla los filtros → propiedades + participantes entrantes con `is_lead`.
    - `total_funding`, `profile`, `headcount`: propiedades y series de Company.
    - `investors`: `INVESTED_IN` entrante. `founders`/`executives`: `FOUNDED`, `IS_CEO_OF`… `acquisitions`: `PARTICIPATES_IN_CORPORATE_EVENT`. `event_attendees`: `PARTICIPATES_IN_EVENT` entrante del evento.
@@ -40,7 +40,7 @@ Misma intención → mismas llamadas a Cala → misma respuesta, sin importar ac
 - `REPORT.md` generado con datos reales.
 
 ## Fase 2 (14/11): consulta con plantilla fija sobre `knowledge_query`
-Medido: con la guía oficial (`docs/CALA-SKILL.md`), un LLM traduce bien las preguntas puntuales (4 variantes de Amenitiz → €38.9M, líder Kfund, correcto), pero escribe una consulta distinta cada vez (cambia `return(...)`), y en filtros las variantes devuelven listas y cifras distintas (~€72M / ~€76M / ~€77M). La misma consulta exacta repetida devuelve exactamente lo mismo. Los endpoints de entidades son estables pero esta ronda tiene el monto mal (3.000 M EUR) y sin inversores.
+Medido: con la guía oficial (`docs/internal/CALA-SKILL.md`), un LLM traduce bien las preguntas puntuales (4 variantes de Amenitiz → €38.9M, líder Kfund, correcto), pero escribe una consulta distinta cada vez (cambia `return(...)`), y en filtros las variantes devuelven listas y cifras distintas (~€72M / ~€76M / ~€77M). La misma consulta exacta repetida devuelve exactamente lo mismo. Los endpoints de entidades son estables pero esta ronda tiene el monto mal (3.000 M EUR) y sin inversores.
 
 Cambio: el LLM **solo** extrae la intención; la consulta la arma el código con una plantilla fija por atributo. Misma intención → misma cadena de consulta, byte a byte → misma respuesta y misma entrada de caché.
 - `POST /v1/knowledge/query` con `{"input": "<consulta>"}`; tarda 16–45 s (timeout 200 s).
