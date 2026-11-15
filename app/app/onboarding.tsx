@@ -82,7 +82,7 @@ export default function OnboardingScreen() {
       <View style={styles.panel}>
         <View style={styles.headingGroup}>
           <Logo size={40} />
-          <Text accessibilityRole="header" style={styles.heading}>Meet the right investors at the right event.</Text>
+          <Text accessibilityRole="header" style={styles.heading}>Stop networking by luck. Meet who matters.</Text>
           <Text style={styles.body}>Create an account or sign in to continue.</Text>
         </View>
         <View style={styles.tabs}>
