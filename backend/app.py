@@ -47,17 +47,17 @@ ERROR_CODES = {
 }
 
 
-def _error(status: int, message: str) -> JSONResponse:
+def _error(status: int, message: str, headers=None) -> JSONResponse:
     # Formato de docs/API.md: {"error": {"code", "message"}}
     code = ERROR_CODES.get(status, "server_error" if status >= 500 else "http_error")
-    return JSONResponse({"error": {"code": code, "message": message}}, status_code=status)
+    return JSONResponse({"error": {"code": code, "message": message}}, status_code=status, headers=headers)
 
 
 @app.exception_handler(StarletteHTTPException)
 async def http_error(_: Request, exc: StarletteHTTPException):
     if isinstance(exc.detail, str) and exc.detail in {"email_taken", "invalid_credentials", "unauthorized", "role_locked"}:
         return JSONResponse({"error": {"code": exc.detail, "message": exc.detail.replace("_", " ").capitalize()}}, status_code=exc.status_code)
-    return _error(exc.status_code, str(exc.detail))
+    return _error(exc.status_code, str(exc.detail), exc.headers)
 
 
 @app.exception_handler(RequestValidationError)

@@ -122,8 +122,8 @@ class CalaClient:
         self.shared_limiter = shared_limiter if shared_limiter is not None else (
             _ValkeySharedLimiter(remote) if enabled and remote is not None else None)
         self._shared_down_until = 0.0
-        raw_cap = os.getenv("CALA_DAILY_CALL_CAP", "").strip()
-        try: self.daily_call_cap = int(raw_cap or 0)
+        raw_cap = os.getenv("CALA_DAILY_CALL_CAP", "2000").strip()
+        try: self.daily_call_cap = int(raw_cap or 2000)
         except ValueError: raise ValueError("CALA_DAILY_CALL_CAP must be an integer")
         self.call_cap = 0
         self._run_start_calls = 0
