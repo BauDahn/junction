@@ -1,104 +1,212 @@
-﻿import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ApiError } from './api';
-import { getOrCreateSessionId, resetSessionId } from './session';
+import { clearAuthToken, getAuthToken, getMe, loginAccount, logoutAccount, registerAccount, type AccountRole, type AuthUser } from './api/auth';
+import { clearSessionId, getOrCreateSessionId, setSessionId } from './session';
 
 export type MatchMode = 'raising' | 'investing';
 export type UserProfile = { name: string; organization: string; role: MatchMode };
-export type ModeContextValue = {
+type PersistedState = {
   mode: MatchMode;
-  setMode: (next: MatchMode) => void;
-  hydrated: boolean;
   onboarded: boolean;
   userProfile: UserProfile;
   myEventIds: string[];
   favoriteInvestorIds: string[];
+  authUser?: AuthUser | null;
+};
+export type ModeContextValue = PersistedState & {
+  hydrated: boolean;
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  authLoading: boolean;
+  setMode: (mode: MatchMode) => void;
   completeOnboarding: (profile: UserProfile) => void;
   resetOnboarding: () => void;
-  toggleMyEvent: (eventId: string) => void;
-  addMyEvent: (eventId: string) => void;
-  toggleFavoriteInvestor: (investorId: string) => void;
-  addFavoriteInvestor: (investorId: string) => void;
+  toggleMyEvent: (id: string) => void;
+  addMyEvent: (id: string) => void;
+  toggleFavoriteInvestor: (id: string) => void;
+  addFavoriteInvestor: (id: string) => void;
+  loginWithCredentials: (input: { email: string; password: string }) => Promise<AuthUser>;
+  registerWithCredentials: (input: { email: string; password: string; name: string; company: string; role: AccountRole }) => Promise<AuthUser>;
+  logout: () => Promise<void>;
+  refreshMe: () => Promise<AuthUser | null>;
 };
 
-type PersistedState = Pick<ModeContextValue, 'mode' | 'onboarded' | 'userProfile' | 'myEventIds' | 'favoriteInvestorIds'>;
 const STORAGE_KEY = 'cala_v3_state';
-const DEFAULT_PROFILE: UserProfile = { name: 'Alex Lindqvist', organization: 'Nordleaf', role: 'raising' };
+const DEFAULT_PROFILE: UserProfile = { name: '', organization: '', role: 'raising' };
 const DEFAULT_STATE: PersistedState = {
   mode: 'raising', onboarded: false, userProfile: DEFAULT_PROFILE,
-  myEventIds: ['slush-2026'], favoriteInvestorIds: ['eight-roads-ventures'],
+  myEventIds: ['slush-2026'], favoriteInvestorIds: [], authUser: null,
 };
-const baseUrl = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
-const mockEnabled = process.env.EXPO_PUBLIC_MOCK === '1';
-const ModeContext = createContext<ModeContextValue>({
-  ...DEFAULT_STATE, hydrated: false, setMode: () => {}, completeOnboarding: () => {}, resetOnboarding: () => {},
-  toggleMyEvent: () => {}, addMyEvent: () => {}, toggleFavoriteInvestor: () => {}, addFavoriteInvestor: () => {},
-});
+const apiBase = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+const modeFor = (user: AuthUser): MatchMode => user.role === 'investor' ? 'investing' : 'raising';
 
-async function syncSessionMode(mode: MatchMode) {
-  if (mockEnabled) return;
-  try {
-    let id = await getOrCreateSessionId();
-    let response = await fetch(`${baseUrl}/api/sessions/${encodeURIComponent(id)}/mode`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }),
-    });
-    if (response.status === 404) {
-      id = await resetSessionId();
-      response = await fetch(`${baseUrl}/api/sessions/${encodeURIComponent(id)}/mode`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }),
-      });
-    }
-    if (!response.ok) return;
-  } catch (error) { if (error instanceof ApiError) return; }
-}
+const ModeContext = createContext<ModeContextValue>({
+  ...DEFAULT_STATE, hydrated: false, user: null, isAuthenticated: false, authLoading: false,
+  setMode: () => {}, completeOnboarding: () => {}, resetOnboarding: () => {},
+  toggleMyEvent: () => {}, addMyEvent: () => {}, toggleFavoriteInvestor: () => {}, addFavoriteInvestor: () => {},
+  loginWithCredentials: async () => { throw new Error('ModeProvider is missing.'); },
+  registerWithCredentials: async () => { throw new Error('ModeProvider is missing.'); },
+  logout: async () => {}, refreshMe: async () => null,
+});
 
 export function ModeProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PersistedState>(DEFAULT_STATE);
   const [hydrated, setHydrated] = useState(false);
-  useEffect(() => {
-    let active = true;
-    AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
-      if (!active || !raw) return;
-      try {
-        const saved = JSON.parse(raw) as Partial<PersistedState>;
-        const mode = saved.mode === 'investing' ? 'investing' : 'raising';
-        setState({
-          mode, onboarded: Boolean(saved.onboarded),
-          userProfile: saved.userProfile && typeof saved.userProfile.name === 'string'
-            ? { ...DEFAULT_PROFILE, ...saved.userProfile, role: saved.userProfile.role === 'investing' ? 'investing' : 'raising' }
-            : DEFAULT_PROFILE,
-          myEventIds: Array.isArray(saved.myEventIds) ? saved.myEventIds.filter((id): id is string => typeof id === 'string') : DEFAULT_STATE.myEventIds,
-          favoriteInvestorIds: Array.isArray(saved.favoriteInvestorIds) ? saved.favoriteInvestorIds.filter((id): id is string => typeof id === 'string') : DEFAULT_STATE.favoriteInvestorIds,
-        });
-      } catch { /* Use the fresh-start state when storage is invalid. */ }
-    }).catch(() => {}).finally(() => {
-      if (active) setHydrated(true);
-    });
-    return () => { active = false; };
-  }, []);
+  const [authLoading, setAuthLoading] = useState(false);
+
   const commit = useCallback((updater: (current: PersistedState) => PersistedState) => {
     setState((current) => {
       const next = updater(current);
       void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
-      if (next.mode !== current.mode) void syncSessionMode(next.mode);
       return next;
     });
   }, []);
-  const setMode = useCallback((mode: MatchMode) => commit((current) => ({ ...current, mode })), [commit]);
-  const completeOnboarding = useCallback((profile: UserProfile) => {
-    commit((current) => ({ ...current, userProfile: profile, mode: profile.role, onboarded: true }));
-    void syncSessionMode(profile.role);
+
+  const syncAnonymousMode = useCallback(async (mode: MatchMode) => {
+    try {
+      const sessionId = await getOrCreateSessionId();
+      await fetch(`${apiBase}/api/sessions/${encodeURIComponent(sessionId)}/mode`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }),
+      });
+    } catch { /* Keep local mode available while offline. */ }
+  }, []);
+
+  const applyUser = useCallback((user: AuthUser) => {
+    const mode = modeFor(user);
+    commit((current) => ({
+      ...current, mode, onboarded: true, authUser: user,
+      userProfile: { name: user.name, organization: user.company, role: mode },
+    }));
   }, [commit]);
+
+  const refreshMe = useCallback(async () => {
+    if (!(await getAuthToken())) return null;
+    try {
+      const user = await getMe();
+      await setSessionId(user.session_id);
+      applyUser(user);
+      return user;
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 401) {
+        await clearAuthToken();
+        await clearSessionId();
+        commit((current) => ({ ...current, onboarded: false, authUser: null }));
+      }
+      return null;
+    }
+  }, [applyUser, commit]);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      let saved = DEFAULT_STATE;
+      try {
+        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          saved = {
+            ...DEFAULT_STATE, ...parsed,
+            myEventIds: Array.isArray(parsed.myEventIds) ? parsed.myEventIds : DEFAULT_STATE.myEventIds,
+            favoriteInvestorIds: Array.isArray(parsed.favoriteInvestorIds) ? parsed.favoriteInvestorIds : DEFAULT_STATE.favoriteInvestorIds,
+          };
+        }
+      } catch { /* Use defaults when saved state is invalid. */ }
+      if (!active) return;
+      setState(saved);
+      if (await getAuthToken()) {
+        try {
+          const user = await getMe();
+          await setSessionId(user.session_id);
+          const mode = modeFor(user);
+          saved = { ...saved, mode, onboarded: true, authUser: user, userProfile: { name: user.name, organization: user.company, role: mode } };
+          setState(saved);
+          void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+        } catch (failure) {
+          if (failure instanceof ApiError && failure.status === 401) {
+            await clearAuthToken();
+            await clearSessionId();
+            saved = { ...saved, onboarded: false, authUser: null };
+            setState(saved);
+            void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+          } else if (!saved.onboarded) {
+            saved = { ...saved, onboarded: false, authUser: null };
+            setState(saved);
+          }
+        }
+      } else {
+        saved = { ...saved, onboarded: false, authUser: null };
+        setState(saved);
+      }
+      if (active) setHydrated(true);
+    })();
+    return () => { active = false; };
+  }, []);
+
+  const setMode = useCallback((mode: MatchMode) => {
+    let sync = false;
+    commit((current) => {
+      if (current.authUser && mode !== modeFor(current.authUser)) return current;
+      sync = !current.authUser;
+      return { ...current, mode };
+    });
+    if (sync) void syncAnonymousMode(mode);
+  }, [commit, syncAnonymousMode]);
+
+  const completeOnboarding = useCallback((profile: UserProfile) => {
+    let sync = false;
+    commit((current) => {
+      if (current.authUser) {
+        const mode = modeFor(current.authUser);
+        return { ...current, mode, userProfile: { ...current.userProfile, name: profile.name, organization: profile.organization }, onboarded: true };
+      }
+      sync = true;
+      return { ...current, userProfile: profile, mode: profile.role, onboarded: true };
+    });
+    if (sync) void syncAnonymousMode(profile.role);
+  }, [commit, syncAnonymousMode]);
+
   const resetOnboarding = useCallback(() => commit((current) => ({ ...current, onboarded: false })), [commit]);
+
+  const authenticate = useCallback(async (request: () => Promise<{ user: AuthUser }>) => {
+    setAuthLoading(true);
+    try {
+      const response = await request();
+      await setSessionId(response.user.session_id);
+      applyUser(response.user);
+      return response.user;
+    } finally { setAuthLoading(false); }
+  }, [applyUser]);
+  const loginWithCredentials = useCallback((input: { email: string; password: string }) => authenticate(() => loginAccount(input)), [authenticate]);
+  const registerWithCredentials = useCallback((input: { email: string; password: string; name: string; company: string; role: AccountRole }) => authenticate(() => registerAccount(input)), [authenticate]);
+
+  const logout = useCallback(async () => {
+    setAuthLoading(true);
+    try {
+      await logoutAccount();
+      await clearSessionId();
+      commit((current) => ({ ...current, onboarded: false, authUser: null, userProfile: DEFAULT_PROFILE, mode: 'raising' }));
+    } finally { setAuthLoading(false); }
+  }, [commit]);
+
   const toggleMyEvent = useCallback((id: string) => commit((current) => ({
-    ...current, myEventIds: current.myEventIds.includes(id) ? current.myEventIds.filter((item) => item !== id) : [...current.myEventIds, id],
+    ...current,
+    myEventIds: current.myEventIds.includes(id) ? current.myEventIds.filter((item) => item !== id) : [...current.myEventIds, id],
   })), [commit]);
   const addMyEvent = useCallback((id: string) => commit((current) => current.myEventIds.includes(id) ? current : ({ ...current, myEventIds: [...current.myEventIds, id] })), [commit]);
   const toggleFavoriteInvestor = useCallback((id: string) => commit((current) => ({
-    ...current, favoriteInvestorIds: current.favoriteInvestorIds.includes(id) ? current.favoriteInvestorIds.filter((item) => item !== id) : [...current.favoriteInvestorIds, id],
+    ...current,
+    favoriteInvestorIds: current.favoriteInvestorIds.includes(id) ? current.favoriteInvestorIds.filter((item) => item !== id) : [...current.favoriteInvestorIds, id],
   })), [commit]);
   const addFavoriteInvestor = useCallback((id: string) => commit((current) => current.favoriteInvestorIds.includes(id) ? current : ({ ...current, favoriteInvestorIds: [...current.favoriteInvestorIds, id] })), [commit]);
-  const value = useMemo(() => ({ ...state, hydrated, setMode, completeOnboarding, resetOnboarding, toggleMyEvent, addMyEvent, toggleFavoriteInvestor, addFavoriteInvestor }), [state, hydrated, setMode, completeOnboarding, resetOnboarding, toggleMyEvent, addMyEvent, toggleFavoriteInvestor, addFavoriteInvestor]);
+
+  const value = useMemo(() => ({
+    ...state, hydrated, user: state.authUser ?? null, isAuthenticated: Boolean(state.authUser), authLoading,
+    setMode, completeOnboarding, resetOnboarding, toggleMyEvent, addMyEvent,
+    toggleFavoriteInvestor, addFavoriteInvestor, loginWithCredentials, registerWithCredentials, logout, refreshMe,
+  }), [state, hydrated, authLoading, setMode, completeOnboarding, resetOnboarding, toggleMyEvent, addMyEvent, toggleFavoriteInvestor, addFavoriteInvestor, loginWithCredentials, registerWithCredentials, logout, refreshMe]);
+
   return <ModeContext.Provider value={value}>{children}</ModeContext.Provider>;
 }
+
 export const useMode = () => useContext(ModeContext);

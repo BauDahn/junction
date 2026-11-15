@@ -12,3 +12,10 @@ dist/
 web-build/
 canonizador/cache/
 canonizador/.cache/
+*.egg-info/
+.vscode/
+*.db
+*.sqlite3
+.DS_Store
+app/dist/
+

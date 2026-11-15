@@ -14,6 +14,7 @@ export type Colors = {
   accentText: string;
   accentSoft: string;
   secondary: string;
+  secondaryText: string;
   secondarySoft: string;
   danger: string;
   dangerSoft: string;
@@ -39,6 +40,7 @@ export const light: Colors = {
   accentText: '#ffffff',
   accentSoft: '#eef2ff',
   secondary: '#006CFF',
+  secondaryText: '#ffffff',
   secondarySoft: '#eaf2ff',
   danger: '#b42318',
   dangerSoft: '#fef2f2',
@@ -64,6 +66,7 @@ export const dark: Colors = {
   accentText: '#0b1120',
   accentSoft: '#1e1b4b',
   secondary: '#5AA2FF',
+  secondaryText: '#0b1120',
   secondarySoft: '#132b4a',
   danger: '#fca5a5',
   dangerSoft: '#3a1b25',

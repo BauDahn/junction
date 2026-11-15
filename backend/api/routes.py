@@ -3,6 +3,8 @@ import asyncio
 import base64
 import json
 import os
+import threading
+import time
 import unicodedata
 from collections import Counter
 from datetime import datetime, timezone
@@ -646,6 +648,13 @@ async def save_mode(session_id: str, body: ModeInput):
     return {"mode": current_mode}
 
 
+_stats_lock = threading.Lock()
+_stats_refreshing = False
+_stats_local = None
+_stats_local_at = 0.0
+_STATS_KEY = "stats:v1:catalog"
+
+
 def _stats_snapshot(catalog, cala):
     investors = catalog.list_features("investor")
     startups = catalog.list_features("startup")
@@ -682,10 +691,52 @@ def _stats_snapshot(catalog, cala):
     return output
 
 
+def _refresh_stats(catalog, cala, remote):
+    global _stats_refreshing, _stats_local, _stats_local_at
+    try:
+        data = None
+        if remote is not None:
+            try:
+                ok, value = remote._run(lambda c: c.get(_STATS_KEY))
+                if ok and value:
+                    data = json.loads(value)
+            except Exception:
+                pass
+        if not isinstance(data, dict):
+            data = _stats_snapshot(catalog, cala)
+            if remote is not None:
+                remote._run(lambda c: c.set(_STATS_KEY, json.dumps(data), ex=60))
+        with _stats_lock:
+            _stats_local, _stats_local_at = data, time.monotonic()
+    finally:
+        with _stats_lock:
+            _stats_refreshing = False
+
+
 @router.get("/api/stats")
 async def stats(authorization: str | None = Header(default=None), x_admin_token: str | None = Header(default=None),
                 catalog=Depends(get_catalog), cala=Depends(get_cala)):
-    output = await asyncio.to_thread(_stats_snapshot, catalog, cala)
+    global _stats_refreshing
+    remote = getattr(getattr(cala, "cache", None), "remote", None) if cala else None
+    if remote is None:
+        try:
+            from canonizador.cache import remote_from_env
+            remote = remote_from_env()
+        except Exception:
+            pass
+    output = None
+    with _stats_lock:
+        if _stats_local is not None and time.monotonic() - _stats_local_at < 60:
+            output = dict(_stats_local)
+    if not isinstance(output, dict):
+        output = {"catalog": {"investors": 0, "startups": 0, "total": 0, "status": "pending"},
+                  "cala_usage": {"total": 0, "calls": 0, "today": 0}}
+    with _stats_lock:
+        if not _stats_refreshing and (_stats_local is None or time.monotonic() - _stats_local_at >= 60):
+            _stats_refreshing = True
+            threading.Thread(target=_refresh_stats, args=(catalog, cala, remote), daemon=True).start()
+    if cala is None:
+        output.pop("cala", None)
     admin = os.getenv("ADMIN_TOKEN")
     if not admin or x_admin_token != admin:
         output.pop("cala", None)

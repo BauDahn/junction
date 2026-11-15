@@ -32,7 +32,7 @@ Versión corta para el stand de Cala: *"We turned Cala's knowledge graph into a 
 | 3 | **Mis eventos** → Slush 2026: investores recomendados con la carta de contacto; abrir uno: ficha simple y cómo conseguir la inversión, con fuentes | "Ranked for me, with a draft of how to approach each one. Every fact has its source." | Nueva web, feed y detalle (**ya en main** la API) **[CONFIRMAR]** |
 | 4 | **Asistente (burbuja)**: por voz "Who led Amenitiz's Series B?" y una empresa que no está en el catálogo | "Same answer however I phrase it; and if it is not in the graph, it searches Cala live." | **Ya funciona** (chat, canonizador, respaldo y búsqueda) |
 | 5 | Al asistente: "We now raise 2 million in seed" y "I want to go to Slush 2026" | "It edits my context and works as a shortcut." | Nueva web **[CONFIRMAR]** |
-Si sobra tiempo: **Perfil** con favoritos y contexto (10 segundos).
+Si sobra tiempo: **Perfil** con favoritos y contexto (10 segundos). Desde los favoritos se descarga el **informe PDF**: las empresas marcadas, lo que Cala sabe de cada una con su fuente y un plan de acción propuesto por Gemini (etiquetado como tal) **[CONFIRMAR]** hasta que se fusione su PR.
 
 **Plan B** (si Cala o la red fallan): recargar el catálogo desde el archivo de respaldo (`docs/ARQUITECTURA.md`, sección 2 punto 8) y hacer la demo con datos precargados. Tener un video grabado del recorrido completo de reserva. **Los pasos 4 y 5 deben funcionar aun sin red** gracias a la caché: precalentarlos antes.
 
