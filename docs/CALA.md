@@ -102,7 +102,7 @@ Cala's knowledge endpoints take 16–60 s and entity calls about 1 s; ten entity
 | Accounts for live calls | With `CALA_REQUIRE_AUTH=1` (set on the public backend) only signed-in users trigger live Cala calls; local catalog data stays available | `backend/api/routes.py`, `backend/chat/routes.py` |
 | Usage visible | `/api/stats` reports Cala calls by class and by machine, with `ADMIN_TOKEN` | `backend/api/routes.py` |
 
-Measured effect of the client optimizer: with the old fixed 8 s pause, 19 calls took 162 s. With per-class pacing, 40 distinct entity lookups ran at 1.89 calls/s and 30 at 1.33 calls/s, with **zero 429s** in three runs. Two processes sharing the Valkey rate limit made 40 calls in 27.9 s (1.43 calls/s combined) with zero 429s ([PROCESS.md](PROCESS.md)).
+Measured effect of the client optimizer: with the old fixed 8 s pause, 19 calls took 162 s. With per-class pacing, 40 distinct entity lookups ran at 1.89 calls/s and 30 at 1.33 calls/s, with **zero 429s** in three runs. Two processes sharing the Valkey rate limit made 40 calls in 27.9 s (1.43 calls/s combined) with zero 429s.
 
 **Live fallback, never a dead end.**
 
