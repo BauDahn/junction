@@ -5,6 +5,7 @@ const REPORT_TIMEOUT_MS = 100_000;
 
 type FavoritesReportOptions = {
   sessionId?: string | null;
+  authToken?: string | null;
   mode?: 'raising' | 'investing';
   signal?: AbortSignal;
 };
@@ -29,7 +30,10 @@ export async function requestFavoritesReport(
     try {
       response = await fetch(`${baseUrl}/api/favorites/report`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(opts.authToken ? { Authorization: `Bearer ${opts.authToken}` } : {}),
+        },
         body: JSON.stringify({
           entity_ids: ids,
           ...(opts.sessionId ? { session_id: opts.sessionId } : {}),
@@ -48,6 +52,9 @@ export async function requestFavoritesReport(
       const body: unknown = await response.json().catch(() => null);
       const payload = body as { error?: { code?: string; message?: string } } | null;
       const stateMessages: Record<number, string> = {
+        401: 'Sign in to download the report.',
+        422: 'Some favorites are not valid Cala entities.',
+        429: 'Too many reports. Try again in a minute.',
         404: 'None of your favorites were found in Cala.',
         503: 'Cala reached its daily call limit. Try again later.',
         502: 'Cala could not load your favorites right now.',

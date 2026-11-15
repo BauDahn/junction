@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { requestFavoritesReport } from '../api/favoritesReport';
 import { useMode } from '../mode';
@@ -27,7 +28,14 @@ export function FavoritesReportButton() {
     setLoading(true);
     try {
       const sessionId = await getSessionId();
-      const { blob, notIncluded } = await requestFavoritesReport(favoriteInvestorIds, { sessionId, mode });
+      // This key is the auth token key introduced by PR #121.
+      let authToken: string | null = null;
+      try {
+        authToken = await AsyncStorage.getItem('cala_auth_token');
+      } catch {
+        authToken = null;
+      }
+      const { blob, notIncluded } = await requestFavoritesReport(favoriteInvestorIds, { sessionId, authToken, mode });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
