@@ -131,10 +131,9 @@ Loading the Slush catalog (`cd backend && uv run python -m catalog run`) spends 
 | `docs/` | One doc per challenge, the [API contract](docs/API.md), [architecture](docs/ARQUITECTURA.md) and [affinity spec](docs/SPEC-grafo-afinidad.md) (Spanish), the benchmark and error report (Spanish, summarized in English in [CALA.md](docs/CALA.md)), the [process log](docs/PROCESO.md), brand and presentation drafts |
 | `docs/internal/` | Working notes from the hackathon (ideas, plans, Cala reference guides); not needed to evaluate the project |
 
-## Honest limits
+## Further work to considerate
 
 - Cala does not say which investors attend an event. For Slush 2026 the event page ranks the investors in the Slush catalog and says so; the other events show "No participant data in Cala yet" instead of guessing.
 - The events list is fixed in the app for now (`app/src/api/events.ts`); there is no events backend yet.
-- Cala has no email, LinkedIn or phone for people, so the app never shows a contact it does not have.
 - The canonizer guarantees the same answer for the same intent, not that the answer is correct. When Cala's structured data and its query answer disagree (Amenitiz's Series B), it flags the discrepancy instead of picking one.
 - The affinity weights are not yet calibrated against known investor–startup pairs.
