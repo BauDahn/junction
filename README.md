@@ -1,78 +1,84 @@
 # Cala Match
 
-**A two-sided funding marketplace built on [Cala](https://cala.ai)'s knowledge graph.** Startups find the investors that fit them; investors find the startups worth a call. Every card, score and answer comes from Cala and shows its source.
+**An event-driven deal-flow experience built on [Cala](https://cala.ai)'s knowledge graph.** Startups find investors who fit; investors find startups worth meeting. Every verified fact and affinity score is grounded in Cala data and shows its source.
 
-Built at Junction 2026 (Espoo, 13–15 November 2026) for the Cala challenge. Slush starts right after, so it has to be usable the next day.
+Built at Junction 2026 in Espoo, Finland. The interface is available for web, iOS and Android.
 
-## What it does
+## Product experience
 
-One app, two modes. A switch at the top changes everything: feed, chatbot suggestions and context prompts.
+### Onboarding gate
 
-| Mode | Who | The feed shows |
-|---|---|---|
-| **Raising** | Startup looking for funding | Investors, ranked by affinity |
-| **Investing** | Investor looking for startups | Startups, ranked by affinity |
+Users calibrate their operating role as a **Raiser** or **Investor** before entering the workspace. The selection shapes recommendations and the event outreach experience.
 
-| Tab | What you get |
+### Events: My Events and Explore Events
+
+Explore a square event grid of major European venture gatherings: **Slush 2026**, **Arctic15**, **Techarena**, **Sifted Summit**, **Bits & Pretzels**, and **South Summit**. Saving an event in Explore Events adds it to My Events.
+
+### Event workspace (`/event/[id]`)
+
+Each event workspace combines a dynamic **Startup Outreach Brief**, tailored to the startup's context and verified Cala facts, with **Recommended Investors** attending that event. Investors are ranked by an affinity score from 0 to 100.
+
+### Investor dossier (`/entity/[id]`)
+
+The dossier presents concise Cala-verified facts: company or fund, industry, key match factors, and stage and ticket, with clickable sources. Its actionable **How to get investment** guide covers verified prior rounds and co-leads, suggested schedule windows, and Cala pitch signals.
+
+### Floating Cala mascot assistant
+
+The assistant stays available in the bottom-right corner for text and voice queries against Cala and Canonizer. It supports live recommender context updates and natural-language shortcuts, such as adding events to My Events or bookmarking investors.
+
+### Context and profile
+
+Calibrate context with a pitch deck PDF and voice note. The minimalist profile manages operating role, saved investors, attending events, and a summary of the recommender context.
+
+## Cala and the data model
+
+The language model interprets requests; Cala supplies verified facts. Every number and entity shown in a response is backed by Cala data and sources.
+
+### Canonizer benchmark
+
+Cala can answer the same question differently depending on phrasing, language, accents, and word order. In our benchmark, direct queries, MCP, and Cala's guide produced consistent results for at most 1 of 9 questions. The canonizer produced consistent results for 9 of 9. See [the benchmark](docs/BENCHMARK-CANONIZADOR.md) and [the error report](docs/INFORME-ERROR-CALA.md).
+
+### Local graph benchmark
+
+Measured on 14 November with Amenitiz as the seed (185 nodes, 246 edges):
+
+| Operation | Result |
 |---|---|
-| **Feed** | A grid of cards, one per investor or startup, each with an **affinity score** (0–100) and a one-line "why it matches". Tap a card for the full profile. |
-| **Detail** | Everything Cala knows: funding rounds with lead investors, portfolio, people, key figures. Every fact carries its source and date. |
-| **Chat** | Ask anything by text or voice ("Who led Amenitiz's Series B?"). Answers are tables of Cala data with sources, never invented numbers. |
-| **Context** | Teach the app about you: upload a pitch deck (PDF), record a voice note or write a note. The app extracts sector, stage, region and ticket size, and the matches improve. |
-| **Profile** | Mode, saved matches, settings. |
-
-The whole interface is in English. The design prototype is in [`docs/design/stitch/`](docs/design/stitch/).
-
-## What makes it different
-
-**1. The canonizer.** Cala answers differently to the same question depending on how it is written (accents, language, word order). We built a canonizer that turns any phrasing into one canonical query. Asking directly, through MCP or with Cala's official guide, at most 1 of 9 questions was consistent; with the canonizer, 9 of 9. See [docs/BENCHMARK-CANONIZADOR.md](docs/BENCHMARK-CANONIZADOR.md) and [docs/INFORME-ERROR-CALA.md](docs/INFORME-ERROR-CALA.md).
-
-**2. A local graph on top of Cala.** Cala is a graph of entities and relationships. We load the neighbourhood of each user into a local subgraph, so exploring it is instant and Cala is only called at the edges. Measured on 14 November with Amenitiz as the seed (185 nodes, 246 edges):
-
-| | Result |
-|---|---|
-| Loading from Cala (19 calls) | about 14–18 s of real work; the entity endpoints answer in about 1 s per call |
-| Rate limit | the 10th call in a row got an HTTP 429; the entity endpoints tolerate roughly 1–2 calls per second |
+| Load from Cala (19 calls) | About 14–18 s of real work; entity endpoints respond in about 1 s per call |
+| Rate limit | The 10th consecutive call returned HTTP 429 |
 | Full BFS over the local subgraph | 0.13 ms |
-| Shortest path, seed to farthest node | 0.13 ms |
+| Shortest path to the farthest node | 0.13 ms |
 | BFS over a synthetic 100,000-node graph | 337 ms |
 
-**3. A shared cache on Aiven Valkey.** What one user (or one machine) asks Cala is instant for everyone else, and it protects the rate limit. The plan is to cache nodes and edges, not just raw answers, so one shared graph grows with use.
+### Shared cache benchmark
 
-**4. Nothing invented.** The language model only interprets the request. It never writes a figure or a name that does not come from Cala, and every value is shown with its source.
+Aiven Valkey shares cached Cala queries and graph data. A repeated question went from 27.7 s to 1.45 s; a Valkey read takes about 30 ms and makes zero Cala calls. See [the Aiven integration](docs/AIVEN.md).
 
 ## Architecture
 
-```
- Expo app (web + iOS + Android)             Feed · Detail · Chat · Context · Profile
-        │  REST (docs/API.md)
- FastAPI backend ───── Gemini: router, intent, audio, PDF context, judge
+```text
+Expo app (web, iOS, Android)
+  Onboarding gate · Explore Events · My Events · Event workspace
+  Investor dossier · Floating Cala assistant · Context · Profile
+        │ REST (docs/API.md)
+FastAPI backend · Gemini router, intent, audio, PDF context, judge
         │
- Canonizer ─────────── Aiven Valkey: shared cache (raw answers, graph)
+Canonizer · Aiven Valkey shared cache and graph
         │
- Cala API: entities, knowledge/query, knowledge/search
+Cala API · entities, knowledge/query, knowledge/search
 ```
 
-Status: chat with voice, router, canonizer, shared cache and rate limit, shared graph, the Slush catalog, and the feed and detail API with the affinity score are in `main`. The minimalist interface and the context upload (PDF and voice) are in review (see [CLAUDE.md](CLAUDE.md#workstreams)).
+The canonizer normalizes user questions before they reach Cala. Local graph traversal makes neighbourhood exploration fast; Cala is queried at the graph edges. The cache reduces repeat latency and helps protect Cala's rate limit.
 
-## Team
+## Repository layout
 
-| Machine | Person | Focus |
-|---|---|---|
-| `bau` | Bau | Orchestration, review, architecture, pitch and documentation |
-| `gabriel` | Gabriel | The app interface, the Slush catalog and the context upload |
-| `fabricio` | Fabricio | Backend, optimizer and Aiven integration (feed API, graph store, shared rate limit) |
-| `adrian` | Adrian | Design review and presentation |
-
-## Repo layout
-
-| Folder | What is in it |
+| Folder | Contents |
 |---|---|
-| `app/` | Expo app (React Native + TypeScript) for web, iOS and Android |
-| `backend/` | FastAPI API. `chat/`: sessions, messages, audio, profile. `cala_core/`: router and Cala queries. `api/`: feed, detail and affinity. `graph/`: shared graph on Valkey. `catalog/`: Slush ingestion. `core/`: shared LLM, config and Cala client modules.md) |
-| `canonizador/` | The query canonizer, the cache layers and the benchmarks. See [canonizador/README.md](canonizador/README.md) |
-| `n8n/` | n8n flows against the API |
-| `docs/` | API contract, Cala guides, benchmarks, error report and design (index in [CLAUDE.md](CLAUDE.md#documentos)) |
+| `app/` | Expo app (React Native and TypeScript) for web, iOS and Android |
+| `backend/` | FastAPI API, chat, Cala core, feed, event catalog, graph, and shared modules |
+| `canonizador/` | Query canonizer, cache layers, and benchmarks |
+| `n8n/` | Automation flows against the API |
+| `docs/` | API contract, Cala guides, benchmarks, and design materials |
 
 ## Run it
 
@@ -81,15 +87,15 @@ Status: chat with voice, router, canonizer, shared cache and rate limit, shared 
 cd backend && uv sync && uv run uvicorn app:app --port 8000
 uv run pytest
 
-# App (web: press w; in Expo Go set EXPO_PUBLIC_API_URL to the PC's IP)
+# App (press w for web; set EXPO_PUBLIC_API_URL to the PC IP for Expo Go)
 cd app && npm install && npx expo start
 ```
 
-Keys (`CALA_API_KEY`, `GEMINI_API_KEY`, `VALKEY_URL`) go only in `backend/.env` (template: `backend/.env.example`). They are never committed.
+Set `CALA_API_KEY`, `GEMINI_API_KEY`, and `VALKEY_URL` only in `backend/.env` (template: `backend/.env.example`). Do not commit keys.
 
 ## Challenges
 
-- **Cala** (main): real need, end-to-end execution, originality, Cala at the core.
-- **Google Gemini**: the product's AI (router, intent, audio, PDF context). **[Where it sits, why Gemini, and the one rule that keeps it honest](docs/GOOGLE-GEMINI.md)**: Gemini interprets, Cala asserts. One multimodal call turns audio into a literal transcript plus a clean intent.
-- **Aiven**: shared Valkey cache for Cala queries and the local graph. **[How we use it and what it saves](docs/AIVEN.md)**: a repeated question goes from 27.7 s to 1.45 s, and a Valkey read takes ~30 ms with zero Cala calls.
-- **OpenAI Codex**: the code was written with Codex, directed by Claude and verified against the real services. **[What Codex built and how much we used it](docs/CODEX.md)**: 19 tasks and 14.4 M input tokens on one machine alone, 9 of the tasks were corrections from real tests. Decisions in [docs/PROCESO.md](docs/PROCESO.md).
+- **Cala:** the knowledge graph is the source of verified facts and recommendations.
+- **Google Gemini:** powers routing, intent, audio, PDF context, and judging. [Why Gemini matters](docs/GOOGLE-GEMINI.md).
+- **Aiven:** shared Valkey cache, graph, and rate limit. [How it helps](docs/AIVEN.md).
+- **OpenAI Codex:** used to implement and verify the product. [Codex work log](docs/CODEX.md) and [process notes](docs/PROCESO.md).
