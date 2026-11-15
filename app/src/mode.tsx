@@ -6,12 +6,15 @@ import { clearSessionId, getOrCreateSessionId, setSessionId } from './session';
 
 export type MatchMode = 'raising' | 'investing';
 export type UserProfile = { name: string; organization: string; role: MatchMode };
+type AccountLists = { myEventIds: string[]; favoriteInvestorIds: string[] };
 type PersistedState = {
   mode: MatchMode;
   onboarded: boolean;
   userProfile: UserProfile;
   myEventIds: string[];
   favoriteInvestorIds: string[];
+  /** Saved lists of the other accounts used on this device, keyed by account id ('guest' when signed out). */
+  byAccount?: Record<string, AccountLists>;
   authUser?: AuthUser | null;
 };
 export type ModeContextValue = PersistedState & {
@@ -41,6 +44,15 @@ const DEFAULT_STATE: PersistedState = {
 };
 const apiBase = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
 const modeFor = (user: AuthUser): MatchMode => user.role === 'investor' ? 'investing' : 'raising';
+const accountKey = (user: AuthUser | null | undefined) => user?.id ?? 'guest';
+/** Favorites and events belong to one account: stash the current account's lists and load the next one's. */
+function withAccount(current: PersistedState, user: AuthUser | null): PersistedState {
+  const from = accountKey(current.authUser), to = accountKey(user);
+  if (from === to) return { ...current, authUser: user };
+  const byAccount = { ...(current.byAccount ?? {}), [from]: { myEventIds: current.myEventIds, favoriteInvestorIds: current.favoriteInvestorIds } };
+  const next = byAccount[to] ?? { myEventIds: DEFAULT_STATE.myEventIds, favoriteInvestorIds: DEFAULT_STATE.favoriteInvestorIds };
+  return { ...current, authUser: user, byAccount, myEventIds: next.myEventIds, favoriteInvestorIds: next.favoriteInvestorIds };
+}
 
 const ModeContext = createContext<ModeContextValue>({
   ...DEFAULT_STATE, hydrated: false, user: null, isAuthenticated: false, authLoading: false, sessionExpired: false,
@@ -78,7 +90,7 @@ export function ModeProvider({ children }: { children: ReactNode }) {
     setSessionExpired(false);
     const mode = modeFor(user);
     commit((current) => ({
-      ...current, mode, onboarded: true, authUser: user,
+      ...withAccount(current, user), mode, onboarded: true,
       userProfile: { name: user.name, organization: user.company, role: mode },
     }));
   }, [commit]);
@@ -94,7 +106,7 @@ export function ModeProvider({ children }: { children: ReactNode }) {
       if (failure instanceof ApiError && failure.status === 401) {
         await clearAuthToken();
         await clearSessionId();
-        commit((current) => ({ ...current, onboarded: false, authUser: null }));
+        commit((current) => ({ ...withAccount(current, null), onboarded: false }));
       }
       return null;
     }
@@ -103,7 +115,7 @@ export function ModeProvider({ children }: { children: ReactNode }) {
   useEffect(() => onAuthExpired(() => {
     void clearSessionId();
     setSessionExpired(true);
-    commit((current) => ({ ...current, onboarded: false, authUser: null, userProfile: DEFAULT_PROFILE, mode: 'raising' }));
+    commit((current) => ({ ...withAccount(current, null), onboarded: false, userProfile: DEFAULT_PROFILE, mode: 'raising' }));
   }), [commit]);
 
   useEffect(() => {
@@ -128,23 +140,23 @@ export function ModeProvider({ children }: { children: ReactNode }) {
           const user = await getMe();
           await setSessionId(user.session_id);
           const mode = modeFor(user);
-          saved = { ...saved, mode, onboarded: true, authUser: user, userProfile: { name: user.name, organization: user.company, role: mode } };
+          saved = { ...withAccount(saved, user), mode, onboarded: true, userProfile: { name: user.name, organization: user.company, role: mode } };
           setState(saved);
           void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
         } catch (failure) {
           if (failure instanceof ApiError && failure.status === 401) {
             await clearAuthToken();
             await clearSessionId();
-            saved = { ...saved, onboarded: false, authUser: null };
+            saved = { ...withAccount(saved, null), onboarded: false };
             setState(saved);
             void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
           } else if (!saved.onboarded) {
-            saved = { ...saved, onboarded: false, authUser: null };
+            saved = { ...withAccount(saved, null), onboarded: false };
             setState(saved);
           }
         }
       } else {
-        saved = { ...saved, onboarded: false, authUser: null };
+        saved = { ...withAccount(saved, null), onboarded: false };
         setState(saved);
       }
       if (active) setHydrated(true);
@@ -194,7 +206,7 @@ export function ModeProvider({ children }: { children: ReactNode }) {
     try {
       await logoutAccount();
       await clearSessionId();
-      commit((current) => ({ ...current, onboarded: false, authUser: null, userProfile: DEFAULT_PROFILE, mode: 'raising' }));
+      commit((current) => ({ ...withAccount(current, null), onboarded: false, userProfile: DEFAULT_PROFILE, mode: 'raising' }));
     } finally { setAuthLoading(false); }
   }, [commit]);
 
