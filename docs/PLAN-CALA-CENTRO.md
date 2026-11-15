@@ -1,6 +1,6 @@
 # Plan: Cala en el centro (14/11)
 
-Cambio de enfoque decidido por el equipo: **el producto no es un chatbot; es una forma de usar Cala desde la voz.** Cada mensaje (texto o audio transcrito) se interpreta y, si hace falta, se convierte en consultas a Cala. Lo que se muestra son **los datos de Cala tal cual** (tablas con fuentes), no texto redactado por un modelo. Además, el usuario recibe un **journal diario** armado solo con datos de Cala.
+Cambio de enfoque decidido por el equipo: **el motor del asistente: una forma de usar Cala desde la voz o el texto.** Cada mensaje (texto o audio transcrito) se interpreta y, si hace falta, se convierte en consultas a Cala. Lo que se muestra son **los datos de Cala tal cual** (tablas con fuentes), no texto redactado por un modelo.
 
 ## 1. Router: qué hacer con cada mensaje
 
