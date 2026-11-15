@@ -12,6 +12,7 @@ from core.llm import make_llm
 from chat.routes import router as chat_router
 from chat import transcribe
 from api.routes import router as match_router
+from context.routes import router as context_router
 
 app = FastAPI(title="Cala Match")
 
@@ -30,6 +31,7 @@ async def warmup_valkey():
 
 app.include_router(chat_router)
 app.include_router(match_router)
+app.include_router(context_router)
 ERROR_CODES = {
     400: "bad_request",
     404: "not_found",
