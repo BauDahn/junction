@@ -1,27 +1,35 @@
 # Cala Match
 
-**A two-sided funding marketplace built on [Cala](https://cala.ai)'s knowledge graph.** Startups find the investors that fit them; investors find the startups worth a call. Every card, score and answer comes from Cala and shows its source.
+**A funding marketplace built around events, on [Cala](https://cala.ai)'s knowledge graph.** At an event like Slush, a startup finds the investors worth meeting and knows how to approach each one; an investor finds the startups worth a call. Every fact on screen comes from Cala and shows its source.
 
-Built at Junction 2026 (Espoo, 13–15 November 2026) for the Cala challenge. Slush starts right after, so it has to be usable the next day.
+Built at Junction 2026 (Espoo, 13–15 November 2026) for the Cala challenge. Slush 2026 opens on 18 November, so it has to be usable right after.
 
 ## What it does
 
-One app, two modes. A switch at the top changes everything: feed, chatbot suggestions and context prompts.
+**You choose who you are when you sign up: Raiser or Investor.** It is required to enter the web, and it decides what every screen shows. The raiser flow below is the first one specified; the investor flow mirrors it with startups to meet.
 
-| Mode | Who | The feed shows |
-|---|---|---|
-| **Raising** | Startup looking for funding | Investors, ranked by affinity |
-| **Investing** | Investor looking for startups | Startups, ranked by affinity |
+### Raiser (a startup looking for funding)
 
-| Tab | What you get |
+| Screen | What it does |
 |---|---|
-| **Feed** | A grid of cards, one per investor or startup, each with an **affinity score** (0–100) and a one-line "why it matches". Tap a card for the full profile. |
-| **Detail** | Everything Cala knows: funding rounds with lead investors, portfolio, people, key figures. Every fact carries its source and date. |
-| **Chat** | Ask anything by text or voice ("Who led Amenitiz's Series B?"). Answers are tables of Cala data with sources, never invented numbers. |
-| **Context** | Teach the app about you: upload a pitch deck (PDF), record a voice note or write a note. The app extracts sector, stage, region and ticket size, and the matches improve. |
-| **Profile** | Mode, saved matches, settings. |
+| **Explore events** | All events, as squares with image, name, slogan and date. One tap saves an event as "I am attending", or removes it. Saved events move to My events. |
+| **My events** | The events you saved, in the same square format. Inside an event: the **investors recommended for you** by the recommendation engine, and for each one a short **contact letter**, a draft of how to approach that investor for your startup. Tap an investor for a simple, concise card of what Cala knows (the firm, its industry and the key factors Cala returns, such as its funds), and a plain **how to get this investment**: what the investor's earlier deals suggest, with schedules and dates that Cala has. |
+| **Profile** | Your context (the data the recommendation engine uses), your favourite investors and your personal data. Minimal. |
+| **Assistant** | There is no Ask tab. A small mascot sits in the bottom-right corner; a tap opens an overlay panel of comfortable size with a chat, by text or voice. It answers questions about companies through Cala and the canonizer, and it **edits your context** ("we now raise 2 million in seed"). It also works as a shortcut: say "I want to go to Slush 2026" and the event is added to your favourites. |
 
-The whole interface is in English. The design prototype is in [`docs/design/stitch/`](docs/design/stitch/).
+### Investor
+Same structure, the other way round: events to attend and the startups worth meeting. Specified next.
+
+### When something is not in the graph
+The app never invents an answer and never gives up after the first miss.
+- **Chat:** if the canonizer fails or finds nothing, it tries Cala's entity lookup, then Cala's search, and only then answers "not found" together with the list of what it tried.
+- **Detail:** an investor or company outside the local graph is fetched live from Cala (one call), stored for next time and shown with its sources.
+- **Search:** `GET /api/search` looks in the local catalog first and then in Cala.
+
+The assistant uses the same rule: Gemini interprets, Cala asserts. See [docs/GOOGLE-GEMINI.md](docs/GOOGLE-GEMINI.md).
+
+### What data exists today
+Slush 2026 has **2,990 participating companies** in Cala, and most of them have people linked (founders, executives, board). Slush 2025 has only **8 speakers** and no participant list, so Slush 2026 is the event we can show in full. Cala has no email, LinkedIn or phone for people, so the app never shows a contact it does not have.
 
 ## What makes it different
 
@@ -44,7 +52,7 @@ The whole interface is in English. The design prototype is in [`docs/design/stit
 ## Architecture
 
 ```
- Expo app (web + iOS + Android)             Feed · Detail · Chat · Context · Profile
+ Web app                       Explore events · My events · Profile · floating assistant
         │  REST (docs/API.md)
  FastAPI backend ───── Gemini: router, intent, audio, PDF context, judge
         │
@@ -53,16 +61,18 @@ The whole interface is in English. The design prototype is in [`docs/design/stit
  Cala API: entities, knowledge/query, knowledge/search
 ```
 
-Status: chat with voice, router, canonizer, shared cache and rate limit, shared graph, the Slush catalog, and the feed and detail API with the affinity score are in `main`. The minimalist interface and the context upload (PDF and voice) are in review (see [CLAUDE.md](CLAUDE.md#workstreams)).
+Status: chat with voice, router, canonizer, shared cache and rate limit, shared graph, the Slush catalog, the feed and detail API with the affinity score, and the live fallback and search are in `main`. The new web (sign-up with role, events, floating assistant, profile) is being built with Gemini and is not in `main` yet.
 
 ## Team
 
 | Machine | Person | Focus |
 |---|---|---|
-| `bau` | Bau | Orchestration, review, architecture, pitch and documentation |
-| `gabriel` | Gabriel | The app interface, the Slush catalog and the context upload |
+| `bau` | Bau | Orchestration, review, architecture, backend with Codex, pitch and documentation |
+| `gabriel` | Gabriel | The new web, built with Gemini |
 | `fabricio` | Fabricio | Backend, optimizer and Aiven integration (feed API, graph store, shared rate limit) |
 | `adrian` | Adrian | Design review and presentation |
+
+Claude plans and reviews, Codex writes the backend, Gemini is both the AI inside the product and the tool building the new web.
 
 ## Repo layout
 
@@ -72,7 +82,7 @@ Status: chat with voice, router, canonizer, shared cache and rate limit, shared 
 | `backend/` | FastAPI API. `chat/`: sessions, messages, audio, profile. `cala_core/`: router and Cala queries. `api/`: feed, detail and affinity. `graph/`: shared graph on Valkey. `catalog/`: Slush ingestion. `core/`: shared LLM, config and Cala client modules.md) |
 | `canonizador/` | The query canonizer, the cache layers and the benchmarks. See [canonizador/README.md](canonizador/README.md) |
 | `n8n/` | n8n flows against the API |
-| `docs/` | API contract, Cala guides, benchmarks, error report and design (index in [CLAUDE.md](CLAUDE.md#documentos)) |
+| `docs/` | API contract, Cala guides, benchmarks, error report, one page per challenge and the first Stitch design (superseded). Index in [CLAUDE.md](CLAUDE.md#documentos) |
 
 ## Run it
 
