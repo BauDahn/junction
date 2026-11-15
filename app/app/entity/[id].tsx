@@ -50,7 +50,8 @@ export default function EntityDossier() {
       const result = await fetchEntityDetail(id, mode, sid);
       setDetail(result.detail); setIsSample(result.isSample); setNotFound(!result.detail);
     } catch (caught) {
-      setError(caught instanceof ApiError && caught.status === 504 ? 'Cala did not answer in time' : caught instanceof Error ? caught.message : 'Entity details could not be loaded.');
+      const status = caught instanceof ApiError ? caught.status : 0;
+      setError(status === 504 ? 'Cala did not answer in time' : status === 401 ? 'Sign in to see this page.' : status === 422 ? 'This link is not a valid company id.' : status === 429 ? 'Too many requests. Wait a moment and try again.' : caught instanceof Error ? caught.message : 'Entity details could not be loaded.');
     } finally { setLoading(false); }
   }, [id, mode]);
   useEffect(() => { void load(); }, [load]);

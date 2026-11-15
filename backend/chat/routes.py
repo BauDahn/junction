@@ -5,7 +5,7 @@ import inspect
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from pydantic import BaseModel
 from core.llm import make_llm
 from core.config import settings
@@ -35,6 +35,8 @@ def get_transcriber():
 
 
 def get_cala():
+    if not settings.cala_api_key:
+        return None
     return CalaClient(settings.cala_api_key, settings.cache_dir)
 
 
@@ -86,7 +88,9 @@ async def preview_transcription(request: Request, transcriber=Depends(get_transc
 
 
 @router.post("/api/sessions")
-async def create_session():
+async def create_session(request: Request):
+    from core.abuse import enforce, client_ip
+    enforce(request, "sessions", f"ip:{client_ip(request)}", 5, 60)
     from uuid import uuid4
     session_id = uuid4().hex
     store.create_session(session_id, store.now_iso())
@@ -97,6 +101,9 @@ async def _process_text(session_id, text, llm, cala, transcript=None, context=No
     try:
         user, reply, profile = await handle_text(session_id, text, llm, transcript=transcript, cala=cala, context=context)
     except Exception as exc:
+        if exc.__class__.__name__ == "CalaBudgetExceeded":
+            logger.warning("Cala call cap reached client=session route=/api/sessions/{session_id}/messages")
+            raise HTTPException(503, "Cala call cap reached.") from exc
         logger.exception("chat: fallo procesando el mensaje")
         raise HTTPException(502, "The model did not respond. Please try again.") from exc
     store.add_message(user)
@@ -117,6 +124,17 @@ async def _process_text(session_id, text, llm, cala, transcript=None, context=No
 @router.post("/api/sessions/{session_id}/messages")
 async def post_message(session_id: str, request: Request, llm=Depends(get_llm), transcriber=Depends(get_transcriber), cala=Depends(get_cala)):
     _session(session_id)
+    from core.abuse import account_for, client_ip, identity, enforce, daily, account_daily
+    authorization = request.headers.get("authorization")
+    user = account_for(authorization)
+    subject = identity(request, user)
+    enforce(request, "chat", subject, 10, 60)
+    daily(request, "chat", subject, 150)
+    if cala is not None:
+        if os.getenv("CALA_REQUIRE_AUTH", "0") == "1" and user is None:
+            raise HTTPException(401, "unauthorized")
+        if user:
+            account_daily(request, user)
     if "multipart/form-data" in request.headers.get("content-type", ""):
         form = await request.form()
         audio = form.get("audio")
@@ -167,6 +185,8 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
         raise HTTPException(400, "Text must not be empty.")
     if len(text) > 4000:
         raise HTTPException(413, "Text must be 4000 characters or fewer.")
+    if len(text) > 500:
+        raise HTTPException(422, "Text must be 500 characters or fewer.")
     context = payload.get("context") if isinstance(payload, dict) else None
     if context is not None and (not isinstance(context, dict) or ("journal_item_id" in context and not isinstance(context["journal_item_id"], str))):
         raise HTTPException(400, "Invalid context.")

@@ -93,17 +93,6 @@ The canonizer normalizes user questions before they reach Cala. Local graph trav
 | `canonizador/` | Query canonizer, cache layers, and benchmarks |
 | `docs/` | API contract, Cala guides, benchmarks, one page per challenge, and the presentation and project PDF (`docs/presentation/`) |
 
-## Team
-
-| Machine | Person | Focus |
-|---|---|---|
-| `bau` | Bau | Orchestration, review, architecture, backend with Codex, pitch and documentation |
-| `gabriel` | Gabriel | The v3 interface, built with Gemini |
-| `fabricio` | Fabricio | Backend, optimizer and Aiven integration (feed API, graph store, shared rate limit) |
-| `adrian` | Adrian | Design review, presentation and the context upload |
-
-Claude plans and reviews, Codex writes the backend, Gemini is both the AI inside the product and the tool building the interface.
-
 ## Run it
 
 ```bash
