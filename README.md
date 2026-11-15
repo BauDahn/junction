@@ -128,7 +128,7 @@ Loading the Slush catalog (`cd backend && uv run python -m catalog run`) spends 
 | `app/` | Expo app (React Native, TypeScript, Expo Router): sign-up, events, event and company pages, assistant, profile |
 | `backend/` | FastAPI API: accounts, chat and voice, context, Cala core (router, executor, claims), feed and affinity, company page with live fallback, search, favorites PDF, Slush catalog, graph store, abuse protection. See [backend/README.md](backend/README.md) |
 | `canonizador/` | The query canonizer, the Cala client (pacing, retries, caps), the two-layer cache and the benchmarks |
-| `docs/` | One doc per challenge, the [API contract](docs/API.md), [architecture](docs/ARCHITECTURE.md) and [affinity spec](docs/SPEC-GRAPH-AFFINITY.md), the [benchmark](docs/BENCHMARK-CANONIZER.md) and [consistency report](docs/CALA-CONSISTENCY-REPORT.md) (summarized in [CALA.md](docs/CALA.md)), the [process log](docs/PROCESS.md) and the brand. Full map: [docs/README.md](docs/README.md) |
+| `docs/` | One doc per challenge, the [API contract](docs/API.md), [architecture](docs/ARCHITECTURE.md) and [affinity spec](docs/SPEC-GRAPH-AFFINITY.md), the [benchmark](docs/BENCHMARK-CANONIZER.md) and [consistency report](docs/CALA-CONSISTENCY-REPORT.md) (summarized in [CALA.md](docs/CALA.md)) and the brand. Full map: [docs/README.md](docs/README.md) |
 | `docs/internal/` | Working notes from the hackathon (ideas, plans, Cala reference guides); not needed to evaluate the project |
 
 ## Further work

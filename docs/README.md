@@ -36,13 +36,6 @@ Everything in `docs/`, what each file is for, and where to start. Back to the [p
 | [SPEC-GRAPH-AFFINITY.md](SPEC-GRAPH-AFFINITY.md) | The local subgraph, the BFS over it and the 0–100 affinity score (six weighted signals). |
 | [API.md](API.md) | Contract between the app and the backend: every endpoint, request and response. |
 
-## Team and process
-
-| File | What it is |
-|---|---|
-| [PITCH.md](PITCH.md) | Pitch and demo script, with the numbers we can say on stage. |
-| [PROCESS.md](PROCESS.md) | Timeline of decisions and milestones during the hackathon. |
-
 ## Folders
 
 | Folder | What it is |
