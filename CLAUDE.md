@@ -26,10 +26,10 @@ La nueva web la construye Gemini (Antigravity). **Pendientes de producto que NO 
 ## Equipo y coordinación
 | Máquina | Persona | Agentes | Rol |
 |---|---|---|---|
-| `bau` | Bau | Claude (orquestador), Codex, Gemini | **Central:** reparte, revisa y mergea todo; datos del backend (#111), documentación y presentación |
-| `fabricio` | Fabricio | Claude, Codex, Gemini | **Activo:** la interfaz (#107) y los bloqueantes del PR #104, sobre la rama `gabriel/v3-layout` |
-| `gabriel` | Gabriel | Antigravity (Gemini) y Codex | **Fuera del equipo activo** (sin tokens, 15/11); su rama `gabriel/v3-layout` es la base de la interfaz |
-| `adrian` | Adrian | Antigravity | **Activo:** registro con correo, perfil con contexto en texto y voz con vista previa (#112) |
+| `bau` | Bau | Claude, Codex, Gemini | Miembro. Tiene en su portátil el backend público de la demo y el túnel |
+| `fabricio` | Fabricio | Claude (orquestador), Codex, Gemini | **Dirige desde el 15/11:** reparte, revisa y mergea todo |
+| `gabriel` | Gabriel | Antigravity (Gemini) y Codex | Miembro: marca calado e interfaz |
+| `adrian` | Adrian | Antigravity | Miembro: despliegue en Vercel, registro y perfil |
 
 - **Todo se coordina por GitHub**, que es lo único que ven las cuatro máquinas: issue fijo #1 "Estado del equipo" (estado de cada máquina y mensajes), issues con label `maquina:<nombre>` (tareas) y PRs.
 - Con [claude-central](https://github.com/BauDahn/claude-central) instalado se usa el comando `equipo` (`equipo mias`, `equipo mensajes`, `equipo avisar bau "..."`, `equipo publicar`). **Sin claude-central** (por ejemplo, con un agente de Google) se hace lo mismo con `gh`: `gh issue list --label maquina:<nombre>` para ver tus tareas, y un comentario en el issue #1 que empiece con `**<nombre> → bau:**` para avisar. El script `equipo` es un solo archivo de Python que solo necesita `gh`; se puede usar suelto.
@@ -43,7 +43,7 @@ La nueva web la construye Gemini (Antigravity). **Pendientes de producto que NO 
 | `app/`: registro, perfil con texto, voz con vista previa | `adrian` |
 | `backend/catalog/`, `backend/graph/`, `backend/api/`, `backend/accounts/`, `backend/context/`, `backend/chat/`, `canonizador/`, `docs/`, `CLAUDE.md`, `README.md` | `bau` con Codex |
 
-**Quién mergea:** `bau` revisa y mergea todos los PRs (squash), después de correr los tests. `gabriel` abre PRs chicos, uno por pantalla, con capturas a 390 px. Al mergear, `bau` avisa en el issue #1.
+**Quién mergea:** `fabricio` revisa y mergea todos los PRs (squash), después de correr los tests. `gabriel` abre PRs chicos, uno por pantalla, con capturas a 390 px. Al mergear, `bau` avisa en el issue #1.
 
 ### Flujo de Git (obligatorio)
 1. Toda tarea es un **issue** (`equipo asignar <maquina> "título" --cuerpo "qué, criterio de hecho"`).
@@ -111,16 +111,20 @@ Frentes de trabajo en este momento (15/11).
 | `docs/CODEX.md` | Registro de lo que construyó Codex (reto de Codex) |
 | `docs/PROCESO.md` | Diario de decisiones |
 
-## Estado (14/11, noche)
-- En `main`: canonizador con límite de tasa compartido en Valkey, grafo compartido (`backend/graph/`), catálogo de Slush (`backend/catalog/`), feed y detalle con afinidad (`backend/api/`), chat con audio de Gemini y las páginas de cada reto (`docs/AIVEN.md`, `docs/CODEX.md`, `docs/GOOGLE-GEMINI.md`, `docs/PITCH.md`).
-- En construcción: la web nueva, con Gemini (`gabriel`). Quedan abiertos los PRs viejos de interfaz #90 a #93 y el de contexto #73, que la nueva web reemplaza o reabsorbe.
-- Equipo: los cuatro activos; `bau` es la central y reparte.
+## Estado y traspaso (15/11, mañana)
+**Dirige `fabricio`.** `bau` le pasó la coordinación; este bloque es el traspaso.
+- **En `main` (272 tests backend):** interfaz con marca calado, modo claro y oscuro, registro con correo y rol fijo, eventos, inversores reales desde el catálogo, ficha de empresa que consulta Cala solo al abrirla, asistente en burbuja, contexto en texto y voz, informe de favoritos en PDF rediseñado, cuentas compartidas, protección contra abuso de Cala y contador de llamadas.
+- **Publicación:** la app va en Vercel (proyecto `junction-app`, repo `BauDahn/junction`, carpeta `app`, variable `EXPO_PUBLIC_API_URL`). El backend corre en el portátil de `bau` (puerto 8000) expuesto con un túnel rápido de Cloudflare; **la URL cambia si se reinicia el túnel o el portátil**, y entonces hay que actualizar la variable en Vercel y redesplegar.
+- **Configuración del backend público** (`backend/.env` de `bau`, no está en git): `CALA_REQUIRE_AUTH=1`, `TRUST_PROXY=1`, `ACCOUNTS_STORE=postgres` (las cuentas viven en Aiven PostgreSQL), `ADMIN_TOKEN` definido. Tope diario de Cala por defecto: 2000 llamadas.
+- **Cala:** una carga del catálogo gastó unas 3.000 llamadas; quedó en 2.110 de 2.990 asistentes (47 inversores, 1.060 startups, pool de ~923 inversores). **No relanzar cargas largas sin permiso del usuario**; `python -m catalog run` corta a las 150 llamadas salvo `--max-calls`.
+- **Cuentas de demo:** `demo@calamatch.test`, `demo.raiser@calamatch.test`, `demo.investor@calamatch.test` (las contraseñas las tiene el equipo por privado).
 
 ## Pendientes
-- [x] Web nueva (Gemini): registro con rol, eventos, asistente en burbuja, perfil; pantallas viejas (Deck, Journal, Estado) ya borradas del `app/`.
-- [ ] Parametrizar el catálogo por evento y correr el de Slush 2026 completo contra Valkey (~55 min); exportar el respaldo.
-- [ ] Textos del backend en inglés y no perder nombres en las notas de voz (#83).
-- [ ] Prueba de punta a punta de la web nueva contra el backend en vivo (#53).
-- [ ] Capturas reales en la presentación y el PDF (`docs/presentation/`).
-- [ ] Preguntas al stand de Cala (`is_lead`, límite de uso, costo, otros eventos).
-- [ ] Confirmar hora límite de entrega y formularios de cada reto.
+- [ ] Confirmar que Vercel desplegó el último `main` y probar de punta a punta en el sitio publicado: entrar, abrir un inversor, una empresa de su cartera, 'Open dossier' desde el perfil, chat y PDF (#53).
+- [ ] Backend de eventos reales: listar, guardar por usuario y feed por evento (#119, contrato en `docs/API.md`).
+- [ ] Datos: BSV Ventures mezcla dos fondos distintos (descripción de India, sede en Lituania): revisar la unión de duplicados por nombre (#111).
+- [ ] Relevancia del feed Raiser: confianza 0,1 y primeros resultados poco afines; usar las etiquetas de sector de las participadas (#111).
+- [ ] Interfaz: enlaces de fuentes que se salen del ancho en móvil en la ficha; 'View dossier' tapado por la burbuja (#107).
+- [ ] PDF: el recuadro del plan de acción puede partirse entre dos páginas.
+- [ ] Slides y video (#69); borradores en `docs/presentation/`, desactualizados respecto de la marca calado.
+- [ ] Preguntas al stand de Cala (créditos por llamada, `is_lead`) y hora límite de entrega.
