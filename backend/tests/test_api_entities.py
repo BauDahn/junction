@@ -254,7 +254,8 @@ def test_detail_loads_unknown_entity_once_and_reuses_graph(client):
     def neighbor(ident, name, entity_type, edge_id, **props):
         return {"id": ident, "name": name, "entity_type": entity_type,
                 "properties": {"id": edge_id, "sources": [SOURCE], **props}}
-    raw = {"id": "live-id", "name": "Live startup", "entity_type": "Company",
+    entity_id = "11111111-1111-4111-8111-111111111111"
+    raw = {"id": entity_id, "name": "Live startup", "entity_type": "Company",
            "properties": {"description": {"value": "Sourced summary", "sources": [SOURCE]}},
            "relationships": {"incoming": {
                "PARTICIPATES_IN_FUNDING_ROUND": [neighbor("excluded-round", "Private round", "PrivateCompanyFundingRound", "e-private")],
@@ -263,8 +264,8 @@ def test_detail_loads_unknown_entity_once_and_reuses_graph(client):
     cala = LiveCala(raw)
     backend_app.app.dependency_overrides[get_graph] = lambda: graph
     backend_app.app.dependency_overrides[get_cala] = lambda: cala
-    first = client.get("/api/entities/live-id")
-    second = client.get("/api/entities/live-id")
+    first = client.get(f"/api/entities/{entity_id}")
+    second = client.get(f"/api/entities/{entity_id}")
     assert first.status_code == second.status_code == 200
     assert first.json()["description"] == "Sourced summary"
     assert first.json()["loaded_at"]
@@ -280,7 +281,8 @@ def test_unknown_company_detail_uses_sourced_cala_properties_and_round_cache(cli
                 "properties": {"id": edge_id, "sources": [SOURCE], **props}}
     round_ref = neighbor("round-live", "Series A", "FundingRound", "issuer-edge", role="ISSUER")
     person_ref = neighbor("person-live", "A. Founder", "Person", "founder-edge")
-    company = {"id": "uncatalogued", "name": "Cala Company", "entity_type": "Company",
+    entity_id = "22222222-2222-4222-8222-222222222222"
+    company = {"id": entity_id, "name": "Cala Company", "entity_type": "Company",
                "properties": {
                    "description": {"value": "Useful summary", "sources": [SOURCE]},
                    "website": {"value": "example.test", "sources": [SOURCE]},
@@ -308,12 +310,12 @@ def test_unknown_company_detail_uses_sourced_cala_properties_and_round_cache(cli
         def __init__(self): self.calls = []
         async def retrieve(self, ident, **kwargs):
             self.calls.append(ident)
-            return {"uncatalogued": company, "round-live": funding_round}[ident]
+            return {entity_id: company, "round-live": funding_round}[ident]
     cala = Cala()
     backend_app.app.dependency_overrides[get_graph] = lambda: graph
     backend_app.app.dependency_overrides[get_cala] = lambda: cala
-    first = client.get("/api/entities/uncatalogued").json()
-    second = client.get("/api/entities/uncatalogued").json()
+    first = client.get(f"/api/entities/{entity_id}").json()
+    second = client.get(f"/api/entities/{entity_id}").json()
     assert first["description"] == "Useful summary"
     facts = {fact["label"]: fact["value"] for fact in first["facts"]}
     assert facts == {"Website": "example.test", "Founded": "2020", "Stage": "Series A",
@@ -327,12 +329,12 @@ def test_unknown_company_detail_uses_sourced_cala_properties_and_round_cache(cli
     assert all(fact["sources"] for fact in first["facts"])
     assert first["rounds"][0]["sources"] and first["loaded_at"]
     assert second["facts"] == first["facts"] and second["rounds"] == first["rounds"]
-    assert cala.calls == ["uncatalogued", "round-live"]
+    assert cala.calls == [entity_id, "round-live"]
 
 
 def test_detail_live_cala_request_error_is_502(client):
     backend_app.app.dependency_overrides[get_cala] = lambda: LiveCala(fail=True)
-    response = client.get("/api/entities/failed-live")
+    response = client.get("/api/entities/33333333-3333-4333-8333-333333333333")
     assert response.status_code == 502
     assert response.json()["error"]["message"] == "Cala request failed."
 
@@ -341,14 +343,14 @@ def test_detail_live_entity_unknown_and_timeout(client, monkeypatch):
     graph = GraphStore(MemoryKV())
     backend_app.app.dependency_overrides[get_graph] = lambda: graph
     backend_app.app.dependency_overrides[get_cala] = lambda: LiveCala()
-    assert client.get("/api/entities/unknown-live").status_code == 404
+    assert client.get("/api/entities/44444444-4444-4444-8444-444444444444").status_code == 404
     from graph import loader as graph_loader
     async def slow(*args, **kwargs):
         await asyncio.sleep(0.1)
     monkeypatch.setattr(graph_loader, "expand_node", slow)
     real_wait_for = asyncio.wait_for
     monkeypatch.setattr("api.routes.asyncio.wait_for", lambda coro, timeout: real_wait_for(coro, timeout=0.01))
-    response = client.get("/api/entities/slow-live")
+    response = client.get("/api/entities/55555555-5555-4555-8555-555555555555")
     assert response.status_code == 504
     assert response.json()["error"]["message"] == "Cala did not answer in time."
 
@@ -362,11 +364,15 @@ def test_stats_catalog_counts_status_and_optional_cala(tmp_path, monkeypatch):
 
     backend_app.app.dependency_overrides[get_catalog] = lambda: catalog
     backend_app.app.dependency_overrides[get_cala] = Cala
+    monkeypatch.setenv("ADMIN_TOKEN", "test-admin")
     with TestClient(backend_app.app) as test_client:
-        data = test_client.get("/api/stats").json()
-        assert data == {"catalog": {"investors": 1, "startups": 1, "total": 1,
-                                    "status": {"done": 2, "total": 8}}, "cala": {"calls": 3}, "cala_usage": {}}
+        headers = {"X-Admin-Token": "test-admin"}
+        data = test_client.get("/api/stats", headers=headers).json()
+        assert data["catalog"] == {"investors": 1, "startups": 1, "total": 1,
+                                    "status": {"done": 2, "total": 8}}
+        assert data["cala"] == {"calls": 3}
+        assert data["cala_usage"]["total"] == 0 and "by_who" in data["cala_usage"]
         backend_app.app.dependency_overrides[get_cala] = lambda: None
-        assert "cala" not in test_client.get("/api/stats").json()
-        assert test_client.get("/api/stats").json()["cala_usage"] == {}
+        assert "cala" not in test_client.get("/api/stats", headers=headers).json()
+        assert test_client.get("/api/stats", headers=headers).json()["cala_usage"]["total"] == 0
     backend_app.app.dependency_overrides.clear()
