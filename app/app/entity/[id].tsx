@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Source } from '../../src/api';
 import { ApiError } from '../../src/api';
@@ -10,11 +11,29 @@ import { font, maxWidth, pageMargin, radius, space, tabularNums, useTheme } from
 
 function host(url: string) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } }
 
-function Sources({ sources }: { sources: Source[] }) {
+function SourceList({ sources, limit = 3 }: { sources: Source[]; limit?: number }) {
   const { colors } = useTheme();
+  const [expanded, setExpanded] = useState(false);
   if (!sources.length) return null;
-  return <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.xs }}>{sources.map((source, i) => <Pressable key={`${source.url}-${i}`} accessibilityRole="link" accessibilityLabel={`Source: ${source.name}, ${host(source.url)}`} onPress={() => void Linking.openURL(source.url).catch(() => {})}><Text style={{ color: colors.accent, fontSize: font.caption, textDecorationLine: 'underline' }}>{source.name} · {host(source.url)}</Text></Pressable>)}</View>;
+  const visible = expanded ? sources : sources.slice(0, limit);
+  return <View style={{ gap: space.xs, marginTop: space.xs }}>{visible.map((source, i) => <Pressable key={`${source.url}-${i}`} accessibilityRole="link" accessibilityLabel={`Source: ${source.name}, ${host(source.url)}`} onPress={() => void Linking.openURL(source.url).catch(() => {})} style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 32 }}><Text numberOfLines={1} style={{ flex: 1, flexShrink: 1, color: colors.accent, fontSize: font.caption, textDecorationLine: 'underline' }}>{source.name || host(source.url)}</Text><Text style={{ color: colors.textMuted, fontSize: font.caption }}>{source.date ?? ''}</Text></Pressable>)}{sources.length > limit ? <Pressable accessibilityRole="button" onPress={() => setExpanded(!expanded)} style={{ minHeight: 36, justifyContent: 'center' }}><Text style={{ color: colors.textMuted, fontSize: font.caption }}>{expanded ? 'Show fewer' : 'Show all'}</Text></Pressable> : null}</View>;
 }
+
+function SourceDisclosure({ sources }: { sources: Source[] }) {
+  const { colors } = useTheme();
+  const [open, setOpen] = useState(false);
+  if (!sources.length) return null;
+  return <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}><Pressable accessibilityRole="button" accessibilityLabel={`${sources.length} sources`} accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={{ minWidth: 44, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 }}><Feather name="link" size={13} color={colors.textMuted} /><Text style={{ color: colors.textMuted, fontSize: font.caption }}>{sources.length}</Text></Pressable>{open ? <View style={{ flexBasis: '100%' }}><SourceList sources={sources} /></View> : null}</View>;
+}
+
+function AllSources({ sources }: { sources: Source[] }) {
+  const { colors } = useTheme();
+  const [open, setOpen] = useState(false);
+  if (!sources.length) return null;
+  return <View style={{ paddingVertical: space.md, borderBottomWidth: 1, borderBottomColor: colors.border, gap: space.md }}><Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md }}><Text numberOfLines={1} style={{ flex: 1, color: colors.text, fontSize: font.h2, fontWeight: '700' }}>Sources ({sources.length})</Text><Feather name={open ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textMuted} /></Pressable>{open ? <SourceList sources={sources} limit={sources.length} /> : null}</View>;
+}
+
+function uniqueSources(sources: Source[]) { return sources.filter((source, i, all) => all.findIndex((other) => other.url === source.url) === i); }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   const { colors } = useTheme();
@@ -75,18 +94,18 @@ export default function EntityDossier() {
     {isSample && currentDetail ? <View style={{ marginTop: space.md, padding: space.md, borderWidth: 1, borderColor: colors.accent, borderRadius: radius.md, backgroundColor: colors.accentSoft }}><Text style={{ color: colors.accent, fontWeight: '700', fontSize: font.small }}>Sample data</Text></View> : null}
     {currentDetail ? <>
       {currentDetail.description ? <Section title="About"><Text style={{ color: colors.text, fontSize: font.body, lineHeight: 23 }}>{currentDetail.description}</Text></Section> : null}
-      {currentDetail.facts.length ? <Section title="Key facts">{currentDetail.facts.map((fact, i) => <View key={`${fact.label}-${i}`} style={{ gap: space.xs }}><Text style={{ color: colors.textMuted, fontSize: font.caption, textTransform: 'uppercase', letterSpacing: 0.5 }}>{fact.label}</Text><Text style={{ color: colors.text, fontSize: font.body, lineHeight: 22 }}>{fact.value}</Text><Sources sources={fact.sources} /></View>)}</Section> : null}
+      {currentDetail.facts.length ? <Section title="Key facts">{currentDetail.facts.map((fact, i) => <View key={`${fact.label}-${i}`} style={{ gap: space.xs }}><Text style={{ color: colors.textMuted, fontSize: font.caption, textTransform: 'uppercase', letterSpacing: 0.5 }}>{fact.label}</Text><View style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}><Text style={{ flex: 1, flexShrink: 1, color: colors.text, fontSize: font.body, lineHeight: 22 }}>{fact.value}</Text><SourceDisclosure sources={fact.sources} /></View></View>)}</Section> : null}
       {currentDetail.rounds.length ? <Section title="Funding rounds">{(() => {
         const others = (round: EntityDetail['rounds'][number]) => round.investors.filter((name) => name !== currentDetail.name && !round.leads.includes(name));
         const bare = currentDetail.rounds.filter((round) => !round.round_type && !round.amount && !round.date && !round.leads.length && !others(round).length);
         const rich = currentDetail.rounds.filter((round) => !bare.includes(round));
-        const bareSources = bare.flatMap((round) => round.sources).filter((s, i, all) => all.findIndex((o) => o.url === s.url) === i);
         const muted = { color: colors.textMuted, fontSize: font.small, lineHeight: 20 } as const;
-        return <>{rich.map((round, i) => <View key={`${round.round_type}-${round.date}-${i}`} style={{ gap: space.xs }}><Text style={[{ fontSize: font.body, fontWeight: '600', color: colors.text }, tabularNums]}>{[round.round_type, round.amount, round.date].filter(Boolean).join(' · ') || 'Funding round'}</Text>{round.leads.length ? <Text style={muted}>Lead: {round.leads.join(', ')}</Text> : null}{others(round).length ? <Text style={muted}>Co-investors: {others(round).join(', ')}</Text> : null}<Sources sources={round.sources} /></View>)}{bare.length ? <View style={{ gap: space.xs }}><Text style={muted}>{bare.length} {bare.length === 1 ? 'round' : 'rounds'} on record in Cala, without public details</Text><Sources sources={bareSources} /></View> : null}</>;
+        return <>{rich.map((round, i) => <View key={`${round.round_type}-${round.date}-${i}`} style={{ gap: space.xs }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}><Text style={[{ flex: 1, flexShrink: 1, fontSize: font.body, fontWeight: '600', color: colors.text }, tabularNums]}>{[round.round_type, round.amount, round.date].filter(Boolean).join(' · ') || 'Funding round'}</Text><SourceDisclosure sources={round.sources} /></View>{round.leads.length ? <Text style={muted}>Lead: {round.leads.join(', ')}</Text> : null}{others(round).length ? <Text style={muted}>Co-investors: {others(round).join(', ')}</Text> : null}</View>)}{bare.length ? <View style={{ gap: space.xs, flexDirection: 'row', alignItems: 'center' }}><Text style={[muted, { flex: 1 }]}>{bare.length} {bare.length === 1 ? 'round' : 'rounds'} on record in Cala, without public details</Text><SourceDisclosure sources={uniqueSources(bare.flatMap((round) => round.sources))} /></View> : null}</>;
       })()}</Section> : null}
-      {currentDetail.people.length ? <Section title="People">{currentDetail.people.map((person) => <Pressable key={person.id} accessibilityRole="link" onPress={() => router.push({ pathname: '/entity/[id]', params: { id: person.id, session_id: user?.session_id ?? '', mode } })} style={{ gap: space.xs }}><Text style={{ color: colors.accent, fontSize: font.body, fontWeight: '600', textDecorationLine: 'underline' }}>{person.name}</Text><Text style={{ color: colors.textMuted, fontSize: font.small }}>{person.role}{person.since ? ` · Since ${person.since}` : ''}</Text></Pressable>)}</Section> : null}
-      {currentDetail.portfolio.length ? <Section title="Portfolio">{currentDetail.portfolio.map((company) => <Pressable key={company.id} accessibilityRole="link" onPress={() => router.push({ pathname: '/entity/[id]', params: { id: company.id, session_id: user?.session_id ?? '', mode } })}><Text style={{ color: colors.accent, fontSize: font.body, textDecorationLine: 'underline' }}>{company.name}</Text></Pressable>)}</Section> : null}
-      {currentDetail.why_match.length ? <Section title="Why it matches">{currentDetail.why_match.map((item, i) => <View key={`${item.signal}-${i}`} style={{ gap: space.xs }}><Text style={{ fontSize: font.body, color: colors.text, lineHeight: 22 }}>{item.text}</Text><Sources sources={item.sources} /></View>)}</Section> : null}
+      {currentDetail.people.length ? <Section title="People">{currentDetail.people.filter((person, i, all) => all.findIndex((other) => other.id === person.id || other.name.trim().toLowerCase() === person.name.trim().toLowerCase()) === i).map((person) => <Pressable key={person.id || person.name} accessibilityRole="link" onPress={() => router.push({ pathname: '/entity/[id]', params: { id: person.id, session_id: user?.session_id ?? '', mode } })} style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: space.md }}><View style={{ flex: 1, gap: space.xs }}><Text numberOfLines={1} style={{ color: colors.text, fontSize: font.body, fontWeight: '600' }}>{person.name}</Text><Text numberOfLines={1} style={{ color: colors.textMuted, fontSize: font.small }}>{person.role}{person.since ? ` · Since ${person.since}` : ''}</Text></View><Feather name="chevron-right" size={18} color={colors.textMuted} /></Pressable>)}</Section> : null}
+      {currentDetail.portfolio.length ? <Section title="Portfolio">{currentDetail.portfolio.filter((company, i, all) => all.findIndex((other) => other.id === company.id || other.name.trim().toLowerCase() === company.name.trim().toLowerCase()) === i).map((company) => <Pressable key={company.id || company.name} accessibilityRole="link" onPress={() => router.push({ pathname: '/entity/[id]', params: { id: company.id, session_id: user?.session_id ?? '', mode } })} style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: space.md }}><Text numberOfLines={1} style={{ flex: 1, flexShrink: 1, color: colors.text, fontSize: font.body }}>{company.name}</Text><Feather name="chevron-right" size={18} color={colors.textMuted} /></Pressable>)}</Section> : null}
+      {currentDetail.why_match.length ? <Section title="Why it matches">{currentDetail.why_match.map((item, i) => <View key={`${item.signal}-${i}`} style={{ gap: space.xs }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs }}><Text style={{ flex: 1, flexShrink: 1, fontSize: font.body, color: colors.text, lineHeight: 22 }}>{item.text}</Text><SourceDisclosure sources={item.sources} /></View></View>)}</Section> : null}
+      {(() => { const sources = uniqueSources([...currentDetail.facts.flatMap((fact) => fact.sources), ...currentDetail.rounds.flatMap((round) => round.sources), ...currentDetail.why_match.flatMap((item) => item.sources)]); return <AllSources sources={sources} />; })()}
       {!hasContent ? <Text style={{ paddingVertical: space.xl, color: colors.textMuted, fontSize: font.body }}>Not available in Cala</Text> : null}
     </> : null}
   </View></ScrollView>;
