@@ -31,6 +31,8 @@ uv run pytest
 | `NVIDIA_API_KEY`, `NVIDIA_BASE_URL`, `NVIDIA_MODEL` | Nemotron. build.nvidia.com: `https://integrate.api.nvidia.com/v1` con `nvidia/nemotron-3.5-super-vl-120b-a12b` y una clave `nvapi-` |
 | `TRANSCRIPTION_PROVIDER`, `WHISPER_MODEL` | `whisper` (local, por defecto `small`), `nvidia` o `none` |
 | `CHAT_DB_PATH` | Base SQLite del chat (por defecto `data/chat.db`) |
+| `ACCOUNTS_STORE` | `valkey`, `postgres` o `sqlite`; por defecto usa `VALKEY_URL` si está configurada y, si no, `DATABASE_URL` o SQLite (`data/app.db`). Valkey comparte cuentas y tokens entre máquinas; si no está disponible, la API devuelve `503`. |
+| `VALKEY_URL` | Valkey compartido para cuentas cuando `ACCOUNTS_STORE` no fuerza otro backend |
 | `CORS_ORIGINS` | Orígenes permitidos (por defecto `*`, solo desarrollo) |
 
 Las respuestas de Cala y del LLM se cachean en `cache/` (ignorada por git).

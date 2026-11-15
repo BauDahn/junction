@@ -12,6 +12,21 @@ router = APIRouter()
 EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 
+def _store_call(fn, *args):
+    try:
+        return fn(*args)
+    except store.StoreUnavailable as exc:
+        raise HTTPException(503, "Account store is temporarily unavailable.") from exc
+
+
+def _ensure_local_session(user):
+    session_id = user["session_id"]
+    if not chat_store.session_exists(session_id):
+        chat_store.create_session(session_id, user["created_at"])
+    if not chat_store.get_mode(session_id):
+        chat_store.save_mode(session_id, "raising" if user["role"] == "raiser" else "investing")
+
+
 class RegisterInput(BaseModel):
     email: str
     password: str = Field(min_length=8)
@@ -31,14 +46,14 @@ def _public(user):
 
 def _issue_token(user_id):
     token, digest = security.new_token()
-    store.create_token(digest, user_id, store.token_expiry())
+    _store_call(store.create_token, digest, user_id, store.token_expiry())
     return token
 
 
 def _authenticated(authorization):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "unauthorized")
-    user = store.get_user_by_token(security.token_hash(authorization[7:]))
+    user = _store_call(store.get_user_by_token, security.token_hash(authorization[7:]))
     if not user:
         raise HTTPException(401, "unauthorized")
     return user
@@ -55,7 +70,7 @@ async def register(body: RegisterInput, request: Request):
     email = body.email.strip().lower()
     if not EMAIL_RE.fullmatch(email) or body.role not in ("raiser", "investor"):
         raise HTTPException(422, "Invalid email or role.")
-    if store.get_user_by_email(email):
+    if _store_call(store.get_user_by_email, email):
         raise HTTPException(409, "email_taken")
     now = datetime.now(timezone.utc).isoformat()
     session_id = uuid4().hex
@@ -65,9 +80,9 @@ async def register(body: RegisterInput, request: Request):
             "name": body.name, "company": body.company, "role": body.role,
             "session_id": session_id, "created_at": now}
     try:
-        store.create_user(user)
+        _store_call(store.create_user, user)
     except Exception as exc:
-        if store.get_user_by_email(email):
+        if _store_call(store.get_user_by_email, email):
             raise HTTPException(409, "email_taken") from exc
         raise
     return {"token": _issue_token(user["id"]), "user": _public(user)}
@@ -75,16 +90,17 @@ async def register(body: RegisterInput, request: Request):
 
 @router.post("/api/auth/login")
 async def login(body: LoginInput):
-    user = store.get_user_by_email(body.email.strip().lower())
+    user = _store_call(store.get_user_by_email, body.email.strip().lower())
     if not user or not security.verify_password(body.password, user["password_hash"]):
         raise HTTPException(401, "invalid_credentials")
+    _ensure_local_session(user)
     return {"token": _issue_token(user["id"]), "user": _public(user)}
 
 
 @router.post("/api/auth/logout", status_code=204)
 async def logout(authorization: str | None = Header(default=None)):
     _authenticated(authorization)
-    store.delete_token(security.token_hash(authorization[7:]))
+    _store_call(store.delete_token, security.token_hash(authorization[7:]))
     return Response(status_code=204)
 
 
