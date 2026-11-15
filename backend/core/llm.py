@@ -84,8 +84,8 @@ def _gemini_http_error(response, api_key):
     except (ValueError, AttributeError, TypeError):
         message = ""
     message = str(message or "Unspecified error")
-    if api_key: message = message.replace(api_key, "[redactado]")
-    message = re.sub(r"https?://\S+", "[URL omitida]", message)
+    if api_key: message = message.replace(api_key, "[redacted]")
+    message = re.sub(r"https?://\S+", "[URL omitted]", message)
     return f"Gemini returned HTTP {response.status_code}: {message[:300]}"
 
 
@@ -162,7 +162,7 @@ class CodexProvider:
                 image_path.write_bytes(image)
                 args.extend(["-i", str(image_path)])
             args.append(system + "\n\n" + user)
-            # stdin cerrado: si el servidor corre sin terminal, codex exec se queda esperando entrada.
+            # stdin is closed: when the server runs without a terminal, codex exec waits for input.
             proc = await asyncio.create_subprocess_exec(*args, cwd=tmp, stdin=asyncio.subprocess.DEVNULL,
                                                         stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             try:
@@ -180,7 +180,7 @@ class ClaudeProvider:
     async def complete_json(self, system, user, schema, images=None, audio=None):
         if audio: raise RuntimeError("ClaudeProvider does not support audio.")
         if images:
-            raise RuntimeError("ClaudeProvider solo admite texto")
+            raise RuntimeError("ClaudeProvider only supports text")
         binary = shutil.which("claude")
         if not binary:
             raise RuntimeError("Claude executable was not found.")

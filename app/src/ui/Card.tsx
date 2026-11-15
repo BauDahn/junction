@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { radius, shadow, space, useTheme } from '../theme';
 
-/** Tarjeta base: superficie con borde fino. `raised` añade sombra. */
+/** Base card: surface with a thin border. `raised` adds a shadow. */
 export default function Card({
   children,
   raised,

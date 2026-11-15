@@ -1,8 +1,8 @@
-"""Caché de consultas: disco (por máquina) y, opcionalmente, Valkey compartido (Aiven).
+"""Query cache: local disk (per machine) and, optionally, shared Valkey (Aiven).
 
-Todas las cachés tienen la misma interfaz: `get(namespace, value)` y `put(namespace, value, result)`
-(clave = sha256 del JSON canónico), más `get_key`/`put_key` para quien ya tiene el hash, y `stats`
-con los contadores `local_hits`, `remote_hits` y `misses`.
+All caches use the same interface: `get(namespace, value)` y `put(namespace, value, result)`
+(key = sha256 of canonical JSON), plus `get_key`/`put_key` for callers that already have the hash, and `stats`
+with the `local_hits`, `remote_hits`, and `misses` counters.
 """
 import hashlib
 import json
@@ -10,10 +10,10 @@ import os
 import time
 from pathlib import Path
 
-DEFAULT_TTL_S = 7 * 24 * 3600  # respuestas de Cala: 7 días
-NO_TTL_NAMESPACES = ("intents",)  # intenciones del LLM: no caducan
+DEFAULT_TTL_S = 7 * 24 * 3600  # Cala responses: 7 days
+NO_TTL_NAMESPACES = ("intents",)  # LLM intents: never expire
 ENV_KEYS = ("CALA_API_KEY", "VALKEY_URL", "VALKEY_CONNECT_TIMEOUT", "VALKEY_TIMEOUT", "CACHE_TTL_S", "GEMINI_API_KEY", "GOOGLE_API_KEY", "GEMINI_MODEL", "GEMINI_FAST_MODEL", "LLM_PROVIDER")
-STATS = {"local_hits": 0, "remote_hits": 0, "misses": 0}  # acumulado del proceso (cachés de make_cache)
+STATS = {"local_hits": 0, "remote_hits": 0, "misses": 0}  # process-wide total (make_cache instances)
 
 
 def _new_stats():
@@ -26,10 +26,10 @@ def cache_key(value):
 
 
 def load_env(path=None, keys=ENV_KEYS):
-    """Carga de backend/.env solo las variables de `keys` que falten en el entorno. No imprime nada.
+    """Loads only `keys` missing from the environment from backend/.env. Prints nothing.
 
-    VALKEY_URL definida vacía en el entorno cuenta como definida: sirve para desactivar la caché
-    remota aunque esté en el .env (lo usan los tests).
+    An empty VALKEY_URL in the environment counts as set: it disables the cache
+    remote cache even if it is set in .env (used by tests).
     """
     path = Path(path) if path else Path(__file__).resolve().parents[2] / "backend" / ".env"
     if not path.exists(): return
@@ -56,7 +56,7 @@ class DiskCache(_Base):
     def __init__(self, root, stats=None):
         self.root = Path(root)
         self.stats = stats if stats is not None else _new_stats()
-        self.count = True  # LayeredCache lo apaga para llevar la cuenta ella
+        self.count = True  # LayeredCache LayeredCache disables this to track its own counts
 
     def _path(self, namespace, digest):
         return self.root / namespace / f"{digest}.json"
@@ -83,8 +83,8 @@ class DiskCache(_Base):
 
 
 class ValkeyCache(_Base):
-    """Caché en Valkey/Redis. Nunca rompe una consulta: ante cualquier error devuelve None / no escribe,
-    y deja de intentar durante `retry_after_s` para no sumar latencia."""
+    """Valkey/Redis cache. Never breaks a query: returns None on any error and skips writes,
+    and stops retrying for `retry_after_s` to avoid adding latency."""
 
     def __init__(self, url, prefix="cala:v1", ttl_s=None, *, client=None, timeout_s=3, connect_timeout_s=8, retry_after_s=60,
                  no_ttl_namespaces=NO_TTL_NAMESPACES, clock=time.monotonic):
@@ -107,7 +107,7 @@ class ValkeyCache(_Base):
         return self._down_until is None or self.clock() >= self._down_until
 
     def _run(self, operation):
-        """Ejecuta operation(cliente). Devuelve (ok, valor); ante un error marca el remoto como caído."""
+        """Runs operation(client). Returns (ok, value); marks the remote as unavailable on error."""
         if not self.available: return False, None
         try:
             if self._client is None:
@@ -117,7 +117,7 @@ class ValkeyCache(_Base):
             value = operation(self._client)
             self._down_until = None
             return True, value
-        except Exception:  # red, TLS, credenciales, URL mal formada: la caché remota es opcional
+        except Exception:  # network, TLS, credentials, malformed URL: remote caching is optional
             self.errors += 1
             self._down_until = self.clock() + self.retry_after_s
             return False, None
@@ -142,7 +142,7 @@ class ValkeyCache(_Base):
 
 
 class LayeredCache(_Base):
-    """get: local → remoto (lo que viene del remoto se copia al local); put: ambos."""
+    """get: local → remote (remote values are copied locally); put: both."""
 
     def __init__(self, local, remote, stats=None):
         self.local, self.remote = local, remote
@@ -172,15 +172,15 @@ _REMOTES = {}
 
 
 def ttl_from_env():
-    """CACHE_TTL_S en segundos (por defecto 7 días; 0 = sin caducidad)."""
+    """CACHE_TTL_S in seconds (7 days by default; 0 = no expiration)."""
     try: ttl = int(os.getenv("CACHE_TTL_S") or DEFAULT_TTL_S)
     except ValueError: ttl = DEFAULT_TTL_S
     return ttl if ttl > 0 else None
 
 
 def remote_from_env():
-    """ValkeyCache según VALKEY_URL (entorno o backend/.env), o None. Se reutiliza una por proceso para
-    compartir la conexión y la pausa tras un fallo."""
+    """ValkeyCache from VALKEY_URL (environment or backend/.env), or None. One instance is reused per process to
+    share the connection and cooldown after a failure."""
     load_env()
     url = (os.getenv("VALKEY_URL") or "").strip()
     if not url: return None
@@ -199,7 +199,7 @@ def _int_env(name, default):
 
 
 def warmup():
-    """Intenta establecer la conexión compartida sin propagar errores. False si no está disponible."""
+    """Attempts to establish the shared connection without propagating errors. False if unavailable."""
     try:
         remote = remote_from_env()
         return remote.ping() if remote is not None else False
@@ -208,8 +208,8 @@ def warmup():
 
 
 def make_cache(root):
-    """LayeredCache(disco, Valkey) si VALKEY_URL está definida; si no, DiskCache. `stats` es el
-    acumulado del proceso (`canonizador.cache.STATS`)."""
+    """LayeredCache(disk, Valkey) when VALKEY_URL is set; otherwise DiskCache. `stats` is the
+    process-wide total (`canonizador.cache.STATS`)."""
     remote = remote_from_env()
     local = DiskCache(root, stats=STATS)
     return LayeredCache(local, remote, stats=STATS) if remote else local

@@ -1,16 +1,16 @@
-"""Perfilado de inversores con una consulta reproducible a Cala."""
+"""Investor profiling with a reproducible Cala query."""
 import re
 from cala_core.executor import _sources
 
 INVESTOR_QUERY = "startups.investors={name}.return(company, round_type, funding_amount, year, sector, location)"
 
 def investor_query(name):
-    """Construye la consulta con un nombre seguro para el lenguaje Cala."""
+    """Builds a query using a name safe for Cala query syntax."""
     clean = re.sub(r"[.,()=]", " ", str(name or ""))
     return INVESTOR_QUERY.format(name=" ".join(clean.split()))
 
 def rounds_from_result(result, query):
-    """Convierte filas Cala en rondas con fuentes normalizadas."""
+    """Converts Cala rows into rounds with normalized sources."""
     def key(k): return re.sub(r"[\s-]+", "_", str(k).casefold()).strip("_")
     def sources(data):
         found = _sources(data)
@@ -34,7 +34,7 @@ def rounds_from_result(result, query):
     return rounds
 
 async def investor_rounds(cala, name):
-    """Consulta una vez todas las rondas conocidas del inversor."""
+    """Fetches all known investor rounds in one query."""
     query = investor_query(name)
     result = await cala.knowledge_query(query)
     if not isinstance(result.get("results"), list): raise TypeError("Cala results must be a list")

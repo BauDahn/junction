@@ -28,7 +28,7 @@ def effective_attribute(intent):
     return attr
 
 def build_query(intent, company_name=None):
-    """Renderiza la intención en una consulta fija, sin intervención del LLM."""
+    """Renders the intent as a fixed query without LLM intervention."""
     attr, f = effective_attribute(intent), intent.get("filters", {})
     name = company_name or (intent.get("entities") or [{}])[0].get("name", "")
     if attr in ("funding_round", "lead_investors"):
@@ -62,14 +62,14 @@ def build_query(intent, company_name=None):
     return templates[attr]
 
 def _funding_literal(value):
-    if isinstance(value, bool): raise ValueError("min_funding debe ser un número")
+    if isinstance(value, bool): raise ValueError("min_funding must be a number")
     try:
         text = str(value).strip().replace(",", "")
         if not re.fullmatch(r"\d+(?:\.\d+)?", text): raise ValueError
         n = float(text)
     except (TypeError, ValueError):
-        raise ValueError("min_funding debe ser un número en moneda base") from None
-    if not math.isfinite(n) or n < 0: raise ValueError("min_funding debe ser un número no negativo")
+        raise ValueError("min_funding must be a number in the base currency") from None
+    if not math.isfinite(n) or n < 0: raise ValueError("min_funding must be a non-negative number")
     if n >= 1_000_000_000: return f"{n/1_000_000_000:g}B"
     if n >= 1_000_000: return f"{n/1_000_000:g}M"
     if n >= 1000: return f"{n/1000:g}K"

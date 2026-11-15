@@ -1,4 +1,4 @@
-"""Acceso local al catálogo precalculado."""
+"""Local access to the precomputed catalog."""
 import json, os, threading, time
 from typing import Protocol
 
@@ -10,7 +10,7 @@ def _list(v):
     return []
 
 def normalize_features(raw):
-    """Normaliza datos tolerando los formatos parciales del catálogo."""
+    """Normalizes data while tolerating partial catalog formats."""
     if isinstance(raw, (str, bytes)):
         try: raw=json.loads(raw)
         except Exception: return None

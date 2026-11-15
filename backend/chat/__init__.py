@@ -1,1 +1,1 @@
-"""Chat de onboarding para founders."""
+"""Onboarding chat for founders."""

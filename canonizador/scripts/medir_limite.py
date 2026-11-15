@@ -1,4 +1,4 @@
-"""Mide llamadas reales al endpoint de entidades de Cala."""
+"""Measures actual calls to the Cala entities endpoint."""
 import argparse
 import asyncio
 import sys
@@ -25,7 +25,7 @@ class NullCache:
 
 
 class NoResponseCache(NullCache):
-    """Desactiva las respuestas y conserva Valkey para el limitador compartido."""
+    """Disables response caching and keeps Valkey enabled for the shared rate limiter."""
     def __init__(self, remote=None): self.remote = remote
 
 
@@ -49,7 +49,7 @@ async def run(args):
             raise
     elapsed = time.monotonic() - start
     sent = client.calls
-    print("| n | intervalo (s) | concurrencia | segundos totales | llamadas/s | 429 | primera llamada con 429 | espera total (s) | esperas limitador compartido | errores limitador compartido |")
+    print("| n | interval (s) | concurrency | total seconds | calls/s | 429 | first call with 429 | total wait (s) | shared limiter waits | shared limiter errors |")
     print("|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
     print(f"| {sent} | {args.interval:g} | {args.concurrency} | {elapsed:.2f} | {sent / elapsed if elapsed else 0:.3f} | {client.stats['429']} | {first_429 or '—'} | {client.stats['429_wait_seconds']:.2f} | {client.stats['shared_limit_waits']} | {client.stats['shared_limit_errors']} |")
 
@@ -60,8 +60,8 @@ def main():
     parser.add_argument("--interval", type=float, default=0.7)
     parser.add_argument("--concurrency", type=int, default=2)
     parser.add_argument("--sin-cache", action="store_true")
-    parser.add_argument("--sin-cache-local", action="store_true",
-                        help="desactiva la cache de respuestas y conserva Valkey para el limitador compartido")
+    parser.add_argument("--no-local-cache", action="store_true",
+                        help="disables response caching and keeps Valkey enabled for the shared rate limiter")
     args = parser.parse_args()
     asyncio.run(run(args))
 

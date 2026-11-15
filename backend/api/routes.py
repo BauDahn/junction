@@ -1,4 +1,4 @@
-"""Endpoints del feed y detalle de Cala Match."""
+"""Cala Match feed and detail endpoints."""
 import asyncio
 import base64
 import json

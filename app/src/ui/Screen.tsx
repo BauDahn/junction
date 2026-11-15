@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { ScrollView } from 'react-native';
 import { maxWidth, space, useTheme } from '../theme';
 
-/** Contenedor de pantalla con scroll, fondo del tema y contenido centrado (máx. ~880 px en web). */
+/** Scrollable screen container with theme background and centered content (max ~880 px on web). */
 export default function Screen({ children, center }: { children: ReactNode; center?: boolean }) {
   const { colors } = useTheme();
   return (

@@ -1,4 +1,4 @@
-"""Modelo y normalización del grafo local."""
+"""Local graph model and normalization."""
 from datetime import datetime, timezone
 import re
 import unicodedata
@@ -18,7 +18,7 @@ def _plain(value):
 
 def normalize_name(name):
     text = _plain(name)
-    # Puntuar separada permite reconocer sufijos escritos como S.L. y S.R.L.
+    # Scoring separately recognizes suffixes written as S.L. and S.R.L.
     text = re.sub(r"[^\w\s]", " ", text, flags=re.UNICODE)
     words = " ".join(text.split()).split()
     original = words[:]

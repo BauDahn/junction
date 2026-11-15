@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { font, space, useTheme } from '../theme';
 
-/** Encabezado de pantalla: eyebrow + título + subtítulo + acción opcional a la derecha. */
+/** Screen header: eyebrow, title, subtitle, and optional action on the right. */
 export default function ScreenHeader({
   title,
   subtitle,

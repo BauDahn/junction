@@ -1,4 +1,4 @@
-"""Ingesta reanudable del catálogo de Slush 2026 hacia Valkey/memoria y el grafo compartido."""
+"""Resumable ingestion of the Slush 2026 catalog into Valkey/memory and the shared graph."""
 import asyncio
 import fnmatch
 import hashlib
@@ -119,7 +119,7 @@ TAG_SYSTEM = (
 
 
 class CatalogLockError(RuntimeError):
-    """Error lanzado cuando otro proceso ya mantiene el lock del catálogo."""
+    """Error raised when another process already holds the catalog lock."""
 
 
 def _now_iso():
@@ -142,7 +142,7 @@ def _json_dump(value):
 
 
 class MemoryCatalogKV:
-    """Almacén clave-valor en memoria con TTL y bloqueo atómico SET NX."""
+    """In-memory key-value store with TTL and atomic SET NX locking."""
 
     def __init__(self):
         self.data = {}
@@ -235,7 +235,7 @@ class MemoryCatalogKV:
 
 
 class RedisCatalogKV:
-    """Adaptador de catálogo sobre Valkey/Redis (o un cliente compatible en tests)."""
+    """Catalog adapter for Valkey/Redis (or a compatible test client)."""
 
     _RELEASE_LUA = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end"
     _REFRESH_LUA = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('expire', KEYS[1], tonumber(ARGV[2])) else return 0 end"
@@ -337,7 +337,7 @@ class RedisCatalogKV:
 
 
 class _WrappedStoreKV:
-    """Envuelve MemoryKV o ValkeyKV de backend/graph/store.py añadiendo set_nx y scan_prefix."""
+    """Wraps MemoryKV or ValkeyKV from backend/graph/store.py and adds set_nx and scan_prefix."""
 
     def __init__(self, inner):
         self.inner = inner
@@ -415,7 +415,7 @@ def _env_float(name, default):
 
 
 def make_kv(store=None, url=None, client=None):
-    """Devuelve un KV compatible para el catálogo (Valkey si está disponible, o memoria)."""
+    """Returns a compatible KV store for the catalog (Valkey if available, otherwise memory)."""
     if client is not None:
         return RedisCatalogKV(client=client)
     if store is not None and hasattr(store, "kv"):
@@ -433,12 +433,12 @@ def make_kv(store=None, url=None, client=None):
             if kv.ping():
                 return kv
         except Exception:
-            logger.warning("Valkey no disponible; usando MemoryCatalogKV")
+            logger.warning("Valkey unavailable; using MemoryCatalogKV")
     return MemoryCatalogKV()
 
 
 class _FallbackGraphStore:
-    """Respaldo compatible con GraphStore (#64) mientras backend/graph aún no está en main."""
+    """Compatibility fallback for GraphStore (#64) while backend/graph is not yet on main."""
 
     def __init__(self, kv, ttl_s=TTL_S, prefix=GRAPH_PREFIX):
         self.kv = _wrap_kv(kv)
@@ -553,7 +553,7 @@ def make_graph_store(kv):
 
 
 def _save_expansion(store, center_node, edges, neighbor_nodes, *, rels=STAGE2_RELS, truncated=False):
-    """Guarda expansión tolerando la firma de PR #81, el WIP previo y MemoryGraph/put_node."""
+    """Saves expansion while supporting the PR #81 signature, the previous WIP, and MemoryGraph/put_node."""
     if store is None:
         return center_node["id"]
     rels_key = ",".join(sorted(set(rels)))
@@ -626,7 +626,7 @@ def _dedupe_sources(sources, limit=20):
 
 
 def _extract_prop_sources(props):
-    """Extrae fuentes únicamente desde dentro de `properties` (nunca del elemento raíz)."""
+    """Extracts sources only from within `properties` (never from the root element)."""
     if not isinstance(props, dict):
         return []
     found = []
@@ -745,7 +745,7 @@ def _build_node_props(props, prop_sources, hq, country):
 
 
 def _extract_attendee_artifacts(attendee, data, *, today=None):
-    """Construye nodo central, aristas, vecinos y características base desde Cala."""
+    """Builds the central node, edges, neighbors, and base features from Cala."""
     today = today or date.today()
     loaded_at = _now_iso()
     eid = str(attendee["id"])
@@ -791,7 +791,7 @@ def _extract_attendee_artifacts(attendee, data, *, today=None):
                 ntype = _str(item.get("entity_type")) or ("Person" if rel == "FOUNDED" else "Company")
                 nname = _str(item.get("name")) or nid
                 ip = item.get("properties") or {}
-                # Regla de Cala: leer sources solo de item["properties"]["sources"], nunca de item["sources"].
+                # Cala rule: read sources only from item["properties"]["sources"], never from item["sources"].
                 esources = _valid_sources(ip.get("sources"))
                 role = _prop_val(ip, "role")
                 is_lead = _prop_val(ip, "is_lead")
@@ -932,7 +932,7 @@ def _clean_tags(values):
 
 
 async def _tag_features_with_llm(features, llm, semaphore):
-    """Etiqueta sectores/etapas/región desde la descripción de Cala usando Gemini en paralelo."""
+    """Labels sectors/stages/regions from the Cala description using Gemini in parallel."""
     description = features.get("description") or ""
     if not description or llm is None:
         return features
@@ -941,7 +941,7 @@ async def _tag_features_with_llm(features, llm, semaphore):
         async with semaphore:
             tagged = await llm.complete_json(TAG_SYSTEM, prompt, TAG_SCHEMA)
     except Exception as exc:
-        logger.warning("Fallo etiquetado LLM para %s: %s", features["id"], exc)
+        logger.warning("LLM labeling failed for %s: %s", features["id"], exc)
         return features
     if not isinstance(tagged, dict):
         return features
@@ -975,7 +975,7 @@ def _resolve_llm(llm):
     try:
         return make_llm(tier="fast")[0]
     except Exception as exc:
-        logger.warning("No se pudo inicializar Gemini fast tier: %s", exc)
+        logger.warning("Could not initialize Gemini fast tier: %s", exc)
         return None
 
 
@@ -1073,7 +1073,7 @@ def _feat_flags(feat):
 
 
 def _seed_stats(kv):
-    """Lee una única vez las características guardadas para actualizar contadores en O(1)."""
+    """Reads saved features once to update counters in O(1)."""
     keys = kv.scan_prefix(FEAT_PREFIX)
     vals = kv.mget(keys) if keys else []
     tracked = {}
@@ -1111,7 +1111,7 @@ async def run_catalog(
     lock_ttl=None,
     max_calls=150,
 ):
-    """Ejecuta las etapas 1–3 de forma reanudable y protegida con lock SET NX y renovación de TTL."""
+    """Runs stages 1–3 resumably, protected by a SET NX lock with TTL renewal."""
     load_env()
     kv, store = _resolve_kv_and_store(kv=kv, store=store)
     effective_lock_ttl = LOCK_TTL_S if lock_ttl is None else lock_ttl
@@ -1268,7 +1268,7 @@ async def run_catalog(
                     _save_state(kv, status, todo, lock_token=token, lock_ttl=effective_lock_ttl)
                 return
             except Exception as exc:
-                logger.warning("Fallo Stage 2 en Cala para %s: %s", eid, exc)
+                logger.warning("Cala Stage 2 failed for %s: %s", eid, exc)
                 async with state_lock:
                     status["errors"] = int(status.get("errors") or 0) + 1
                     _save_state(kv, status, todo, lock_token=token, lock_ttl=effective_lock_ttl)
@@ -1284,7 +1284,7 @@ async def run_catalog(
                             payment_breaker["tripped"] = True
                             status["stopped"] = "payment_required"
                             status["stage"] = "paused"
-                            logger.error("Catálogo pausado: %s entidades consecutivas devolvieron 402; quedan %s pendientes.", payment_trip, len(todo))
+                            logger.error("Catalog paused: %s consecutive entities returned 402; %s remain pending.", payment_trip, len(todo))
                     kv.set(f"{FAILED_PREFIX}{eid}", _json_dump({"status": error_status, "error": error, "at": datetime.now(timezone.utc).isoformat()}), TTL_S)
                     status["errors"] = int(status.get("errors") or 0) + 1
                     counter = "payment_required" if error_status == 402 else "not_found"
@@ -1369,7 +1369,7 @@ def _dump_graph(kv, store):
 
 
 def export_catalog(path, *, kv=None, store=None):
-    """Exporta características, estado y grafo local a un archivo JSON UTF-8 sin BOM."""
+    """Exports features, state, and the local graph to a UTF-8 JSON file without a BOM."""
     load_env()
     kv, store = _resolve_kv_and_store(kv=kv, store=store)
     feat_keys = sorted(kv.scan_prefix(FEAT_PREFIX))
@@ -1395,7 +1395,7 @@ def export_catalog(path, *, kv=None, store=None):
 
 
 def import_catalog(path, *, kv=None, store=None):
-    """Restaura características, estado y grafo desde un JSON exportado (Plan B de demo)."""
+    """Restores features, state, and graph from an exported JSON file (demo Plan B)."""
     load_env()
     kv, store = _resolve_kv_and_store(kv=kv, store=store)
     payload = json.loads(Path(path).read_text(encoding="utf-8-sig"))

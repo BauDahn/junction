@@ -1,4 +1,4 @@
-"""Países y regiones usados por la afinidad."""
+"""Countries and regions used for affinity."""
 
 _COUNTRIES = {
     "Finland": ["finland", "suomi", "finlandia"], "Sweden": ["sweden", "sverige", "suecia"],
@@ -31,7 +31,7 @@ REGIONS = {
 _REGION_NAMES = {k.casefold(): k for k in REGIONS}
 
 def country_of(text):
-    """Resuelve país a partir del texto o de sus componentes."""
+    """Resolves a country from text or its components."""
     if not isinstance(text, str): return None
     whole = text.strip().casefold()
     if whole in _LOOKUP: return _LOOKUP[whole]
@@ -39,7 +39,7 @@ def country_of(text):
     return next((_LOOKUP[p] for p in reversed(parts) if p in _LOOKUP), None)
 
 def region_match(a, b):
-    """Compara países y grupos regionales según la afinidad del producto."""
+    """Compares countries and regional groups for product affinity."""
     ca, cb = country_of(a), country_of(b)
     ra = _REGION_NAMES.get(a.strip().casefold()) if isinstance(a, str) else None
     rb = _REGION_NAMES.get(b.strip().casefold()) if isinstance(b, str) else None

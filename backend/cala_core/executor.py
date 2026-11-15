@@ -158,7 +158,7 @@ async def _execute(part, *, cala=None, llm=None, cache_dir=None):
         tried = ([{"tool": "canonizer", "error": canonizer_error}] if canonizer_error else [])
         return await _search_block(client, canonical, text, title=_title({"text": text}, intent), tried=tried)
     if isinstance(data, list):
-        # Camino de entidades del canonizador: lista de retrieve/search, no filas de knowledge_query.
+        # Canonizer entity path: a list of retrieve/search results, not knowledge_query rows.
         ids = ",".join(result.get("entity_ids") or []) or text
         table = _table_from_entity(data, _call("entity", f"retrieve:{ids}"))
         if table:

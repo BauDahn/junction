@@ -185,7 +185,7 @@ def test_two_queries_and_multiple_profile_parts_merge(monkeypatch):
 
 
 def test_router_prompt_declares_classification_rules():
-    assert "cuánto/cuántos" in SYSTEM and "UNA sola parte profile" in SYSTEM
+    assert "including messages that start with" in SYSTEM and "exactly ONE profile part" in SYSTEM
     assert "Somos Stayflow en Barcelona; nos interesan las fintech nórdicas en etapa seed" in SYSTEM
     assert "canonical_question_en" in SCHEMA["properties"]["parts"]["items"]["required"]
     assert "has_entity" in SCHEMA["properties"]["parts"]["items"]["required"]

@@ -1,18 +1,18 @@
-"""Benchmark con un agente conectado al servidor MCP de Cala.
+"""Benchmark with an agent connected to the Cala MCP server.
 
-Un agente (Codex CLI) recibe la pregunta tal cual, con el MCP de Cala (https://api.cala.ai/mcp/) como única
-herramienta, y decide solo qué herramientas llamar. Es como usaría Cala un usuario desde Claude Desktop o Codex.
+An agent (Codex CLI) receives the question as-is, with Cala MCP (https://api.cala.ai/mcp/) as its only
+tool, and decides which tools to call. This models how a user would access Cala from Claude Desktop or Codex.
 
   uv run python bench_mcp.py        # reanudable; escribe bench/results_mcp.json
 
-La clave se lee de backend/.env y se pasa al proceso de Codex como variable de entorno (CALA_API_KEY);
-el header X-API-KEY lo arma Codex con `env_http_headers`. Nunca se imprime ni se guarda.
+The key is read from backend/.env and passed to the Codex process as an environment variable (CALA_API_KEY);
+Codex builds the X-API-KEY header with `env_http_headers`. It is never printed or stored.
 """
 import glob, json, os, subprocess, sys, tempfile, time
 from pathlib import Path
 
 HERE = Path(__file__).parent
-# --guia: carga la guía oficial de Cala (docs/internal/CALA-SKILL.md, copia de github.com/cala-ai/cala-skill) en el prompt.
+# --guia: loads the official Cala guide (docs/internal/CALA-SKILL.md, copia de github.com/cala-ai/cala-skill) en el prompt.
 GUIA = "--guia" in sys.argv
 OUT = HERE / "bench" / ("results_mcp_guia.json" if GUIA else "results_mcp.json")
 GUIA_TEXTO = ""
@@ -86,7 +86,7 @@ def main():
                 continue
             try:
                 g[q] = agente(q, env)
-            except Exception as exc:  # no cortar el benchmark por una pregunta
+            except Exception as exc:  # do not stop the benchmark because of one question
                 g[q] = {"final": None, "tools": [], "error": str(exc)[:300]}
             OUT.write_text(json.dumps(results, ensure_ascii=False, indent=1))
             print("mcp", q[:60], g[q].get("seconds", "ERR"), [t["tool"] for t in g[q]["tools"]], file=sys.stderr, flush=True)

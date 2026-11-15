@@ -1,4 +1,4 @@
-"""Candidatos inversores reconstruidos desde las carteras del catálogo."""
+"""Investor candidates reconstructed from catalog portfolios."""
 import os
 import math
 import re
@@ -12,7 +12,7 @@ _CACHE = {}
 
 
 def apply_evidence(result, candidate):
-    """Ajusta el puntaje según la cantidad de participaciones trazables."""
+    """Adjusts the score based on the number of traceable investments."""
     if "deals" not in candidate:
         return result
     deals = candidate["deals"]
@@ -29,13 +29,13 @@ def apply_evidence(result, candidate):
 
 
 def reset():
-    """Limpia la caché del pool para pruebas."""
+    """Clears the pool cache for tests."""
     with _LOCK:
         _CACHE.clear()
 
 
 def portfolio_investors(catalog, store):
-    """Agrupa inversores con participaciones trazables en startups asistentes."""
+    """Groups investors with traceable investments in attending startups."""
     startups = catalog.list_features("startup")
     startup_ids = [str(feature["id"]) for feature in startups if feature.get("id")]
     key = (id(catalog), id(store), tuple(startup_ids), os.getenv("INVESTOR_POOL_PERSONS", "0"),

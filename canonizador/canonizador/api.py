@@ -34,7 +34,7 @@ def _sources(*objects):
 
 
 async def answer_intent(intent, client):
-    """Ejecuta una intención ya estructurada, sin invocar el proveedor LLM."""
+    """Executes a structured intent without invoking the LLM provider."""
     if intent.get("attribute") not in ("funding_round", "lead_investors"):
         raise NotImplementedError("answer_intent implementa actualmente consultas de rondas")
     if not intent.get("entities"):
@@ -99,7 +99,7 @@ async def answer_intent(intent, client):
 
 
 def _env():
-    """Carga CALA_API_KEY, VALKEY_URL y CACHE_TTL_S desde backend/.env si no están en el entorno."""
+    """Loads CALA_API_KEY, VALKEY_URL, and CACHE_TTL_S from backend/.env when they are not set in the environment."""
     load_env()
 
 

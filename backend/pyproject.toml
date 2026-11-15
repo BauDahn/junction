@@ -18,7 +18,7 @@ dependencies = [
 cala-canonizador = { path = "../canonizador", editable = true }
 
 [project.optional-dependencies]
-audio = ["faster-whisper>=1.1", "av>=14,<17"]  # av 17+ quitó metadata_errors, que usa faster-whisper
+audio = ["faster-whisper>=1.1", "av>=14,<17"]  # av 17+ removed metadata_errors, which faster-whisper uses
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

@@ -32,7 +32,7 @@ def test_gemini_http_error_redacts_key_and_url_and_truncates():
         asyncio.run(GeminiProvider(api_key="fake-secret", client=Client()).complete_json("s", "u", {}))
     message = str(caught.value)
     assert "HTTP 400" in message and "fake-secret" not in message and "?token=" not in message
-    assert "bad [redactado] [URL omitida]" in message
+    assert "bad [redacted] [URL omitted]" in message
     assert len(message.split(": ", 1)[1]) == 300
 def test_gemini_request_text_image_audio_and_parse():
     import base64

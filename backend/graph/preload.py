@@ -1,4 +1,4 @@
-"""Precarga manual del vecindario para una demo."""
+"""Manually preloads a neighborhood for a demo."""
 import argparse
 import asyncio
 import json
@@ -42,7 +42,7 @@ async def run(args, store=None, cala=None):
         return result
     stats = await load_neighborhood(store, cala, seed_ids, user=args.user, depth=args.depth,
                                     quota=args.quota, introspect=getattr(args, "introspect", False))
-    # Resolver calls pueden venir en caché; http_calls cuenta solo peticiones salidas.
+    # Resolver calls may be cached; http_calls counts outgoing requests only.
     stats["cala_calls"] += resolved["cala_calls"]
     result = {"backend": getattr(store, "backend", "memory"), "user": args.user,
               "seeds": seed_map, **stats,
@@ -50,7 +50,7 @@ async def run(args, store=None, cala=None):
     if hasattr(cala, "stats"):
         result["cala_stats"] = dict(cala.stats)
     if result["backend"] == "memory":
-        print("Aviso: el backend memory no persiste la precarga.", file=sys.stderr)
+        print("Warning: the memory backend does not persist the preload.", file=sys.stderr)
     print(json.dumps(result, ensure_ascii=False))
     return result
 

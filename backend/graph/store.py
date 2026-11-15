@@ -1,4 +1,4 @@
-"""Almacén compartido de nodos y aristas con adaptadores de memoria y Valkey."""
+"""Shared node and edge store with memory and Valkey adapters."""
 import hashlib
 import json
 import os
@@ -160,7 +160,7 @@ class GraphStore:
             for ident in pending:
                 raw = resolved[ident]
                 if raw and raw != current[ident]: current[ident] = raw; changed.append(ident)
-            # Solo se vuelve a consultar una cadena que realmente avanzó.
+            # Only a chain that actually advanced is queried again.
             pending = changed
         return current
     def _read_nodes_canonical(self, canonical):

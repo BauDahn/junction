@@ -1,6 +1,6 @@
-"""Convierte un mensaje que depende del anterior ("¿esto es verdad?", "¿y su CEO?") en uno autocontenido.
+"""Rewrites a message that depends on the previous one ("is this true?", "and its CEO?") as a self-contained message.
 
-Solo resuelve referencias con lo que ya se dijo en la conversación; no añade datos nuevos.
+Resolves references only from what was already said in the conversation; adds no new facts.
 """
 import json
 

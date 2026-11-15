@@ -239,4 +239,4 @@ def test_cache_sync_reports_remote_down(tmp_path, capsys):
     fake = FakeRedis()
     fake.fail = True
     assert cache_sync.main([str(tmp_path)], remote=ValkeyCache("rediss://falso", client=fake)) == 1
-    assert "incompleta" in capsys.readouterr().out
+    assert "upload is incomplete" in capsys.readouterr().out
