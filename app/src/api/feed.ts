@@ -1,4 +1,4 @@
-import { ApiError, type Source } from './index';
+import { ApiError, normalizeSourcesDeep, type Source } from './index';
 import type { MatchMode } from '../mode';
 
 export type FeedCard = {
@@ -89,7 +89,7 @@ export async function getFeed({
         response.status,
       );
     }
-    return body as FeedResponse;
+    return normalizeSourcesDeep(body) as FeedResponse;
   } catch (err) {
     if (err instanceof ApiError) {
       throw err;

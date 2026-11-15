@@ -1,4 +1,4 @@
-import { ApiError, type Source } from './index';
+import { ApiError, normalizeSources, type Source } from './index';
 
 export type EntityMode = 'raising' | 'investing';
 
@@ -55,7 +55,8 @@ export type EntityDetailResult = {
   isSample: boolean;
 };
 
-const REQUEST_TIMEOUT_MS = 8000;
+const REQUEST_TIMEOUT_MS = 30000;
+const CALA_TIMEOUT = () => new ApiError('cala_timeout', 'Cala did not answer in time.', 504);
 
 const baseUrl = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
 const mockEnabled = process.env.EXPO_PUBLIC_MOCK === '1';
@@ -70,13 +71,7 @@ function findMockEntity(id: string, _mode: EntityMode): EntityDetail | null {
   };
 }
 
-function sanitizeSources(raw: unknown): Source[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.filter(
-    (s): s is Source =>
-      Boolean(s && typeof s === 'object' && typeof (s as Source).name === 'string' && typeof (s as Source).url === 'string'),
-  );
-}
+const sanitizeSources = normalizeSources;
 
 function sanitizeStrings(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
@@ -188,6 +183,7 @@ export async function fetchEntityDetail(
 
   try {
     const response = await fetch(url, controller ? { signal: controller.signal } : undefined);
+    if (response.status === 504) throw CALA_TIMEOUT();
     const body: unknown = await response.json().catch(() => null);
 
     if (response.status === 404) {
@@ -215,6 +211,7 @@ export async function fetchEntityDetail(
     return { detail: normalizeEntityDetail(body), isSample: false };
   } catch (err: unknown) {
     if (err instanceof ApiError) throw err;
+    if (err instanceof Error && err.name === 'AbortError') throw CALA_TIMEOUT();
 
     const fallback = findMockEntity(cleanId, mode);
     if (fallback) {
