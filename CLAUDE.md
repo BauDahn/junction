@@ -65,7 +65,7 @@ Frentes de trabajo en este momento (15/11).
 
 ## Principios de calidad (decisión del 14/11 noche)
 **Menos cantidad, más calidad. Una app simple que se vea y se sienta bien vale más que muchas funciones a medias.**
-- La app tiene **tres pestañas**: Feed, Ask (el chat) y Context. El perfil es una hoja que se abre desde el avatar, no una pestaña. Más el detalle de una tarjeta.
+- La app tiene una **barra inferior con tres pestañas**: Mis eventos, Explorar eventos y Perfil (el contexto vive dentro del perfil). El asistente es una burbuja flotante (solo el ícono) que abre el chat. Más la página del evento y la ficha de la empresa.
 - **Fuera de la app y del repo:** Deck, Journal y la pantalla de estado. Los archivos de esas pantallas se borran, no se esconden.
 - Antes de sumar una función, preguntarse si mejora la primera pantalla de la demo. Si no, no entra; va a la lista "después" de `docs/PITCH.md`.
 - Terminar una pantalla es que se vea bien en teléfono, tenga estados vacío, de carga y de error con texto humano, y esté probada con datos reales. No se mergea una pantalla a medias aunque "ya funcione".
