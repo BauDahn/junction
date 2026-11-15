@@ -423,3 +423,17 @@ def test_ten_report_ids_use_same_cala_expansions_as_ten_entity_gets(monkeypatch)
         client.close()
         backend_app.app.dependency_overrides.clear()
 
+
+
+def test_action_plan_box_never_splits_across_pages_with_several_entities():
+    steps = [f"Step {i} " + "long detail " * 12 for i in range(8)]
+    for extra in range(0, 30, 3):
+        facts = [{"label": f"Fact {i}", "value": "data " * 60, "sources": []} for i in range(extra)]
+        detail = {"name": "E", "type": "investor", "facts": facts, "rounds": [], "people": [],
+                  "portfolio": [], "why_match": []}
+        entries = [{"detail": detail, "plan": steps}, {"detail": detail, "plan": steps}]
+        doc = fitz.open(stream=render_pdf(entries, [], "raising", datetime(2026, 11, 15, tzinfo=timezone.utc)), filetype="pdf")
+        pages = [p.get_text() for p in doc]
+        head = [i for i, t in enumerate(pages) if "Proposed action plan" in t]
+        last = [i for i, t in enumerate(pages) if "Step 7 " in t]
+        assert head == last and len(head) == 2
