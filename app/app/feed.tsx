@@ -19,7 +19,7 @@ function EventTile({ event, attending, onToggle, onOpen }: { event: CalaEvent; a
     <View style={{ height: '54%', flex: 1, padding: space.sm, justifyContent: 'space-between', gap: space.xs }}>
       <View><Text numberOfLines={1} style={{ fontSize: font.body, fontWeight: '600', color: colors.text }}>{event.name}</Text><Text style={{ fontSize: font.caption, color: colors.textMuted }}>{event.city}</Text></View>
       <Text numberOfLines={1} style={{ fontSize: font.caption, color: colors.textMuted, lineHeight: 16 }}>{event.slogan}</Text>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.xs }}><Text numberOfLines={1} style={[{ fontSize: font.caption, color: colors.accent, fontWeight: '600' }, tabularNums]}>{event.investors.length} matched investors</Text><Text style={{ fontSize: font.caption, color: colors.text, fontWeight: '600' }}>Open event</Text></View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.xs }}><Text numberOfLines={1} style={[{ fontSize: font.caption, color: colors.accent, fontWeight: '600' }, tabularNums]}>{event.participantData === 'cala' ? 'Cala participant data' : 'No participant data yet'}</Text><Text style={{ fontSize: font.caption, color: colors.text, fontWeight: '600' }}>Open event</Text></View>
     </View>
   </Pressable>;
 }
