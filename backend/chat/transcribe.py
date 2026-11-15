@@ -60,12 +60,12 @@ def _whisper_transcribe(path, hint=None):
 
 
 SCHEMA = {"type": "object", "properties": {key: {"type": "string"} for key in ("transcript", "text", "language")}, "required": ["transcript", "text", "language"]}
-SYSTEM = ('Return transcript as the exact words spoken, verbatim, word for word. Return text as only the speaker’s intended request or question, applying self-corrections and removing fillers and discourse openers wherever they occur, including "bueno", "a ver", "eh", "o sea", "um", "so", "like", and "you know". Preserve proper names exactly; do not add facts or answer the question, and keep the SAME language. Examples: "Series A... no, sorry, Series B of Amenitiz" → "Who led Series B of Amenitiz?"; "Bueno, a ver, compare Factorial with Amenitiz" → "Compare Factorial with Amenitiz." Return language as the ISO 639-1 language code.')
+SYSTEM = ('Return transcript as the exact words spoken, verbatim, word for word. Return text in the same language, removing only fillers and discourse openers and applying explicit self-corrections. Preserve ALL factual information the speaker gives, especially every detail about themselves, their startup, names, industry, location, funding, and intent. Keep uncertain or possibly misrecognized proper names exactly as heard in transcript; never omit or guess them. Do not turn statements into questions or otherwise rewrite their meaning. Example: "We are Stayflow, hotel software in Barcelona. We are raising a seed round of 2 million euros" must retain Stayflow, hotel software, Barcelona, seed round, and 2 million euros. Example: "Series A... no, sorry, Series B" → "Series B". Do not add facts or answer the question. Return language as the ISO 639-1 language code.')
 
 
 async def _gemini_transcribe(path: Path, hint: str | None, mime: str):
     llm = await _gemini_llm()
-    user = "Transcribe and clean the attached audio."
+    user = "Transcribe and clean the attached audio while preserving every factual detail and uncertain name."
     if hint:
         user += f" Known proper names (preserve spelling exactly): {hint}"
     result = await llm.complete_json(SYSTEM, user, SCHEMA, audio=(path.read_bytes(), mime))
@@ -75,7 +75,7 @@ async def _gemini_transcribe(path: Path, hint: str | None, mime: str):
 async def transcribe(path: Path, hint: str | None = None, mime: str | None = None):
     provider = effective_provider()
     if provider == "none":
-        raise RuntimeError("Transcripción no configurada")
+        raise RuntimeError("Transcription is not configured.")
     if provider == "whisper":
         return await asyncio.to_thread(_whisper_transcribe, path, hint)
     if provider == "gemini":
@@ -84,7 +84,7 @@ async def transcribe(path: Path, hint: str | None = None, mime: str | None = Non
             result = await _gemini_transcribe(path, hint, mime or mime_for(path))
             text = str(result.get("text") or "").strip()
             if not text:
-                raise RuntimeError("Gemini devolvió texto vacío")
+                raise RuntimeError("Gemini returned empty text.")
             transcript = str(result.get("transcript") or "").strip() or text
             return {"text": text, "transcript": transcript, "language": result.get("language") or ""}
         except Exception as exc:
@@ -96,7 +96,7 @@ async def transcribe(path: Path, hint: str | None = None, mime: str | None = Non
     if provider == "nvidia":
         api_key = os.getenv("NVIDIA_API_KEY")
         if not api_key:
-            raise RuntimeError("NVIDIA_API_KEY no está configurada para transcripción")
+            raise RuntimeError("NVIDIA_API_KEY is not configured for transcription.")
         try:
             async with httpx.AsyncClient(timeout=180) as client:
                 with path.open("rb") as audio:
@@ -105,13 +105,13 @@ async def transcribe(path: Path, hint: str | None = None, mime: str | None = Non
                         data={"model": os.getenv("NVIDIA_ASR_MODEL", "nvidia/parakeet-ctc-1.1b-asr"), **({"prompt": hint} if hint else {})},
                         files={"file": (path.name, audio, mime or mime_for(path))})
             if response.is_error:
-                raise RuntimeError(f"NVIDIA ASR respondió HTTP {response.status_code}: {response.text[:300]}")
+                raise RuntimeError(f"NVIDIA ASR returned HTTP {response.status_code}: {response.text[:300]}")
             body = response.json()
             text = body.get("text", "")
             return {"text": text, "transcript": text, "language": body.get("language") or "", "duration_s": body.get("duration", 0)}
         except httpx.HTTPError as exc:
-            raise RuntimeError("No se pudo conectar con NVIDIA ASR") from exc
-    raise RuntimeError(f"Proveedor de transcripción no válido: {provider}")
+            raise RuntimeError("Could not connect to NVIDIA ASR.") from exc
+    raise RuntimeError(f"Invalid transcription provider: {provider}")
 
 
 def hint_from_profile(profile: dict | None) -> str:

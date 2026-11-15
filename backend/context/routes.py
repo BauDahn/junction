@@ -92,7 +92,7 @@ async def _voice(session_id, request, llm, transcriber):
         profile = _profile(session_id)
         try: result = await transcriber(path, hint=hint_from_profile(profile))
         except Exception as exc:
-            if "no configurada" in str(exc).lower(): raise HTTPException(503, "Transcription is not configured.") from exc
+            if "not configured" in str(exc).lower(): raise HTTPException(503, "Transcription is not configured.") from exc
             raise HTTPException(502, "Audio transcription failed.") from exc
         raw_transcript = str(result.get("transcript") or result.get("text") or "").strip()
         if not raw_transcript: raise HTTPException(422, "Audio could not be understood.")

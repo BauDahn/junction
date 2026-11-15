@@ -56,7 +56,7 @@ async def _process_text(session_id, text, llm, cala, transcript=None, context=No
         user, reply, profile = await handle_text(session_id, text, llm, transcript=transcript, cala=cala, context=context)
     except Exception as exc:
         logger.exception("chat: fallo procesando el mensaje")
-        raise HTTPException(502, "El modelo no respondió, intenta de nuevo.") from exc
+        raise HTTPException(502, "The model did not respond. Please try again.") from exc
     store.add_message(user)
     store.add_message(reply)
     if profile is not None:
@@ -79,15 +79,15 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
         form = await request.form()
         audio = form.get("audio")
         if not hasattr(audio, "read") or not hasattr(audio, "filename"):
-            raise HTTPException(415, "Tipo de audio no admitido.")
+            raise HTTPException(415, "Unsupported audio format.")
         allowed = {".m4a", ".webm", ".wav", ".mp3", ".ogg"}
         content_types = {"audio/mp4", "audio/x-m4a", "audio/webm", "audio/wav", "audio/x-wav", "audio/mpeg", "audio/ogg", "application/ogg"}
         suffix = Path(audio.filename or "").suffix.lower()
         if suffix not in allowed and audio.content_type not in content_types:
-            raise HTTPException(415, "Tipo de audio no admitido.")
+            raise HTTPException(415, "Unsupported audio format.")
         data = await audio.read(10 * 1024 * 1024 + 1)
         if len(data) > 10 * 1024 * 1024:
-            raise HTTPException(413, "El audio debe pesar 10 MB o menos.")
+            raise HTTPException(413, "Audio must be 10 MB or smaller.")
         fd, filename = tempfile.mkstemp(prefix="chat-audio-", suffix=suffix if suffix in allowed else ".audio")
         path = Path(filename)
         try:
@@ -103,15 +103,15 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
                 parameters = inspect.signature(transcriber).parameters
                 result = await transcriber(path, hint=hint, **({"mime": mime} if "mime" in parameters or any(p.kind == p.VAR_KEYWORD for p in parameters.values()) else {}))
             except Exception as exc:
-                if "no configurada" in str(exc).lower():
-                    raise HTTPException(503, "Transcripción no configurada") from exc
+                if "not configured" in str(exc).lower():
+                    raise HTTPException(503, "Transcription is not configured.") from exc
                 logger.exception("chat: fallo transcribiendo %s (%s, %d bytes)", audio.filename, audio.content_type, len(data))
-                raise HTTPException(502, "No se pudo transcribir el audio.") from exc
+                raise HTTPException(502, "Audio transcription failed.") from exc
             text = result.get("text", "").strip()
             if not text:
-                raise HTTPException(422, "No se entendió el audio.")
+                raise HTTPException(422, "Audio could not be understood.")
             if result.get("duration_s", 0) > 120:
-                raise HTTPException(413, "El audio debe durar 2 minutos o menos.")
+                raise HTTPException(413, "Audio must be 2 minutes or shorter.")
             transcript = result.get("transcript") or text
             return await _process_text(session_id, text, llm, cala, transcript=transcript)
         finally:
@@ -127,7 +127,7 @@ async def post_message(session_id: str, request: Request, llm=Depends(get_llm), 
         raise HTTPException(413, "Text must be 4000 characters or fewer.")
     context = payload.get("context") if isinstance(payload, dict) else None
     if context is not None and (not isinstance(context, dict) or ("journal_item_id" in context and not isinstance(context["journal_item_id"], str))):
-        raise HTTPException(400, "Context inválido.")
+        raise HTTPException(400, "Invalid context.")
     return await _process_text(session_id, text.strip(), llm, cala, context=context)
 
 

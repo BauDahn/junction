@@ -112,7 +112,7 @@ def test_cala_rows_preserve_values(monkeypatch):
     block = run(executor.execute("q", cala=None, llm=FakeLLM([])))
     assert block["columns"] == ["amount", "date"]
     assert block["rows"] == [["€50m", "2026-01-01"]]
-    assert block["title"] == "Amenitiz · ronda Series B"
+    assert block["title"] == "Amenitiz · funding round Series B"
 
 
 def test_sources_normalize_shape_and_deduplicate():

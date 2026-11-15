@@ -38,7 +38,7 @@ class NvidiaProvider:
         self.client = client
 
     async def complete_json(self, system, user, schema, images=None, audio=None):
-        if audio: raise RuntimeError("NvidiaProvider no admite audio")
+        if audio: raise RuntimeError("NvidiaProvider does not support audio.")
         content = [{"type": "text", "text": user}]
         for image in images or []:
             content.append({"type": "image_url", "image_url": {"url": "data:image/png;base64," + base64.b64encode(image).decode()}})
@@ -83,10 +83,10 @@ def _gemini_http_error(response, api_key):
         message = response.json().get("error", {}).get("message", "")
     except (ValueError, AttributeError, TypeError):
         message = ""
-    message = str(message or "Error sin detalle")
+    message = str(message or "Unspecified error")
     if api_key: message = message.replace(api_key, "[redactado]")
     message = re.sub(r"https?://\S+", "[URL omitida]", message)
-    return f"Gemini respondió HTTP {response.status_code}: {message[:300]}"
+    return f"Gemini returned HTTP {response.status_code}: {message[:300]}"
 
 
 class GeminiProvider:
@@ -144,14 +144,14 @@ class CodexProvider:
         self.timeout = float(timeout if timeout is not None else os.getenv("CODEX_TIMEOUT", "420"))
 
     async def complete_json(self, system, user, schema, images=None, audio=None):
-        if audio: raise RuntimeError("CodexProvider no admite audio")
+        if audio: raise RuntimeError("CodexProvider does not support audio.")
         binary = shutil.which("codex")
         if not binary:
             import glob
             candidates = glob.glob(str(Path.home() / ".nvm/versions/node/*/bin/codex"))
             binary = candidates[-1] if candidates else None
         if not binary:
-            raise RuntimeError("No se encontró el ejecutable codex")
+            raise RuntimeError("Codex executable was not found.")
         with tempfile.TemporaryDirectory(prefix="cala-llm-") as tmp:
             root = Path(tmp)
             schema_path, output = root / "schema.json", root / "out.json"
@@ -169,27 +169,27 @@ class CodexProvider:
                 stdout, stderr = await asyncio.wait_for(proc.communicate(), self.timeout)
             except asyncio.TimeoutError:
                 proc.kill(); await proc.wait()
-                raise RuntimeError(f"Codex excedió el timeout de {self.timeout:g} segundos")
+                raise RuntimeError(f"Codex timed out after {self.timeout:g} seconds.")
             if proc.returncode:
-                raise RuntimeError("codex exec falló: " + stderr.decode(errors="replace")[-1200:])
+                raise RuntimeError("codex exec failed: " + stderr.decode(errors="replace")[-1200:])
             result = output.read_text() if output.exists() else stdout.decode()
             return parse_json(result)
 
 
 class ClaudeProvider:
     async def complete_json(self, system, user, schema, images=None, audio=None):
-        if audio: raise RuntimeError("ClaudeProvider no admite audio")
+        if audio: raise RuntimeError("ClaudeProvider does not support audio.")
         if images:
             raise RuntimeError("ClaudeProvider solo admite texto")
         binary = shutil.which("claude")
         if not binary:
-            raise RuntimeError("No se encontró el ejecutable claude")
+            raise RuntimeError("Claude executable was not found.")
         proc = await asyncio.create_subprocess_exec(binary, "-p", "--output-format", "json", system + "\n\n" + user,
                                                     stdin=asyncio.subprocess.DEVNULL,
                                                     stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         stdout, stderr = await asyncio.wait_for(proc.communicate(), 180)
         if proc.returncode:
-            raise RuntimeError("claude falló: " + stderr.decode(errors="replace")[-1200:])
+                raise RuntimeError("claude failed: " + stderr.decode(errors="replace")[-1200:])
         return parse_json(json.loads(stdout)["result"])
 
 
