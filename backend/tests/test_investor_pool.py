@@ -2,8 +2,10 @@ import pytest
 
 from api.catalog_port import MemoryCatalog
 from api.graph_port import MemoryGraph
-from api.investor_pool import portfolio_investors, reset
-from api.candidates import build_feed
+from api.investor_pool import apply_evidence, portfolio_investors, reset
+from api.candidates import build_feed, candidate_for_entity
+from api.affinity import score_candidate
+from api.routes import _feedcard
 
 SOURCE = {"name": "Cala", "url": "https://cala.test"}
 
@@ -84,3 +86,46 @@ def test_raising_feed_uses_pool_rounds_without_duplicates_and_investing_unchange
     investing = build_feed("user", {"sector": "Fintech"}, "investing", catalog, graph)
     assert {row["id"] for row in investing["results"]} == {"startup-a", "startup-b"}
     assert "portfolio-only" not in {row["id"] for row in investing["results"]}
+
+
+def test_evidence_scales_low_deal_count_but_caps_at_nine_and_preserves_inputs():
+    candidate = {"id": "pool", "name": "Pool", "type": "investor",
+                "rounds": [{"sector": "Fintech", "sources": [SOURCE]}],
+                "attrs": {"sources": [SOURCE]}}
+    base = score_candidate({"sectors": ["Fintech"]}, candidate)
+    original_signals = [dict(signal) for signal in base["signals"]]
+    one = apply_evidence(base, {**candidate, "deals": 1})
+    nine = apply_evidence(base, {**candidate, "deals": 9})
+    many = apply_evidence(base, {**candidate, "deals": 15})
+    assert one["score"] < nine["score"]
+    assert one["signals"][-1]["value"] == pytest.approx(0.6 + 0.4 / 3.321928094887362)
+    assert "Based on 1 tracked deal(s)" in one["why_match"][-1]["text"]
+    assert nine["score"] == base["score"]
+    assert many["score"] == base["score"]
+    assert not any(signal["signal"] == "evidence" for signal in nine["signals"] + many["signals"])
+    assert base["signals"] == original_signals
+
+
+def test_pool_evidence_appears_in_feed_card_and_entity_detail():
+    catalog, graph = setup_graph()
+    feed = build_feed("user", {"sector": "Fintech", "location": "Finland"}, "raising", catalog, graph)
+    row = next(item for item in feed["results"] if item["id"] == "portfolio-only")
+    card = _feedcard(row)
+    evidence_text = "Based on 1 tracked deal(s) with Slush attendees; score scaled to 0.72"
+    assert evidence_text in card["why_match"]
+
+    detail = candidate_for_entity("portfolio-only", "user", {"sector": "Fintech", "location": "Finland"},
+                                  "raising", catalog, graph)
+    assert evidence_text in [signal["text"] for signal in detail["why_match"]]
+    assert detail["score"] == row["score"]
+
+
+def test_investor_with_features_is_not_evidence_scaled():
+    catalog, graph = setup_graph()
+    catalog = MemoryCatalog([*catalog.list_features("startup"),
+                             {"id": "fund", "name": "Fund", "kinds": ["investor"],
+                              "sectors": ["Fintech"], "sources": [SOURCE]}])
+    feed = build_feed("user", {"sector": "Fintech"}, "raising", catalog, graph)
+    fund = next(item for item in feed["results"] if item["id"] == "fund")
+    assert "deals" not in fund["_candidate"]
+    assert not any(signal["signal"] == "evidence" for signal in fund["signals"])

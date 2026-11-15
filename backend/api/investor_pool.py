@@ -1,5 +1,6 @@
 """Candidatos inversores reconstruidos desde las carteras del catálogo."""
 import os
+import math
 import re
 import threading
 import time
@@ -8,6 +9,23 @@ from .graph_port import neighbors_batch
 
 _LOCK = threading.Lock()
 _CACHE = {}
+
+
+def apply_evidence(result, candidate):
+    """Ajusta el puntaje según la cantidad de participaciones trazables."""
+    if "deals" not in candidate:
+        return result
+    deals = candidate["deals"]
+    factor = min(1, 0.6 + 0.4 * math.log2(1 + deals) / math.log2(10))
+    result = dict(result)
+    result["score"] = round(result["score"] * factor)
+    if factor < 1:
+        signal = {"signal": "evidence", "value": factor, "weight": 0,
+                  "text": f"Based on {deals} tracked deal(s) with Slush attendees; score scaled to {factor:.2f}",
+                  "sources": list((candidate.get("attrs") or {}).get("sources") or [])}
+        result["signals"] = list(result.get("signals") or []) + [signal]
+        result["why_match"] = list(result.get("why_match") or []) + [dict(signal)]
+    return result
 
 
 def reset():
