@@ -1,4 +1,4 @@
-# calado
+# CalaDo
 
 **A funding marketplace around events, built on [Cala](https://cala.ai)'s knowledge graph: startups find the investors worth meeting at an event, investors find the startups, and every fact on screen shows its Cala source.**
 
