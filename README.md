@@ -78,10 +78,9 @@ Claude plans and reviews, Codex writes the backend, Gemini is both the AI inside
 
 | Folder | What is in it |
 |---|---|
-| `app/` | Expo app (React Native + TypeScript) for web, iOS and Android |
+| `app/` | The web app (Expo, React Native and TypeScript today). The new version is being built with Gemini |
 | `backend/` | FastAPI API. `chat/`: sessions, messages, audio, profile. `cala_core/`: router and Cala queries. `api/`: feed, detail and affinity. `graph/`: shared graph on Valkey. `catalog/`: Slush ingestion. `core/`: shared LLM, config and Cala client modules.md) |
 | `canonizador/` | The query canonizer, the cache layers and the benchmarks. See [canonizador/README.md](canonizador/README.md) |
-| `n8n/` | n8n flows against the API |
 | `docs/` | API contract, Cala guides, benchmarks, error report, one page per challenge and the first Stitch design (superseded). Index in [CLAUDE.md](CLAUDE.md#documentos) |
 
 ## Run it

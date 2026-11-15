@@ -69,7 +69,7 @@ Si sobra tiempo: **Perfil** con favoritos y contexto (10 segundos).
 
 **OpenAI Codex: "built with Codex, directed by Claude"**
 - Claude diseña, revisa y prueba; Codex escribe el código; Gemini es la IA dentro del producto. Registro completo en `docs/CODEX.md` y `docs/PROCESO.md`.
-- Cada máquina exporta su `cx log` (tareas, modelo, minutos, tokens). **Falta el de Fabricio y el de Adrian.**
+- Cada máquina exporta su `cx log` (tareas, modelo, minutos, tokens). Ya están bau, gabriel y fabricio; adrian trabaja con Antigravity y no tiene registro de Codex.
 
 ## 6. Preguntas que nos van a hacer
 | Pregunta | Respuesta |
@@ -80,7 +80,7 @@ Si sobra tiempo: **Perfil** con favoritos y contexto (10 segundos).
 | ¿Los datos están actualizados? | Cada nodo guarda cuándo se cargó y la app lo muestra. Cala devuelve la fecha de cada fuente. |
 | ¿Funciona fuera de Slush? | El catálogo es de Slush por ser finito para la demo; el chat y el detalle consultan Cala en vivo para cualquier empresa. |
 | ¿Y el límite de uso de Cala? | Lo medimos: unas 1,4 llamadas por segundo sostenidas. Por eso el catálogo es precalculado y compartido. |
-| ¿Qué harían con más tiempo? | Camino de introducción entre personas, alertas de nuevas rondas con n8n, y pesos del afinidad aprendidos con datos reales. |
+| ¿Qué harían con más tiempo? | Camino de introducción entre personas, alertas de nuevas rondas, y pesos del afinidad aprendidos con datos reales. |
 
 ## 7. Lista antes de presentar (propietario: `bau`)
 - [ ] Catálogo cargado en Valkey y archivo de respaldo exportado.
@@ -88,6 +88,6 @@ Si sobra tiempo: **Perfil** con favoritos y contexto (10 segundos).
 - [ ] Pasos 4 y 5 precalentados en caché; probados sin red.
 - [ ] Video de reserva del recorrido completo (1 a 2 min).
 - [ ] Los **[CONFIRMAR]** de este documento resueltos y ensayo con cronómetro (3:00 de pitch más 2:00 de demo).
-- [ ] Fotos o capturas de las pantallas para las slides (salen de `docs/design/stitch/` y de la app real).
+- [ ] Fotos o capturas de las pantallas para las slides (salen de la web nueva ya corriendo).
 - [ ] Hora límite de entrega y formularios de Cala, Gemini, Aiven y Codex confirmados (sigue pendiente).
 - [ ] Registro de Codex de Fabricio y de Adrian en `docs/CODEX.md`.

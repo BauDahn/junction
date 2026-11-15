@@ -21,7 +21,7 @@ La nueva web la construye Gemini (Antigravity). **Pendientes de producto que NO 
 - **Aiven** (secundario): caché compartida de consultas a Cala en Aiven Valkey (`VALKEY_URL`, ver `canonizador/README.md`).
 - NVIDIA Nemotron: descartado como modelo principal (el endpoint que nos dieron nunca respondió); el proveedor queda en el código como alternativa.
 - **OpenAI Codex** (secundario): construimos con Codex; evidencia en `docs/CODEX.md` (registro de tareas exportado de `cx log` de cada máquina) y `docs/PROCESO.md`.
-- Candidatos sin decidir: Context.dev, CRACI. Descartado: bot de WhatsApp/Telegram con n8n (se reemplaza por el chat de la app).
+- Candidatos sin decidir: Context.dev, CRACI. Descartado: bot de WhatsApp/Telegram (se reemplaza por el asistente de la app).
 
 ## Equipo y coordinación
 | Máquina | Persona | Agentes | Rol |
@@ -54,17 +54,14 @@ La nueva web la construye Gemini (Antigravity). **Pendientes de producto que NO 
 6. Después de cada merge en `main`, la otra máquina hace `git pull --rebase` en su rama.
 
 ## Workstreams
-Una tarea por persona para cada eje; cada una es un issue con label `maquina:<nombre>`.
+Frentes de trabajo en este momento (15/11).
 
-| Eje | Qué es | Dueño |
+| Frente | Qué es | Quién |
 |---|---|---|
-| **Arquitectura** | Subgrafo local (nodos y aristas con fuente, BFS con cupo por nivel, filtro de nodos concentradores, unir duplicados como "Chalfen Ventures" y "CHALFEN VENTURES LLP"), definición del puntaje de afinidad | `bau` |
-| **Diseño y app** | Pasar el prototipo de Stitch a la app Expo: feed, detalle, chat, contexto y perfil, en inglés, con modo claro y oscuro | `adrian` |
-| **Optimizador** | Pausa por endpoint (8 s para query y search, ~0,5–1 s para entidades), espera corta tras un 429, concurrencia, medir y publicar los números | `fabricio` |
-| **Integración con Aiven** | Valkey como grafo compartido (nodos y aristas, no solo respuestas), vistas por usuario, precarga de la demo | `fabricio` |
-| **Contexto** | Subir PDF (pitch) y notas de voz; Gemini extrae sector, etapa, región y ticket; actualiza el perfil y el afinidad | `gabriel` |
-| **Otras herramientas y utilidades nuevas** | n8n: avisos de nuevas rondas y matches, resumen semanal; evaluar Context.dev y otras APIs; ideas de `docs/IDEAS-CALA.md` (camino de introducción, escalera de inversores) | `gabriel` |
-| **Presentación** | Pitch, guion de la demo, video, números del benchmark, slides del reto de Cala, Gemini, Aiven y Codex | `bau` con aporte de todos |
+| **Web nueva** | Registro con rol Raiser o Investor, Explorar y Mis eventos, asistente en burbuja, perfil (ver Producto) | Gemini, con `gabriel` |
+| **Backend** | Feed, detalle, búsqueda, respaldo en Cala, catálogo y grafo en Valkey | `bau` con Codex |
+| **Eventos en el catálogo** | Parametrizar el evento y las claves `cat:v1:*` por evento (hoy fijo a Slush 2026), ver `docs/ARQUITECTURA.md` sección 10 | siguiente, `bau` con Codex |
+| **Presentación** | PowerPoint y PDF del proyecto en `docs/presentation/`, pitch y demo en `docs/PITCH.md` | `bau` |
 
 ## Principios de calidad (decisión del 14/11 noche)
 **Menos cantidad, más calidad. Una app simple que se vea y se sienta bien vale más que muchas funciones a medias.**
@@ -116,15 +113,14 @@ Una tarea por persona para cada eje; cada una es un issue con label `maquina:<no
 
 ## Estado (14/11, noche)
 - En `main`: canonizador con límite de tasa compartido en Valkey, grafo compartido (`backend/graph/`), catálogo de Slush (`backend/catalog/`), feed y detalle con afinidad (`backend/api/`), chat con audio de Gemini y las páginas de cada reto (`docs/AIVEN.md`, `docs/CODEX.md`, `docs/GOOGLE-GEMINI.md`, `docs/PITCH.md`).
-- En revisión: la interfaz minimalista de `gabriel` (#90 a #93) y el contexto por PDF y voz (#73).
+- En construcción: la web nueva, con Gemini (`gabriel`). Quedan abiertos los PRs viejos de interfaz #90 a #93 y el de contexto #73, que la nueva web reemplaza o reabsorbe.
 - Equipo activo: `bau` y `gabriel`. `fabricio` y `adrian` en pausa.
 
 ## Pendientes
-- [ ] Interfaz (#80): mergear #90 a #93 tras revisar capturas; sacar los archivos de las pantallas viejas (Deck, Journal, Estado, Perfil como pestaña).
-- [ ] Contexto (#66, PR #73): sacar su cambio de `docs/CODEX.md`, rebasar y mergear.
-- [ ] Correr el catálogo de Slush completo contra Valkey (~55 min) y exportar el respaldo.
+- [ ] Web nueva (Gemini): registro con rol, eventos, asistente en burbuja, perfil; borrar del `app/` las pantallas viejas (Deck, Journal, Estado, Ask).
+- [ ] Parametrizar el catálogo por evento y correr el de Slush 2026 completo contra Valkey (~55 min); exportar el respaldo.
 - [ ] Textos del backend en inglés y no perder nombres en las notas de voz (#83).
-- [ ] Prueba de punta a punta de la app contra el backend en vivo (#53).
+- [ ] Prueba de punta a punta de la web nueva contra el backend en vivo (#53).
+- [ ] Capturas reales en la presentación y el PDF (`docs/presentation/`).
 - [ ] Preguntas al stand de Cala (`is_lead`, límite de uso, costo, otros eventos).
 - [ ] Confirmar hora límite de entrega y formularios de cada reto.
-- [ ] Slides y video del pitch (#69).

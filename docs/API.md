@@ -1,6 +1,6 @@
 # Contrato de la API (backend ↔ app)
 
-Fuente de verdad entre las dos personas: la app (`app/`) y el backend (`backend/`) se programan contra este documento. **Cambiar algo que no esté marcado *(borrador)* requiere un PR propio que el otro apruebe antes de implementarlo.** El porqué de los bloques y del journal está en `docs/PLAN-CALA-CENTRO.md`.
+Fuente de verdad entre las dos personas: la app (`app/`) y el backend (`backend/`) se programan contra este documento. **Cambiar algo que no esté marcado *(borrador)* requiere un PR propio que el otro apruebe antes de implementarlo.** El porqué de los bloques está en `docs/PLAN-CALA-CENTRO.md`.
 
 Base: `http://localhost:8000` en desarrollo (en la app, `EXPO_PUBLIC_API_URL`). JSON UTF-8. Errores: HTTP 4xx/5xx con `{"error": {"code": "...", "message": "..."}}`. CORS abierto en desarrollo.
 
@@ -12,7 +12,7 @@ Base: `http://localhost:8000` en desarrollo (en la app, `EXPO_PUBLIC_API_URL`). 
 - `CalaCall`: `{tool: knowledge_query|entity|knowledge_search, query: string}`. La consulta exacta enviada a Cala, para poder reproducirla.
 
 ## Bloques (lo que muestra la app) *(borrador, nuevo 14/11)*
-Las respuestas del chat y las secciones del journal son listas de `Block`. Todos los bloques de datos son **datos de Cala tal cual**; el modelo solo agrega, como mucho, `summary` (una línea).
+Las respuestas del chat son listas de `Block`. Todos los bloques de datos son **datos de Cala tal cual**; el modelo solo agrega, como mucho, `summary` (una línea).
 
 | `type` | Campos | Cuándo |
 |---|---|---|
@@ -27,7 +27,7 @@ Las respuestas del chat y las secciones del journal son listas de `Block`. Todos
 Una conversación por usuario. Manda texto o audio; el backend transcribe y el **router** (`backend/cala_core`) decide qué hacer con cada parte del mensaje: consultar Cala, verificar una afirmación o actualizar el perfil.
 - `POST /api/sessions` → `{session_id}` (sin login en la demo; la app guarda el id localmente)
 - `POST /api/sessions/{id}/messages`
-  - texto: JSON `{text}`; opcional `context: {journal_item_id}` cuando se pregunta desde el journal
+  - texto: JSON `{text}`
   - audio: multipart `audio` (m4a, webm, wav, mp3; ≤ 2 min)
   - → `{message: Message, reply: Message, profile_updated: bool, recommendations_status: idle|running|ready|error}`
 - `GET /api/sessions/{id}/messages` → `{messages: [Message]}`
@@ -49,15 +49,6 @@ Cala Match. Detalle de cómo se calcula el puntaje en `docs/SPEC-grafo-afinidad.
 ## Perfil y recomendaciones *(borrador)*
 - `GET /api/sessions/{id}/profile` → `{startup_name?, one_liner?, sector?, stage?, location?, raising?: {amount?, round?}, competitors: [string], target_customers?, role?: founder|investor|other, interests?: {sectors: [string], regions: [string], stages: [string], follows: {companies: [string], investors: [string]}}, facts: [{text, origin: user}], updated_at}`
 - `GET /api/sessions/{id}/recommendations` → `{status: idle|running|ready|error, updated_at, investors: [Card], competitors: [Card], prospects: [Card]}`
-
-## Journal diario *(borrador, nuevo 14/11)*
-Dos ediciones armadas solo con consultas a Cala. Se genera bajo demanda la primera vez del día y queda cacheado.
-- `GET /api/journal/ecosistema?date=YYYY-MM-DD` → `Journal` (edición genérica, la misma para todos)
-- `GET /api/sessions/{id}/journal?date=YYYY-MM-DD` → `Journal` (edición `founders`, según el perfil y los intereses de la sesión)
-- `POST /api/journal/ecosistema/regenerate` y `POST /api/sessions/{id}/journal/regenerate` → `{status: generating}` (para la demo)
-- `Journal`: `{edition: ecosistema|founders, date, status: generating|ready|error, generated_at?, progress?: {done, total}, sections: [Section], error?}`. Mientras `status` es `generating`, la app hace polling cada 2 s.
-- `Section`: `{id, title, description, items: [JournalItem]}`
-- `JournalItem`: `{id, is_new: bool, block: Block}`. `id` sirve para preguntar desde el journal (`context.journal_item_id` en el chat).
 
 ## Reglas
 - Todo dato que venga de Cala viaja con `sources`, y la app siempre las muestra.
