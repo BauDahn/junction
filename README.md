@@ -40,7 +40,7 @@ The app never invents an answer and never gives up after the first miss.
 
 - **Assistant:** if the canonizer fails or finds nothing, it tries Cala's entity lookup, then Cala's search, and only then answers "not found" with the list of what it tried.
 - **Dossier:** an investor or company outside the local graph is fetched live from Cala in one call, stored for next time and shown with its sources.
-- **Search:** `GET /api/search` looks in the local catalog first and then in Cala.
+- **Search:** `GET /api/search` looks in the local catalog first and then in Cala. Local catalog results are always available without an account, even with `CALA_REQUIRE_AUTH=1`.
 
 Measured against the live Cala API: search answers in 1.5 s, and a second look at the same entity makes zero Cala calls. Cala has no email, LinkedIn or phone for people, so the app never shows a contact it does not have.
 
@@ -107,6 +107,9 @@ uv run pytest
 
 # App (web; set EXPO_PUBLIC_API_URL to the PC IP for Expo Go)
 cd app && npm install && npx expo start --web
+
+# Export static web build for Vercel SPA (app/vercel.json)
+cd app && npm run build
 ```
 
 Set `CALA_API_KEY`, `GEMINI_API_KEY`, and `VALKEY_URL` only in `backend/.env` (template: `backend/.env.example`). Do not commit keys.
