@@ -5,6 +5,7 @@ import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from pydantic import BaseModel
 
 from chat import store
 from chat.profile import empty_profile
@@ -13,12 +14,35 @@ from chat.transcribe import hint_from_profile
 from core.llm import make_llm
 from core.pdf import read_pdf
 from .service import UNDERSTOOD_KEYS, _items, _parse_ticket_range, build_context_payload, extract_context, understood_from_profile, update_profile
+from accounts.routes import current_user
 
 router = APIRouter()
 MAX_PDF = 20 * 1024 * 1024
 MAX_AUDIO = 10 * 1024 * 1024
 AUDIO_SUFFIXES = {".m4a", ".webm", ".wav", ".mp3", ".ogg"}
 AUDIO_TYPES = {"audio/mp4", "audio/x-m4a", "audio/webm", "audio/wav", "audio/x-wav", "audio/mpeg", "audio/ogg", "application/ogg"}
+MAX_RAW_CONTEXT = 8000
+
+
+class RawContextInput(BaseModel):
+    text: str
+
+
+def _append_raw(session_id, line):
+    current = store.get_raw_context(session_id)["text"]
+    combined = f"{current}\n{line}" if current else line
+    if len(combined) > MAX_RAW_CONTEXT:
+        raise HTTPException(422, "Context must be 8000 characters or fewer.")
+    store.save_raw_context(session_id, combined)
+
+
+async def _update_profile_from_raw(session_id, text, llm):
+    try:
+        extracted = await extract_context(llm, text)
+    except Exception as exc:
+        raise HTTPException(502, "Context extraction failed.") from exc
+    profile, _ = update_profile(_profile(session_id), extracted, {"id": uuid.uuid4().hex, "kind": "text", "title": "Context", "subtitle": "Context updated"})
+    store.save_profile(session_id, profile)
 
 
 def get_llm(request: Request):
@@ -44,7 +68,39 @@ async def _save(session_id, llm, text, source, images=None):
         raise HTTPException(502, "Context extraction failed.") from exc
     profile, added = update_profile(_profile(session_id), extracted, source)
     store.save_profile(session_id, profile)
+    if source.get("kind") == "pdf":
+        summary = "; ".join(str(extracted.get(k)).strip() for k in ("one_liner", "sector", "stage", "location", "ticket") if extracted.get(k)) or "Pitch deck context"
+        line = f"From {source.get('title') or 'Pitch deck'}: {summary.splitlines()[0]}"
+    else:
+        line = text
+    _append_raw(session_id, line)
     return build_context_payload(session_id, profile, added)
+
+
+@router.get("/api/me/context/raw")
+async def get_raw_context(user=Depends(current_user)):
+    return store.get_raw_context(user["session_id"])
+
+
+@router.put("/api/me/context/raw")
+async def put_raw_context(body: RawContextInput, user=Depends(current_user), llm=Depends(get_llm)):
+    if len(body.text) > MAX_RAW_CONTEXT:
+        raise HTTPException(422, "Context must be 8000 characters or fewer.")
+    saved = store.save_raw_context(user["session_id"], body.text)
+    await _update_profile_from_raw(user["session_id"], body.text, llm)
+    return saved | {"profile_updated": True}
+
+
+@router.post("/api/me/context/raw/append")
+async def append_raw_context(body: RawContextInput, user=Depends(current_user), llm=Depends(get_llm)):
+    session_id = user["session_id"]
+    current = store.get_raw_context(session_id)["text"]
+    combined = f"{current}\n{body.text}" if current else body.text
+    if len(combined) > MAX_RAW_CONTEXT:
+        raise HTTPException(422, "Context must be 8000 characters or fewer.")
+    saved = store.save_raw_context(session_id, combined)
+    await _update_profile_from_raw(session_id, combined, llm)
+    return saved | {"profile_updated": True}
 
 
 @router.get("/api/sessions/{session_id}/context")
@@ -119,7 +175,7 @@ async def post_note(session_id: str, request: Request, llm=Depends(get_llm)):
     if not isinstance(text, str) or not text.strip(): raise HTTPException(400, "Text must not be empty.")
     if len(text) > 8000: raise HTTPException(413, "Text must be 8000 characters or fewer.")
     title = body.get("title") if isinstance(body.get("title"), str) and body.get("title").strip() else "Note"
-    return await _save(session_id, llm, text.strip(), {"id": uuid.uuid4().hex, "kind": "note", "title": title, "subtitle": "Note analyzed"})
+    return await _save(session_id, llm, text, {"id": uuid.uuid4().hex, "kind": "note", "title": title, "subtitle": "Note analyzed"})
 
 
 @router.patch("/api/sessions/{session_id}/context/understood")

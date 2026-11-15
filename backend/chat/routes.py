@@ -43,6 +43,48 @@ def _session(session_id):
         raise HTTPException(404, "Session not found.")
 
 
+@router.post("/api/transcribe")
+async def preview_transcription(request: Request, transcriber=Depends(get_transcriber)):
+    form = await request.form()
+    audio = form.get("audio")
+    allowed = {".m4a", ".webm", ".wav", ".mp3", ".ogg"}
+    content_types = {"audio/mp4", "audio/x-m4a", "audio/webm", "audio/wav", "audio/x-wav", "audio/mpeg", "audio/ogg", "application/ogg"}
+    if not hasattr(audio, "read") or not hasattr(audio, "filename"):
+        raise HTTPException(415, "Unsupported audio format.")
+    suffix = Path(audio.filename or "").suffix.lower()
+    if suffix not in allowed and audio.content_type not in content_types:
+        raise HTTPException(415, "Unsupported audio format.")
+    data = await audio.read(10 * 1024 * 1024 + 1)
+    if not data:
+        raise HTTPException(422, "Audio could not be understood.")
+    if len(data) > 10 * 1024 * 1024:
+        raise HTTPException(413, "Audio must be 10 MB or smaller.")
+    fd, filename = tempfile.mkstemp(prefix="transcribe-preview-", suffix=suffix if suffix in allowed else ".audio")
+    path = Path(filename)
+    try:
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(data)
+        try:
+            parameters = inspect.signature(transcriber).parameters
+            kwargs = {"hint": None}
+            if "mime" in parameters or any(p.kind == p.VAR_KEYWORD for p in parameters.values()):
+                kwargs["mime"] = transcription.mime_for(audio.filename, audio.content_type)
+            result = await transcriber(path, **kwargs)
+        except Exception as exc:
+            if "not configured" in str(exc).lower():
+                raise HTTPException(503, "Transcription is not configured.") from exc
+            raise HTTPException(502, "Audio transcription failed.") from exc
+        transcript = str(result.get("transcript") or result.get("text") or "").strip()
+        text = str(result.get("text") or transcript).strip()
+        if not transcript or not text:
+            raise HTTPException(422, "Audio could not be understood.")
+        if result.get("duration_s", 0) > 120:
+            raise HTTPException(413, "Audio must be 2 minutes or shorter.")
+        return {"transcript": transcript, "text": text}
+    finally:
+        path.unlink(missing_ok=True)
+
+
 @router.post("/api/sessions")
 async def create_session():
     from uuid import uuid4
