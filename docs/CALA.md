@@ -2,7 +2,7 @@
 
 **Short version:** Cala is the only source of facts in calado. Every investor, startup, round, lead investor, person and number on screen comes from Cala and carries its source. Gemini only interprets what the user says. Building on Cala, we measured that its knowledge endpoints answer the same question differently depending on wording, so we built a **canonizer** that turns any phrasing into one canonical query (9 of 9 questions consistent, against 0 to 1 of 9 without it). We then wrapped Cala in a local graph, a shared cache and call caps, so the app is fast and cannot exhaust the API key.
 
-All numbers were measured on 14–15 November 2026 against the real API (`https://api.cala.ai/v1`). The full evidence is in Spanish in [BENCHMARK-CANONIZADOR.md](BENCHMARK-CANONIZADOR.md) and [INFORME-ERROR-CALA.md](INFORME-ERROR-CALA.md); this page summarizes it in English.
+All numbers were measured on 14–15 November 2026 against the real API (`https://api.cala.ai/v1`). The full evidence is in [BENCHMARK-CANONIZER.md](BENCHMARK-CANONIZER.md) and [CALA-CONSISTENCY-REPORT.md](CALA-CONSISTENCY-REPORT.md); this page summarizes it.
 
 ## 1. Which Cala endpoints we use, and for what
 
@@ -102,7 +102,7 @@ Cala's knowledge endpoints take 16–60 s and entity calls about 1 s; ten entity
 | Accounts for live calls | With `CALA_REQUIRE_AUTH=1` (set on the public backend) only signed-in users trigger live Cala calls; local catalog data stays available | `backend/api/routes.py`, `backend/chat/routes.py` |
 | Usage visible | `/api/stats` reports Cala calls by class and by machine, with `ADMIN_TOKEN` | `backend/api/routes.py` |
 
-Measured effect of the client optimizer: with the old fixed 8 s pause, 19 calls took 162 s. With per-class pacing, 40 distinct entity lookups ran at 1.89 calls/s and 30 at 1.33 calls/s, with **zero 429s** in three runs. Two processes sharing the Valkey rate limit made 40 calls in 27.9 s (1.43 calls/s combined) with zero 429s ([PROCESO.md](PROCESO.md)).
+Measured effect of the client optimizer: with the old fixed 8 s pause, 19 calls took 162 s. With per-class pacing, 40 distinct entity lookups ran at 1.89 calls/s and 30 at 1.33 calls/s, with **zero 429s** in three runs. Two processes sharing the Valkey rate limit made 40 calls in 27.9 s (1.43 calls/s combined) with zero 429s ([PROCESS.md](PROCESS.md)).
 
 **Live fallback, never a dead end.**
 

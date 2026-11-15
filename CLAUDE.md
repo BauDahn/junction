@@ -1,130 +1,130 @@
-# Junction 2026: proyecto del equipo
+# Junction 2026: team project
 
-Hackathon Junction 2026, Espoo (Finlandia), del 13 al 15 de noviembre de 2026. Somos **cuatro personas (Bau, Fabricio, Gabriel y Adrian), cada una con su máquina y sus agentes**, trabajando en paralelo sobre este repo. Este archivo lo leen todos los agentes: Claude (`CLAUDE.md`), Codex (`AGENTS.md`) y los de Google (`GEMINI.md`); los tres nombres apuntan al mismo archivo. Respondé en español.
+Junction 2026 hackathon, Espoo (Finland), November 13–15, 2026. We are **four people (Bau, Fabricio, Gabriel, and Adrian), each with their own machine and agents**, working in parallel on this repo. This file is read by all agents: Claude (`CLAUDE.md`), Codex (`AGENTS.md`), and Google's agents (`GEMINI.md`); all three names point to the same file. Respond in Spanish.
 
-## Producto (forma final, 15/11: Cala Match)
-**Marketplace de financiación alrededor de eventos, sobre el grafo de Cala. Toda la app en inglés.** El README tiene la versión pública. El prompt que se le dio a Gemini para la nueva web está resumido aquí.
-1. **Registro:** al registrarse se elige **Raiser** (startup que busca financiación) o **Investor**; es requisito para entrar y decide lo que muestra cada pantalla. Solo el modo Raiser está especificado; el de Investor es el espejo (startups a las que ver).
-2. **Eventos** (cuadrados con imagen, nombre, eslogan y fecha), dos pestañas:
-   - **Explorar eventos:** todos los eventos; se guarda uno como "asisto" o no; si se guarda pasa a Mis eventos.
-   - **Mis eventos:** al entrar en un evento, los **inversores recomendados** por el motor de afinidad y, por cada uno, una **carta de cómo plantear el contacto**. Al pinchar un inversor, una ficha muy simple con lo que da Cala (empresa, industria, factores importantes como los fondos) y **cómo conseguir la inversión**, según las inversiones previas, horarios y datos de Cala.
-3. **Asistente:** no hay pestaña Ask. Una **mascota en burbuja** abajo a la derecha abre un panel superpuesto con chat por texto y voz: pregunta por empresas (Cala + canonizador), **modifica el contexto** (lo que usa el motor de recomendación) y hace **atajos** ("quiero ir a Slush 2026" lo agrega a favoritos).
-4. **Perfil:** contexto, inversores favoritos y datos personales. Simple y minimalista.
-5. **Respaldo si no está en el grafo:** el chat nunca falla (canonizador, entidad, búsqueda, `not_found` con lo intentado); el detalle se trae de Cala en vivo y se guarda; `GET /api/search` mira el catálogo y luego Cala.
-6. **Subgrafo local sobre Cala y afinidad:** como en `docs/ARQUITECTURA.md` y `docs/SPEC-grafo-afinidad.md`. Datos de eventos: Slush 2026 tiene 2.990 empresas participantes con personas; Slush 2025 solo 8 speakers.
+## Product (final form, 15/11: Cala Match)
+**A financing marketplace around events, built on Cala's graph. The entire app is in English.** The README has the public version. The prompt given to Gemini for the new web app is summarized here.
+1. **Registration:** during sign-up, choose **Raiser** (a startup seeking funding) or **Investor**; this is required to enter and determines what each screen shows. Only Raiser mode is specified; Investor mode is its mirror (startups to browse).
+2. **Events** (squares with an image, name, tagline, and date), two tabs:
+   - **Explore events:** all events; save one as "attending" or not; saved events appear under My events.
+   - **My events:** when entering an event, see the **investors recommended** by the affinity engine and, for each one, a **note on how to approach them**. Clicking an investor opens a very simple profile with the information Cala provides (company, industry, important factors such as funds) and **how to secure the investment**, based on previous investments, schedules, and Cala data.
+3. **Assistant:** there is no Ask tab. A **mascot bubble** in the bottom-right opens an overlay panel with text and voice chat: ask about companies (Cala + canonicalizer), **modify the context** (what the recommendation engine uses), and perform **shortcuts** ("quiero ir a Slush 2026" ("I want to go to Slush 2026") adds it to favorites).
+4. **Profile:** context, favorite investors, and personal details. Simple and minimal.
+5. **Fallback when something is not in the graph:** chat never fails (canonicalizer, entity, search, `not_found` with what was tried); details are fetched live from Cala and saved; `GET /api/search` checks the catalog and then Cala.
+6. **Local subgraph over Cala and affinity:** as in `docs/ARCHITECTURE.md` and `docs/SPEC-GRAPH-AFFINITY.md`. Event data: Slush 2026 has 2,990 participating companies with people; Slush 2025 has only 8 speakers.
 
-La nueva web la construye Gemini (Antigravity). **Pendientes de producto que NO están en ese prompt** y quedan como ideas: planificador de reuniones en documento, aviso de "20 minutos libres". Fuera del producto: el verificador de decks y el journal. Cala es el núcleo; todo dato de Cala se muestra con su fuente.
+Gemini (Antigravity) is building the new web app. **Product items NOT in that prompt** remain ideas: a meeting planner in a document, and a "20 minutes free" notice. Outside the product: the deck checker and the journal. Cala is the core; all Cala data is shown with its source.
 
-## Retos
-- **Principal: Cala** (25% cada uno: necesidad real, ejecución end-to-end, originalidad, Cala como núcleo). Slush empieza justo después: usable al día siguiente.
-- **Google Gemini** (secundario, desde el 14/11): Gemini es la IA del producto (router, audio, intención, juez). El reto pide un uso significativo e innovador y explicar por qué Gemini importa en la solución.
-- **Aiven** (secundario): caché compartida de consultas a Cala en Aiven Valkey (`VALKEY_URL`, ver `canonizador/README.md`).
-- NVIDIA Nemotron: descartado como modelo principal (el endpoint que nos dieron nunca respondió); el proveedor queda en el código como alternativa.
-- **OpenAI Codex** (secundario): construimos con Codex; evidencia en `docs/CODEX.md` (registro de tareas exportado de `cx log` de cada máquina) y `docs/PROCESO.md`.
-- Candidatos sin decidir: Context.dev, CRACI. Descartado: bot de WhatsApp/Telegram (se reemplaza por el asistente de la app).
+## Challenges
+- **Primary: Cala** (25% each: real need, end-to-end execution, originality, Cala as the core). Slush starts right after: usable the next day.
+- **Google Gemini** (secondary, from 14/11): Gemini is the product's AI (router, audio, intent, judge). The challenge asks for a meaningful and innovative use and an explanation of why Gemini matters to the solution.
+- **Aiven** (secondary): shared cache for Cala queries in Aiven Valkey (`VALKEY_URL`, see `canonizador/README.md`).
+- NVIDIA Nemotron: ruled out as the primary model (the endpoint they gave us never responded); the provider remains in the code as an alternative.
+- **OpenAI Codex** (secondary): we are building with Codex; evidence is in `docs/CODEX.md` (task log exported from `cx log` on each machine) and `docs/PROCESS.md`.
+- Candidates not yet decided: Context.dev, CRACI. Ruled out: WhatsApp/Telegram bot (replaced by the in-app assistant).
 
-## Equipo y coordinación
-| Máquina | Persona | Agentes | Rol |
+## Team and coordination
+| Machine | Person | Agents | Role |
 |---|---|---|---|
-| `bau` | Bau | Claude, Codex, Gemini | Miembro. Tiene en su portátil el backend público de la demo y el túnel |
-| `fabricio` | Fabricio | Claude (orquestador), Codex, Gemini | **Dirige desde el 15/11:** reparte, revisa y mergea todo |
-| `gabriel` | Gabriel | Antigravity (Gemini) y Codex | Miembro: marca calado e interfaz |
-| `adrian` | Adrian | Antigravity | Miembro: despliegue en Vercel, registro y perfil |
+| `bau` | Bau | Claude, Codex, Gemini | Member. The public demo backend and tunnel run on his laptop |
+| `fabricio` | Fabricio | Claude (orchestrator), Codex, Gemini | **Leads since 15/11:** assigns, reviews, and merges everything |
+| `gabriel` | Gabriel | Antigravity (Gemini) and Codex | Member: brand calado and interface |
+| `adrian` | Adrian | Antigravity | Member: Vercel deployment, registration, and profile |
 
-- **Todo se coordina por GitHub**, que es lo único que ven las cuatro máquinas: issue fijo #1 "Estado del equipo" (estado de cada máquina y mensajes), issues con label `maquina:<nombre>` (tareas) y PRs.
-- Con [claude-central](https://github.com/BauDahn/claude-central) instalado se usa el comando `equipo` (`equipo mias`, `equipo mensajes`, `equipo avisar bau "..."`, `equipo publicar`). **Sin claude-central** (por ejemplo, con un agente de Google) se hace lo mismo con `gh`: `gh issue list --label maquina:<nombre>` para ver tus tareas, y un comentario en el issue #1 que empiece con `**<nombre> → bau:**` para avisar. El script `equipo` es un solo archivo de Python que solo necesita `gh`; se puede usar suelto.
-- **Antes de empezar algo que no te asignaron, avisá al orquestador** (comentario en #1 o `equipo avisar bau`), para no duplicar trabajo. Ya pasó.
-- El orquestador responde y reparte por el mismo canal. Las claves (`CALA_API_KEY`, `GEMINI_API_KEY`, `VALKEY_URL`) se pasan por privado, nunca por GitHub.
+- **Everything is coordinated through GitHub**, the only thing all four machines can see: fixed issue #1 "Team status" (each machine's status and messages), issues labeled `maquina:<nombre>` (tasks), and PRs.
+- With [claude-central](https://github.com/BauDahn/claude-central) installed, use the `equipo` command (`equipo mias`, `equipo mensajes`, `equipo avisar bau "..."`, `equipo publicar`). **Without claude-central** (for example, with a Google agent), do the same with `gh`: `gh issue list --label maquina:<nombre>` to see your tasks, and a comment on issue #1 starting with `**<nombre> → bau:**` to send a message. The `equipo` script is a single Python file that only needs `gh`; it can be used standalone.
+- **Before starting work that was not assigned to you, notify the orchestrator** (comment on #1 or `equipo avisar bau`) to avoid duplication. This has happened before.
+- The orchestrator replies and assigns work in the same channel. Keys (`CALA_API_KEY`, `GEMINI_API_KEY`, `VALKEY_URL`) are shared privately, never through GitHub.
 
-### Dueños de cada área (15/11, los cuatro activos)
-| Área | Dueño |
+### Area owners (15/11, all four active)
+| Area | Owner |
 |---|---|
-| `app/`: tema, navegación, eventos, inversores, asistente | `fabricio` |
-| `app/`: registro, perfil con texto, voz con vista previa | `adrian` |
-| `backend/catalog/`, `backend/graph/`, `backend/api/`, `backend/accounts/`, `backend/context/`, `backend/chat/`, `canonizador/`, `docs/`, `CLAUDE.md`, `README.md` | `bau` con Codex |
+| `app/`: theme, navigation, events, investors, assistant | `fabricio` |
+| `app/`: registration, text profile, voice with preview | `adrian` |
+| `backend/catalog/`, `backend/graph/`, `backend/api/`, `backend/accounts/`, `backend/context/`, `backend/chat/`, `canonizador/`, `docs/`, `CLAUDE.md`, `README.md` | `bau` with Codex |
 
-**Quién mergea:** `fabricio` revisa y mergea todos los PRs (squash), después de correr los tests. `gabriel` abre PRs chicos, uno por pantalla, con capturas a 390 px. Al mergear, `bau` avisa en el issue #1.
+**Who merges:** `fabricio` reviews and merges all PRs (squash), after running the tests. `gabriel` opens small PRs, one per screen, with screenshots at 390 px. After merging, `bau` posts in issue #1.
 
-### Flujo de Git (obligatorio)
-1. Toda tarea es un **issue** (`equipo asignar <maquina> "título" --cuerpo "qué, criterio de hecho"`).
-2. Rama desde `main` actualizado: `git switch main && git pull && git switch -c <maquina>/<issue>-<slug>` (ej. `bau/12-chat-audio`).
-3. Commits chicos. **Nunca commitear a `main` ni hacer force-push a ramas ajenas.**
-4. Antes del PR: `git fetch && git rebase origin/main`, tests en verde.
-5. PR con `gh pr create --fill --body "Closes #<issue>"`; avisar al otro (`equipo avisar <maquina> "PR #N"`). Revisa el otro o el orquestador; merge con **squash**. Apuntar a PRs de < 2 h de trabajo.
-6. Después de cada merge en `main`, la otra máquina hace `git pull --rebase` en su rama.
+### Git workflow (required)
+1. Every task is an **issue** (`equipo asignar <machine> "title" --cuerpo "what, definition of done"`).
+2. Branch from an up-to-date `main`: `git switch main && git pull && git switch -c <maquina>/<issue>-<slug>` (e.g. `bau/12-chat-audio`).
+3. Small commits. **Never commit to `main` or force-push to someone else's branch.**
+4. Before the PR: `git fetch && git rebase origin/main`, with tests passing.
+5. PR with `gh pr create --fill --body "Closes #<issue>"`; notify the other person (`equipo avisar <maquina> "PR #N"`). The other person or orchestrator reviews it; merge with **squash**. Aim for PRs requiring less than 2 hours of work.
+6. After each merge into `main`, the other machine runs `git pull --rebase` on its branch.
 
 ## Workstreams
-Frentes de trabajo en este momento (15/11).
+Current workstreams (15/11).
 
-| Frente | Qué es | Quién |
+| Workstream | What it is | Who |
 |---|---|---|
-| **Interfaz** | Modo oscuro, color #006CFF, barra con iconos, eventos, inversores, asistente vacío y solo icono, y los bloqueantes del PR #104 | `fabricio` (#107) |
-| **Cuentas y contexto en la interfaz** | Registro con correo y rol fijo, perfil con el contexto como texto, voz con vista previa y 'Add to context' | `adrian` (#112) |
-| **Datos** | Errores 402 de Cala en el catálogo, inversores de Slush desde el grafo, eventos reales y guardados por usuario | `bau` con Codex (#111) |
-| **Central** | Revisión y merge, backend de cuentas y contexto (hecho: #109, #110), documentación, presentación | `bau` |
+| **Interface** | Dark mode, #006CFF color, icon bar, events, investors, empty assistant with icon only, and blockers from PR #104 | `fabricio` (#107) |
+| **Accounts and context in the interface** | Email registration with a fixed role, profile with context as text, voice with preview and 'Add to context' | `adrian` (#112) |
+| **Data** | Cala 402 errors in the catalog, Slush investors from the graph, real events and per-user saved events | `bau` with Codex (#111) |
+| **Central** | Review and merge, accounts and context backend (done: #109, #110), documentation, presentation | `bau` |
 
-## Principios de calidad (decisión del 14/11 noche)
-**Menos cantidad, más calidad. Una app simple que se vea y se sienta bien vale más que muchas funciones a medias.**
-- La app tiene una **barra inferior con tres pestañas**: Mis eventos, Explorar eventos y Perfil (el contexto vive dentro del perfil). El asistente es una burbuja flotante (solo el ícono) que abre el chat. Más la página del evento y la ficha de la empresa.
-- **Fuera de la app y del repo:** Deck, Journal y la pantalla de estado. Los archivos de esas pantallas se borran, no se esconden.
-- Antes de sumar una función, preguntarse si mejora la primera pantalla de la demo. Si no, no entra; va a la lista "después" de `docs/PITCH.md`.
-- Terminar una pantalla es que se vea bien en teléfono, tenga estados vacío, de carga y de error con texto humano, y esté probada con datos reales. No se mergea una pantalla a medias aunque "ya funcione".
-- **Diseño minimalista y humano.** Las reglas están en el issue de rediseño de la app (un solo acento de color, sin degradados ni brillos, poca sombra, texto específico en lugar de eslóganes, nada de tarjetas dentro de tarjetas). Los PRs de interfaz llevan capturas a 390 px de ancho y Claude las revisa antes de mergear.
+## Quality principles (decision on the night of 14/11)
+**Less quantity, more quality. A simple app that looks and feels good is worth more than many half-finished features.**
+- The app has a **bottom bar with three tabs**: My events, Explore events, and Profile (context lives inside the profile). The assistant is a floating bubble (icon only) that opens the chat. Plus the event page and company profile.
+- **Out of the app and repo:** Deck, Journal, and the status screen. The files for those screens are deleted, not hidden.
+- Before adding a feature, ask whether it improves the demo's first screen. If not, it does not go in; it goes on the "later" list in `docs/PITCH.md`.
+- A screen is finished when it looks good on a phone, has empty, loading, and error states with human-friendly text, and has been tested with real data. A half-finished screen is not merged even if it "already works."
+- **Minimal, human design.** The rules are in the app redesign issue (one accent color, no gradients or glow, minimal shadow, specific text instead of slogans, no cards inside cards). Interface PRs include screenshots at 390 px wide, and Claude reviews them before merging.
 
-## Cómo trabajamos: tres roles (decisión del 14/11)
-| Quién | Rol | Qué hace | Qué no hace |
+## How we work: three roles (decision on 14/11)
+| Who | Role | What they do | What they don't do |
 |---|---|---|---|
-| **Claude** | Orquestador y arquitecto | Diseña (specs, contrato de la API, planes), reparte tareas, revisa diffs y PRs, prueba contra los servicios reales, coordina las máquinas y mantiene la documentación | **No escribe código de la aplicación.** Ni arreglos chicos: todo cambio de código se le pide a Codex |
-| **Codex** | Programador | Escribe y corrige todo el código (backend, app, canonizador, tests) a partir de tareas concretas | No decide arquitectura ni hace commits, push o cambios de rama |
-| **Gemini** | IA dentro del producto | Todos los servicios de IA en tiempo de ejecución: clasificar mensajes (router), extraer intenciones, transcribir y entender audio, elegir filas y juzgar afirmaciones | No se usa Codex ni Claude como modelo del producto (quedan solo como respaldo) |
+| **Claude** | Orchestrator and architect | Designs (specs, API contract, plans), assigns tasks, reviews diffs and PRs, tests against real services, coordinates the machines, and maintains documentation | **Does not write application code.** Not even small fixes: all code changes are assigned to Codex |
+| **Codex** | Programmer | Writes and fixes all code (backend, app, canonicalizer, tests) from concrete tasks | Does not decide architecture or make commits, push, or branch changes |
+| **Gemini** | AI inside the product | All runtime AI services: classify messages (router), extract intents, transcribe and understand audio, select rows, and judge claims | Codex or Claude are not used as the product model (they remain only as fallback) |
 
-- Delegar a Codex con `cx` (ver `cx roles`): `cx <rol> -C ~/proyectos/junction -p junction "<tarea concreta con criterio de hecho y cómo verificar>"`. Correcciones con `cx seguir <hilo> "..."` (hilos largos se encarecen: para algo nuevo, hilo nuevo). Si Codex queda colgado sin tocar archivos, cortarlo y relanzar.
-- Claude revisa leyendo solo lo que cambió (`git diff`), corre los tests y las pruebas reales, y hace los commits, push y PRs.
-- **Gemini**: modelo rápido (`GEMINI_FAST_MODEL`, por defecto `gemini-3.5-flash-lite`: ~1 s por llamada, 3/3 en la prueba del router) para router, intención y foco; modelo fuerte (`GEMINI_MODEL`, por defecto `gemini-flash-latest`) para el juez. Medido el 14/11 con la clave del equipo.
-- **Tokens:** no leer docs enteros si no hace falta; `rg` y lecturas parciales.
+- Delegate to Codex with `cx` (see `cx roles`): `cx <role> -C ~/proyectos/junction -p junction "<concrete task with definition of done and how to verify>"`. Corrections with `cx seguir <hilo> "..."` (long threads get expensive: use a new thread for new work). If Codex hangs without touching files, stop it and relaunch.
+- Claude reviews by reading only what changed (`git diff`), runs tests and real-world checks, and makes commits, pushes, and PRs.
+- **Gemini**: fast model (`GEMINI_FAST_MODEL`, default `gemini-3.5-flash-lite`: ~1 s per call, 3/3 in the router test) for router, intent, and focus; stronger model (`GEMINI_MODEL`, default `gemini-flash-latest`) for the judge. Measured on 14/11 with the team's key.
+- **Tokens:** don't read entire docs unless needed; use `rg` and partial reads.
 
-## Cómo correr
+## How to run
 - Backend: `cd backend && uv sync && uv run uvicorn app:app --port 8000` Tests: `uv run pytest`.
-- App: `cd app && npm install && npx expo start` (web: tecla `w`; en Expo Go, `EXPO_PUBLIC_API_URL` con la IP del PC). La app tiene modo simulado si el backend no responde.
-- Todo junto: backend en `:8000` y app web; el chat completo (texto, audio, perfil, recomendaciones con fuentes) ya está en `main`.
+- App: `cd app && npm install && npx expo start` (web: press `w`; in Expo Go, set `EXPO_PUBLIC_API_URL` to the PC's IP). The app has a mock mode if the backend does not respond.
+- Everything together: backend on `:8000` and web app; the complete chat (text, audio, profile, recommendations with sources) is already on `main`.
 
-## Reglas técnicas
-- **Secretos**: `CALA_API_KEY`, `NVIDIA_API_KEY` solo en `backend/.env` (ignorado por git; plantilla en `backend/.env.example`). Nunca leerlos, imprimirlos, loguearlos ni ponerlos en prompts o commits.
-- **Cala**: el código nuevo consulta Cala **a través del canonizador** (`canonizador/`), nunca mandando el texto del usuario directo: el texto libre da respuestas distintas para la misma pregunta (`docs/BENCHMARK-CANONIZADOR.md`). Endpoints: `knowledge/query` (filas), entidades (datos con fuentes y `is_lead`), `knowledge/search` (respuesta con fuentes, último recurso). **16–60 s por llamada** y HTTP 429 tras ~7 llamadas seguidas: caché en disco (`backend/cache/`, ignorada), pocas llamadas a la vez y reintentos con espera. Detalle en `docs/internal/CALA-CAMPOS.md` y `docs/internal/CALA-API.md`.
-- **LLM**: `LLM_PROVIDER` = `gemini` (por defecto si hay `GEMINI_API_KEY`) | `nvidia` | `codex` | `claude` (`backend/core/llm.py`). Claves solo en `backend/.env`.
-- **Transcripción**: Gemini por defecto si hay `GEMINI_API_KEY` (una llamada para transcripción literal e intención limpia, con respaldo a faster-whisper local, modelo `WHISPER_MODEL`, por defecto `small`); si no, whisper si está instalado, o `none`. `TRANSCRIPTION_PROVIDER` permite elegir `gemini` | `whisper` | `nvidia` | `none`. Ver `backend/chat/transcribe.py`.
-- No crear repos ni desplegar sin aprobación del usuario. Antes de dar algo por terminado, correr la app o los tests y decir qué se verificó.
+## Technical rules
+- **Secrets**: `CALA_API_KEY`, `NVIDIA_API_KEY` only in `backend/.env` (ignored by git; template in `backend/.env.example`). Never read, print, log, or put them in prompts or commits.
+- **Cala**: new code queries Cala **through the canonicalizer** (`canonizador/`), never by sending the user's raw text directly: free text gives different answers for the same question (`docs/BENCHMARK-CANONIZER.md`). Endpoints: `knowledge/query` (rows), entities (data with sources and `is_lead`), `knowledge/search` (answer with sources, last resort). **16–60 s per call** and HTTP 429 after ~7 consecutive calls: disk cache (`backend/cache/`, ignored), few concurrent calls, and retries with a delay. Details in `docs/internal/CALA-CAMPOS.md` and `docs/internal/CALA-API.md`.
+- **LLM**: `LLM_PROVIDER` = `gemini` (default if `GEMINI_API_KEY` is set) | `nvidia` | `codex` | `claude` (`backend/core/llm.py`). Keys only in `backend/.env`.
+- **Transcription**: Gemini by default if `GEMINI_API_KEY` is set (one call for literal transcription and clean intent, with fallback to local faster-whisper, model `WHISPER_MODEL`, default `small`); otherwise whisper if installed, or `none`. `TRANSCRIPTION_PROVIDER` lets you choose `gemini` | `whisper` | `nvidia` | `none`. See `backend/chat/transcribe.py`.
+- Do not create repos or deploy without the user's approval. Before calling something finished, run the app or tests and say what was verified.
 
-## Documentos
-| Documento | Qué tiene |
+## Documents
+| Document | Contents |
 |---|---|
-| `docs/internal/PLAN-CALA-CENTRO.md` | El motor: router de mensajes, consultas a Cala, bloques y reparto |
-| `docs/API.md` | Contrato backend ↔ app |
-| `docs/internal/CALA-CAMPOS.md` | Guía oficial de campos de Cala (entidades, rondas, `is_lead`, Slush 2026) |
-| `docs/internal/CALA-SKILL.md` | Guía oficial para que un LLM use Cala (lenguaje de consultas) |
-| `docs/internal/CALA-API.md` | Primer resumen de la API de Cala |
-| `docs/internal/SPEC-canonizador.md` | Diseño del canonizador de consultas |
-| `docs/BENCHMARK-CANONIZADOR.md` | Benchmark: 5 formas de preguntarle a Cala (0–1 de 9 consistentes contra 9 de 9) |
-| `docs/INFORME-ERROR-CALA.md` | El error de consistencia de Cala, evidencia y recomendaciones para Cala |
-| `docs/design/` | Prototipo de Stitch (pantallas y sistema de diseño) |
-| `docs/internal/IDEAS-CALA.md` | Ideas evaluadas al elegir el proyecto |
-| `docs/CODEX.md` | Registro de lo que construyó Codex (reto de Codex) |
-| `docs/PROCESO.md` | Diario de decisiones |
+| `docs/internal/PLAN-CALA-CENTRO.md` | The engine: message router, Cala queries, blocks, and distribution |
+| `docs/API.md` | Backend ↔ app contract |
+| `docs/internal/CALA-CAMPOS.md` | Official guide to Cala fields (entities, rounds, `is_lead`, Slush 2026) |
+| `docs/internal/CALA-SKILL.md` | Official guide for an LLM to use Cala (query language) |
+| `docs/internal/CALA-API.md` | Initial summary of the Cala API |
+| `docs/internal/SPEC-canonizador.md` | Canonicalizer query design |
+| `docs/BENCHMARK-CANONIZER.md` | Benchmark: 5 ways of asking Cala (0–1 of 9 consistent versus 9 of 9) |
+| `docs/CALA-CONSISTENCY-REPORT.md` | Cala's consistency error, evidence, and recommendations for Cala |
+| `docs/design/` | Stitch prototype (screens and design system) |
+| `docs/internal/IDEAS-CALA.md` | Ideas evaluated when choosing the project |
+| `docs/CODEX.md` | Record of what Codex built (Codex challenge) |
+| `docs/PROCESS.md` | Decision log |
 
-## Estado y traspaso (15/11, mañana)
-**Dirige `fabricio`.** `bau` le pasó la coordinación; este bloque es el traspaso.
-- **En `main` (272 tests backend):** interfaz con marca calado, modo claro y oscuro, registro con correo y rol fijo, eventos, inversores reales desde el catálogo, ficha de empresa que consulta Cala solo al abrirla, asistente en burbuja, contexto en texto y voz, informe de favoritos en PDF rediseñado, cuentas compartidas, protección contra abuso de Cala y contador de llamadas.
-- **Publicación:** la app va en Vercel (proyecto `junction-app`, repo `BauDahn/junction`, carpeta `app`, variable `EXPO_PUBLIC_API_URL`). El backend corre en el portátil de `bau` (puerto 8000) expuesto con un túnel rápido de Cloudflare; **la URL cambia si se reinicia el túnel o el portátil**, y entonces hay que actualizar la variable en Vercel y redesplegar.
-- **Configuración del backend público** (`backend/.env` de `bau`, no está en git): `CALA_REQUIRE_AUTH=1`, `TRUST_PROXY=1`, `ACCOUNTS_STORE=postgres` (las cuentas viven en Aiven PostgreSQL), `ADMIN_TOKEN` definido. Tope diario de Cala por defecto: 2000 llamadas.
-- **Cala:** una carga del catálogo gastó unas 3.000 llamadas; quedó en 2.110 de 2.990 asistentes (47 inversores, 1.060 startups, pool de ~923 inversores). **No relanzar cargas largas sin permiso del usuario**; `python -m catalog run` corta a las 150 llamadas salvo `--max-calls`.
-- **Cuentas de demo:** `demo@calamatch.test`, `demo.raiser@calamatch.test`, `demo.investor@calamatch.test` (las contraseñas las tiene el equipo por privado).
+## Status and handoff (15/11, morning)
+**Fabricio is leading.** `bau` handed him coordination; this section is the handoff.
+- **On `main` (272 backend tests):** interface with calado branding, light and dark modes, email registration with a fixed role, events, real investors from the catalog, company profile that queries Cala only when opened, bubble assistant, text and voice context, redesigned favorites report in PDF, shared accounts, protection against Cala abuse, and call counter.
+- **Deployment:** the app is on Vercel (project `junction-app`, repo `BauDahn/junction`, folder `app`, variable `EXPO_PUBLIC_API_URL`). The backend runs on `bau`'s laptop (port 8000), exposed through a quick Cloudflare tunnel; **the URL changes if the tunnel or laptop is restarted**, so the variable in Vercel must then be updated and redeployed.
+- **Public backend configuration** (`bau`'s `backend/.env`, not in git): `CALA_REQUIRE_AUTH=1`, `TRUST_PROXY=1`, `ACCOUNTS_STORE=postgres` (accounts are stored in Aiven PostgreSQL), `ADMIN_TOKEN` set. Default daily Cala limit: 2000 calls.
+- **Cala:** one catalog load used about 3,000 calls; it ended at 2,110 of 2,990 attendees (47 investors, 1,060 startups, pool of ~923 investors). **Do not relaunch long loads without the user's permission**; `python -m catalog run` stops at 150 calls unless `--max-calls` is provided.
+- **Demo accounts:** `demo@calamatch.test`, `demo.raiser@calamatch.test`, `demo.investor@calamatch.test` (the team has the passwords privately).
 
-## Pendientes
-- [ ] Confirmar que Vercel desplegó el último `main` y probar de punta a punta en el sitio publicado: entrar, abrir un inversor, una empresa de su cartera, 'Open dossier' desde el perfil, chat y PDF (#53).
-- [ ] Backend de eventos reales: listar, guardar por usuario y feed por evento (#119, contrato en `docs/API.md`).
-- [ ] Datos: BSV Ventures mezcla dos fondos distintos (descripción de India, sede en Lituania): revisar la unión de duplicados por nombre (#111).
-- [ ] Relevancia del feed Raiser: confianza 0,1 y primeros resultados poco afines; usar las etiquetas de sector de las participadas (#111).
-- [ ] Interfaz: enlaces de fuentes que se salen del ancho en móvil en la ficha; 'View dossier' tapado por la burbuja (#107).
-- [ ] PDF: el recuadro del plan de acción puede partirse entre dos páginas.
-- [ ] Slides y video (#69); borradores en `docs/presentation/`, desactualizados respecto de la marca calado.
-- [ ] Preguntas al stand de Cala (créditos por llamada, `is_lead`) y hora límite de entrega.
+## Pending
+- [ ] Confirm that Vercel deployed the latest `main` and test end to end on the published site: sign in, open an investor, a company in their portfolio, 'Open dossier' from the profile, chat, and PDF (#53).
+- [ ] Backend for real events: list, save per user, and feed by event (#119, contract in `docs/API.md`).
+- [ ] Data: BSV Ventures combines two different funds (description from India, headquarters in Lithuania): review merging duplicates by name (#111).
+- [ ] Raiser feed relevance: confidence 0.1 and poorly matched top results; use the portfolio companies' sector tags (#111).
+- [ ] Interface: source links overflow the width on mobile in the profile; 'View dossier' is covered by the bubble (#107).
+- [ ] PDF: the action plan box may split across two pages.
+- [ ] Slides and video (#69).
+- [ ] Questions for the Cala booth (credits per call, `is_lead`) and submission deadline.

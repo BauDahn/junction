@@ -1,6 +1,6 @@
 # Design: Cala Match (Stitch prototype)
 
-Demo design generated with Google Stitch on 14/11. It is a reference for the app, not the app itself: `app/` (Expo) is built from it.
+Design demo generated with Google Stitch on 14/11. It is a reference for the app, not the app itself: `app/` (Expo) is built from it.
 
 | Folder | Screen |
 |---|---|

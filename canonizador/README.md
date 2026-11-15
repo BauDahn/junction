@@ -1,6 +1,6 @@
 # Canonizador de consultas Cala
 
-Normaliza preguntas, convierte su intención a JSON con Gemini si hay `GEMINI_API_KEY` (si no, NVIDIA si hay `NVIDIA_API_KEY`, y si no `codex exec`; `LLM_PROVIDER` lo fuerza), resuelve entidades y consulta endpoints de entidad con caché local en `cache/`.
+Normalizes questions, converts their intent to JSON with Gemini when `GEMINI_API_KEY` is set (otherwise NVIDIA if `NVIDIA_API_KEY` is set, then `codex exec`; `LLM_PROVIDER` overrides this), resolves entities, and queries entity endpoints with a local cache in `cache/`.
 
 Desde esta carpeta:
 
@@ -11,33 +11,33 @@ uv run python bench.py
 uv run pytest
 ```
 
-La CLI carga `CALA_API_KEY` desde `../backend/.env` si no está en el entorno. Las peticiones tienen caché cruda. `CalaClient` limita knowledge/query y knowledge/search con `knowledge_interval` (8 s) y entidades con `entities_interval` (0,7 s); se configuran también con `CALA_KNOWLEDGE_INTERVAL` y `CALA_ENTITIES_INTERVAL`. Las entidades permiten hasta 2 peticiones simultáneas (`entities_concurrency` / `CALA_ENTITIES_CONCURRENCY`). `CALA_429_WAIT` fija la espera exponencial base en segundos (5 por defecto); se respeta `Retry-After`, con un máximo de 60 s.
+The CLI loads `CALA_API_KEY` from `../backend/.env` if it is not in the environment. Requests use a raw cache. `CalaClient` rate-limits knowledge/query and knowledge/search with `knowledge_interval` (8 s), and entities with `entities_interval` (0.7 s); these can also be configured with `CALA_KNOWLEDGE_INTERVAL` and `CALA_ENTITIES_INTERVAL`. Entities allow up to 2 simultaneous requests (`entities_concurrency` / `CALA_ENTITIES_CONCURRENCY`). `CALA_429_WAIT` sets the base exponential backoff in seconds (5 by default); `Retry-After` is honored, up to a maximum of 60 s. Example: “¿Quién lideró la Serie B de Amenitiz?” (“Who led Amenitiz's Series B?”).
 
-## Caché compartida (Aiven Valkey)
+## Shared cache (Aiven Valkey)
 
-Las consultas a Cala tardan 16–60 s. Por defecto se cachean solo en disco (`cache/`, por máquina). Con `VALKEY_URL` definida, la caché pasa a tener dos capas: disco → Valkey. Lo que consulta una máquina le sale al instante a la otra.
+Cala queries take 16–60 s. By default, they are cached only on disk (`cache/`, per machine). When `VALKEY_URL` is set, the cache has two layers: disk → Valkey. A query made by one machine is instantly available to the other.
 
 Activarla:
 
-1. En la [consola de Aiven](https://console.aiven.io): *Create service* → **Valkey** → elegir plan y región → esperar a que esté *Running*.
-2. Copiar el **Service URI** (`rediss://default:<password>@<host>:<port>`, con TLS) a `backend/.env`:
+1. In the [Aiven console](https://console.aiven.io): *Create service* → **Valkey** → choose a plan and region → wait until it is *Running*.
+2. Copy the **Service URI** (`rediss://default:<password>@<host>:<port>`, with TLS) to `backend/.env`:
    ```sh
    VALKEY_URL=rediss://default:<password>@<host>:<port>
-   # CACHE_TTL_S=604800   # opcional: caducidad en segundos (por defecto 7 días; 0 = sin caducidad)
-   # VALKEY_CONNECT_TIMEOUT=8  # conexión inicial (segundos)
-   # VALKEY_TIMEOUT=3          # lectura/escritura (segundos)
+   # CACHE_TTL_S=604800   # optional: expiration in seconds (7 days by default; 0 = no expiration)
+   # VALKEY_CONNECT_TIMEOUT=8  # initial connection (seconds)
+   # VALKEY_TIMEOUT=3          # read/write (seconds)
    ```
-   Es un secreto: va solo en `backend/.env`, igual que `CALA_API_KEY`.
-3. Subir lo que ya está en disco (precalentar la demo): `uv run python -m canonizador.cache_sync` (imprime cuántas entradas subió por namespace; acepta carpetas de caché como argumentos; por defecto `canonizador/cache` y `backend/cache`).
+   This is a secret: keep it only in `backend/.env`, like `CALA_API_KEY`.
+3. Upload what is already on disk (to warm the demo cache): `uv run python -m canonizador.cache_sync` (prints how many entries it uploaded per namespace; accepts cache directories as arguments; defaults to `canonizador/cache` and `backend/cache`).
 
-Cómo funciona (`canonizador/cache.py`):
+How it works (`canonizador/cache.py`):
 
-- `make_cache(root)` devuelve `LayeredCache(DiskCache, ValkeyCache)` si hay `VALKEY_URL`, y `DiskCache` si no. La usan `answer()` y `CalaClient` (respuestas crudas, namespace `cala`).
-- Lectura: disco → Valkey (lo que viene de Valkey se copia al disco). Escritura: ambos.
-- Claves `cala:v1:<namespace>:<sha256>`. Las respuestas de Cala caducan a los `CACHE_TTL_S` segundos; las intenciones del LLM (`intents`) no caducan.
-- Valkey es opcional de verdad: timeout de conexión configurable (`VALKEY_CONNECT_TIMEOUT`, 8 s) y de lectura/escritura (`VALKEY_TIMEOUT`, 3 s). Si falla, se sigue solo con disco y no se reintenta durante 60 s. El backend intenta precalentar la conexión en segundo plano al arrancar.
-- Ahorro para la demo: `cache.stats` (o `canonizador.cache.STATS`, acumulado del proceso) tiene `local_hits`, `remote_hits` y `misses`.
-- Con Valkey, `CALA_SHARED_LIMIT` (activado por defecto; `0` lo desactiva) aplica un cupo compartido por clase de endpoint: knowledge cada 8 s y entities según su intervalo.
-- El contador usa `INCR` + `PEXPIRE` atómicos por ventana del tamaño del intervalo, con cupo de una petición por ventana, y la conexión de Valkey de la caché; los procesos esperan la ventana siguiente cuando se agota el cupo. Un intervalo de 0 o menor desactiva el límite compartido para ese endpoint.
-- Si Valkey falla, se mantiene el límite local y se omiten los intentos compartidos durante 30 s.
-- En los tests la caché remota está desactivada (`VALKEY_URL=""` en `tests/conftest.py`).
+- `make_cache(root)` returns `LayeredCache(DiskCache, ValkeyCache)` when `VALKEY_URL` is set, and `DiskCache` otherwise. It is used by `answer()` and `CalaClient` (raw responses, `cala` namespace).
+- Reads: disk → Valkey (values from Valkey are copied to disk). Writes: both.
+- Keys: `cala:v1:<namespace>:<sha256>`. Cala responses expire after `CACHE_TTL_S` seconds; LLM intents (`intents`) never expire.
+- Valkey is truly optional: configurable connection timeout (`VALKEY_CONNECT_TIMEOUT`, 8 s) and read/write timeout (`VALKEY_TIMEOUT`, 3 s). If it fails, the system continues with disk only and does not retry for 60 s. The backend attempts to warm the connection in the background at startup.
+- Savings for the demo: `cache.stats` (or `canonizador.cache.STATS`, accumulated per process) has `local_hits`, `remote_hits` and `misses`.
+- With Valkey, `CALA_SHARED_LIMIT` (enabled by default; `0` disables it) applies a shared quota by endpoint class: knowledge every 8 s and entities according to their interval.
+- The counter uses atomic `INCR` + `PEXPIRE` per window sized to the interval, with a quota of one request per window, and the cache's Valkey connection; processes wait for the next window when the quota is exhausted. An interval of 0 or less disables the shared limit for that endpoint.
+- If Valkey fails, the local limit remains in effect and shared attempts are skipped for 30 s.
+- The remote cache is disabled in tests (`VALKEY_URL=""` in `tests/conftest.py`).

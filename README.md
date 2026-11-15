@@ -64,13 +64,13 @@ Measured against the real services on 14–15 November 2026. Method and raw data
 
 | What | Result | Source |
 |---|---|---|
-| Same data across 3 phrasings, without the canonizer | 0 to 1 of 9 questions (direct search, direct query, MCP agent, MCP agent with Cala's guide) | [benchmark](docs/BENCHMARK-CANONIZADOR.md) |
-| Same data across 3 phrasings, with the canonizer | **9 of 9** | [benchmark](docs/BENCHMARK-CANONIZADOR.md) |
-| Phrasings collapsed by the canonizer | **41 phrasings of 9 questions -> 9 queries**, identical answer within each group | [error report](docs/INFORME-ERROR-CALA.md) |
-| Cala, exact same text repeated | 0.2–0.3 s vs 15–18 s the first time (Cala caches by exact text; a paraphrase misses) | [error report](docs/INFORME-ERROR-CALA.md) |
-| Slush 2026 attendee list from Cala | **2,990** attendees, fetched in 36 s (30 pages of 100) | [architecture](docs/ARQUITECTURA.md) |
+| Same data across 3 phrasings, without the canonizer | 0 to 1 of 9 questions (direct search, direct query, MCP agent, MCP agent with Cala's guide) | [benchmark](docs/BENCHMARK-CANONIZER.md) |
+| Same data across 3 phrasings, with the canonizer | **9 of 9** | [benchmark](docs/BENCHMARK-CANONIZER.md) |
+| Phrasings collapsed by the canonizer | **41 phrasings of 9 questions -> 9 queries**, identical answer within each group | [error report](docs/CALA-CONSISTENCY-REPORT.md) |
+| Cala, exact same text repeated | 0.2–0.3 s vs 15–18 s the first time (Cala caches by exact text; a paraphrase misses) | [error report](docs/CALA-CONSISTENCY-REPORT.md) |
+| Slush 2026 attendee list from Cala | **2,990** attendees, fetched in 36 s (30 pages of 100) | [architecture](docs/ARCHITECTURE.md) |
 | Catalog loaded into the graph | **2,110 of 2,990** attendees profiled: 47 investors, 1,060 startups | team status, 15 Nov |
-| BFS over a local subgraph (185 nodes, 246 edges) | **0.13 ms** | [architecture](docs/ARQUITECTURA.md) |
+| BFS over a local subgraph (185 nodes, 246 edges) | **0.13 ms** | [architecture](docs/ARCHITECTURE.md) |
 | Aiven Valkey, 200 reads in one pipeline | **31 ms** (one by one: ~28 ms each) | [Aiven](docs/AIVEN.md) |
 | Repeated chat question through the backend | 27.7 s the first time, 1.45 s the second | [Aiven](docs/AIVEN.md) |
 
@@ -126,12 +126,12 @@ Loading the Slush catalog (`cd backend && uv run python -m catalog run`) spends 
 | Folder | Contents |
 |---|---|
 | `app/` | Expo app (React Native, TypeScript, Expo Router): sign-up, events, event and company pages, assistant, profile |
-| `backend/` | FastAPI API: accounts, chat and voice, context, Cala core (router, executor, claims), feed and affinity, company page with live fallback, search, favorites PDF, Slush catalog, graph store, abuse protection. See [backend/README.md](backend/README.md) (Spanish) |
+| `backend/` | FastAPI API: accounts, chat and voice, context, Cala core (router, executor, claims), feed and affinity, company page with live fallback, search, favorites PDF, Slush catalog, graph store, abuse protection. See [backend/README.md](backend/README.md) |
 | `canonizador/` | The query canonizer, the Cala client (pacing, retries, caps), the two-layer cache and the benchmarks |
-| `docs/` | One doc per challenge, the [API contract](docs/API.md), [architecture](docs/ARQUITECTURA.md) and [affinity spec](docs/SPEC-grafo-afinidad.md) (Spanish), the benchmark and error report (Spanish, summarized in English in [CALA.md](docs/CALA.md)), the [process log](docs/PROCESO.md), brand and presentation drafts |
+| `docs/` | One doc per challenge, the [API contract](docs/API.md), [architecture](docs/ARCHITECTURE.md) and [affinity spec](docs/SPEC-GRAPH-AFFINITY.md), the [benchmark](docs/BENCHMARK-CANONIZER.md) and [consistency report](docs/CALA-CONSISTENCY-REPORT.md) (summarized in [CALA.md](docs/CALA.md)), the [process log](docs/PROCESS.md) and the brand. Full map: [docs/README.md](docs/README.md) |
 | `docs/internal/` | Working notes from the hackathon (ideas, plans, Cala reference guides); not needed to evaluate the project |
 
-## Further work to considerate
+## Further work
 
 - Cala does not say which investors attend an event. For Slush 2026 the event page ranks the investors in the Slush catalog and says so; the other events show "No participant data in Cala yet" instead of guessing.
 - The events list is fixed in the app for now (`app/src/api/events.ts`); there is no events backend yet.

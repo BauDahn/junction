@@ -1,93 +1,93 @@
-# Pitch y guion de demo (issue #69)
+# Pitch and demo script (issue #69)
 
-Borrador de `bau`, 14/11 noche. El guion hablado está en inglés (se presenta en Espoo); las notas para el equipo, en español. **Regla: en el escenario solo se dice lo que ya está medido o funcionando.** Lo que depende de trabajo en curso va marcado **[CONFIRMAR]** y se ajusta antes de ensayar.
+Draft by `bau`, evening of 14/11. The spoken script is in English (the presentation is in Espoo); the team notes too. **Rule: on stage, say only what has been measured or is working.** Anything that depends on work in progress is marked **[CONFIRM]** and should be updated before rehearsal.
 
-## 1. La idea en una frase
+## 1. The idea in one sentence
 > **Cala Match: the funding marketplace that finds the right investor or startup for you, and shows its sources for every claim.**
 
-Versión corta para el stand de Cala: *"We turned Cala's knowledge graph into a two-sided marketplace, and we fixed the one thing that stops agents from trusting it: the same question giving different answers."*
+Short version for the Cala booth: *"We turned Cala's knowledge graph into a two-sided marketplace, and we fixed the one thing that stops agents from trusting it: the same question giving different answers."*
 
-## 2. Pitch de 3 minutos
-**0:00 – El problema (30 s)**
+## 2. Three-minute pitch
+**0:00 – The problem (30 s)**
 "Raising money is a search problem. Founders spend weeks figuring out which investors actually back companies like theirs. Investors do the opposite: they scroll through hundreds of decks. Both sides are guessing, and the data to stop guessing exists, in Cala's knowledge graph. But it's hard to use."
 
-**0:30 – El hallazgo (40 s)**
+**0:30 – The finding (40 s)**
 "When we started, we hit a wall. We asked Cala the same question three ways: with accents, without, in another language. Out of nine questions, asking directly gave consistent answers at most once. Through MCP, even with Cala's official guide loaded, also at most once. Same question, different companies, different numbers. An agent can't build trust on that."
 "So we built a canonizer. It turns any phrasing into one canonical query. 41 phrasings of 9 questions collapsed into 9 queries with identical answers. Nine out of nine."
 
-**1:10 – El producto (50 s)**
+**1:10 – The product (50 s)**
 "On top of that, Cala Match. One app, two sides. Switch between *Raising* and *Investing*. The feed shows cards: each investor or startup with an affinity score from 0 to 100 and one line on why it matches. Tap a card and you get everything Cala knows: rounds, lead investors, portfolio, people. Every fact carries its source and date. Ask the chatbot anything, by text or voice. Upload your pitch deck or record a voice note, and your matches get better."
 
-**2:00 – Cómo es rápido (30 s)**
+**2:00 – How it stays fast (30 s)**
 "Cala is a graph, so we treat it like one. We pre-load all 2,990 Slush 2026 attendees into a shared Aiven Valkey cache. Exploring the local graph takes 0.13 milliseconds. Cala is only called at the edges. The language model never writes a number or a name: those come only from Cala, always with sources."
 
-**2:30 – Cierre (30 s)**
+**2:30 – Closing (30 s)**
 "Slush starts right after this hackathon. Tomorrow, a founder walking the floor can open this app and know in seconds who is worth a conversation, and why. Cala Match."
 
-## 3. Demo en vivo (2 minutos, 5 pasos) — flujo Raiser
-| Paso | Qué se hace | Qué se dice | Depende de |
+## 3. Live demo (2 minutes, 5 steps) — Raiser flow
+| Step | What to do | What to say | Depends on |
 |---|---|---|---|
-| 1 | Registrarse eligiendo **Raiser** y cargar el contexto de la startup de la demo | "I sign up as a raiser: a hotel-software startup raising a Series A." | Nueva web **[CONFIRMAR]** |
-| 2 | **Explorar eventos**: guardar Slush 2026 | "One tap and it is in My events." | Nueva web **[CONFIRMAR]** |
-| 3 | **Mis eventos** → Slush 2026: investores recomendados con la carta de contacto; abrir uno: ficha simple y cómo conseguir la inversión, con fuentes | "Ranked for me, with a draft of how to approach each one. Every fact has its source." | Nueva web, feed y detalle (**ya en main** la API) **[CONFIRMAR]** |
-| 4 | **Asistente (burbuja)**: por voz "Who led Amenitiz's Series B?" y una empresa que no está en el catálogo | "Same answer however I phrase it; and if it is not in the graph, it searches Cala live." | **Ya funciona** (chat, canonizador, respaldo y búsqueda) |
-| 5 | Al asistente: "We now raise 2 million in seed" y "I want to go to Slush 2026" | "It edits my context and works as a shortcut." | Nueva web **[CONFIRMAR]** |
-Si sobra tiempo: **Perfil** con favoritos y contexto (10 segundos). Desde los favoritos se descarga el **informe PDF**: las empresas marcadas, lo que Cala sabe de cada una con su fuente y un plan de acción propuesto por Gemini (etiquetado como tal) **[CONFIRMAR]** hasta que se fusione su PR.
+| 1 | Sign up as a **Raiser** and add the demo startup's context | "I sign up as a raiser: a hotel-software startup raising a Series A." | New website **[CONFIRM]** |
+| 2 | **Explore events**: save Slush 2026 | "One tap and it is in My events." | New website **[CONFIRM]** |
+| 3 | **My events** → Slush 2026: recommended investors with an outreach letter; open one for a simple profile and how to secure the investment, with sources | "Ranked for me, with a draft of how to approach each one. Every fact has its source." | New website, feed and detail (**API already in main**) **[CONFIRM]** |
+| 4 | **Assistant (bubble)**: ask by voice "Who led Amenitiz's Series B?" and ask about a company not in the catalog | "Same answer however I phrase it; and if it is not in the graph, it searches Cala live." | **Already works** (chat, canonizer, fallback, and search) |
+| 5 | Tell the assistant: "We now raise 2 million in seed" and "I want to go to Slush 2026" | "It edits my context and works as a shortcut." | New website **[CONFIRM]** |
+If time permits: **Profile** with favorites and context (10 seconds). From favorites, download the **PDF report**: the saved companies, what Cala knows about each with its source, and an action plan proposed by Gemini (labeled as such) **[CONFIRM]** until its PR is merged.
 
-**Plan B** (si Cala o la red fallan): recargar el catálogo desde el archivo de respaldo (`docs/ARQUITECTURA.md`, sección 2 punto 8) y hacer la demo con datos precargados. Tener un video grabado del recorrido completo de reserva. **Los pasos 4 y 5 deben funcionar aun sin red** gracias a la caché: precalentarlos antes.
+**Plan B** (if Cala or the network fails): reload the catalog from the backup file (`docs/ARCHITECTURE.md`, section 2, item 8) and demo with preloaded data. Have a video recording of the complete booking flow. **Steps 4 and 5 must work offline** thanks to the cache: warm it up beforehand.
 
-## 4. Números que podemos decir (medidos el 14/11)
-| Dato | Valor | Fuente |
+## 4. Numbers we can share (measured on 14/11)
+| Metric | Value | Source |
 |---|---|---|
-| Consistencia sin canonizar | 0 de 9, 0 de 9, 1 de 9 y 0 de 9 (directo y por MCP, con y sin guía de Cala) | `docs/BENCHMARK-CANONIZADOR.md` |
-| Consistencia con canonizador | 9 de 9; 41 redacciones → 9 consultas | `docs/INFORME-ERROR-CALA.md` |
-| Respuesta repetida desde caché | 0,2–0,3 s contra 15–18 s la primera vez | `docs/INFORME-ERROR-CALA.md` |
-| Slush 2026 completo | 2.990 asistentes traídos en 36 s | `docs/ARQUITECTURA.md` |
-| Cargar un subgrafo de 185 nodos | ~14–18 s de trabajo real de Cala (19 llamadas, ~1 s cada una) | README |
-| Explorar el subgrafo en local | 0,13 ms (BFS completo) | README |
-| Valkey de Aiven | 200 lecturas en lote en 31 ms | `docs/ARQUITECTURA.md` |
-| Codex | 12 tareas, 24 min y 8 M tokens de entrada en la máquina `bau` (más lo de las otras máquinas) | `docs/CODEX.md` |
+| Consistency without canonization | 0 out of 9, 0 out of 9, 1 out of 9, and 0 out of 9 (direct and through MCP, with and without Cala's guide) | `docs/BENCHMARK-CANONIZER.md` |
+| Consistency with canonizer | 9 out of 9; 41 phrasings → 9 queries | `docs/CALA-CONSISTENCY-REPORT.md` |
+| Repeated response from cache | 0.2–0.3 s versus 15–18 s the first time | `docs/CALA-CONSISTENCY-REPORT.md` |
+| Complete Slush 2026 | 2,990 attendees fetched in 36 s | `docs/ARCHITECTURE.md` |
+| Load a 185-node subgraph | ~14–18 s of actual Cala work (19 calls, ~1 s each) | README |
+| Explore the subgraph locally | 0.13 ms (complete BFS) | README |
+| Aiven Valkey | 200 batch reads in 31 ms | `docs/ARCHITECTURE.md` |
+| Codex | 12 tasks, 24 min, and 8 M input tokens on the `bau` machine (plus the other machines) | `docs/CODEX.md` |
 
-**No decir** (todavía no está medido o no existe): cuántos de los asistentes son inversores, el tiempo total del catálogo, la calidad del puntaje de afinidad, "el camino más corto de todo Cala" (solo es el mínimo dentro de lo explorado) ni nada sobre el verificador de decks.
+**Do not say** (not measured yet or does not exist): how many attendees are investors, the catalog's total processing time, affinity score quality, "the shortest path in all of Cala" (it is only the minimum within the explored graph), or anything about the pitch-deck verifier.
 
-## 5. Qué decir para cada reto
-**Cala (principal): "Cala at the core"**
-- Cada tarjeta, tabla y puntaje sale de Cala y muestra su fuente. El modelo no escribe datos.
-- Usamos más que la búsqueda: entidades con relaciones tipadas (`INVESTED_IN`, `is_lead`, fechas), consultas estructuradas y la búsqueda como último recurso.
-- Le devolvemos algo a Cala: un informe con evidencia del error de consistencia y una forma de resolverlo (`docs/INFORME-ERROR-CALA.md`).
-- Para el stand: preguntar por `is_lead`, el límite de uso, el costo por llamada y si habrá otros eventos además de Slush 2026.
+## 5. What to say about each challenge
+**Cala (main): "Cala at the core"**
+- Every card, table, and score comes from Cala and shows its source. The model does not write data.
+- We use more than search: entities with typed relationships (`INVESTED_IN`, `is_lead`, dates), structured queries, and search as a last resort.
+- We give something back to Cala: a report with evidence of the consistency error and a way to address it (`docs/CALA-CONSISTENCY-REPORT.md`).
+- At the booth: ask about `is_lead`, the usage limit, the cost per call, and whether there will be events besides Slush 2026.
 
 **Google Gemini: "why Gemini matters here"**
-- Es la IA del producto en todos los puntos donde hay lenguaje: el router que separa consulta, afirmación y perfil; la intención de cada pregunta; el audio; el contexto de los PDF; y las etiquetas de sector y etapa del catálogo a partir de las descripciones de Cala.
-- Dos modelos: uno rápido (`gemini-3.5-flash-lite`, ~1 s por llamada, 3 de 3 en la prueba del router) para el flujo en vivo y uno fuerte para lo difícil. **[CONFIRMAR]** los números cuando termine el audio con Gemini (#50).
-- Lo que hace Gemini es normalizar texto; los hechos los pone Cala. Esa separación es el argumento de confianza.
+- It is the product's AI wherever language is involved: the router that separates queries, claims, and profile updates; the intent behind each question; audio; PDF context; and catalog sector and stage labels derived from Cala descriptions.
+- Two models: a fast one (`gemini-3.5-flash-lite`, ~1 s per call, 3 out of 3 in the router test) for the live flow, and a stronger one for harder tasks. **[CONFIRM]** the figures when Gemini audio is finished (#50).
+- Gemini normalizes text; Cala supplies the facts. That separation is the trust argument.
 
 **Aiven: "Valkey as the product's memory"**
-- Una caché compartida entre máquinas y usuarios, y además el grafo: nodos y aristas con fuente, un solo grafo que crece con el uso, y el subgrafo de cada usuario como una vista.
-- Protege el límite de uso de Cala y hace instantáneo lo que ya se preguntó.
-- Datos: lecturas en lote (200 en 31 ms), TTL en todo, y un archivo de respaldo que se recarga con un comando.
+- A cache shared across machines and users, plus the graph: nodes and edges with sources, one graph that grows with use, and each user's subgraph as a view.
+- It protects Cala's usage limit and makes previously queried information instant.
+- Data: batch reads (200 in 31 ms), TTL everywhere, and a backup file that can be reloaded with one command.
 
 **OpenAI Codex: "built with Codex, directed by Claude"**
-- Claude diseña, revisa y prueba; Codex escribe el código; Gemini es la IA dentro del producto. Registro completo en `docs/CODEX.md` y `docs/PROCESO.md`.
-- Cada máquina exporta su `cx log` (tareas, modelo, minutos, tokens). Ya están bau, gabriel y fabricio; adrian trabaja con Antigravity y no tiene registro de Codex.
+- Claude designs, reviews, and tests; Codex writes the code; Gemini is the AI inside the product. Full log in `docs/CODEX.md` and `docs/PROCESS.md`.
+- Each machine exports its `cx log` (tasks, model, minutes, tokens). bau, gabriel, and fabricio are included; adrian works with Antigravity and has no Codex log.
 
-## 6. Preguntas que nos van a hacer
-| Pregunta | Respuesta |
+## 6. Questions we'll be asked
+| Question | Answer |
 |---|---|
-| ¿Qué pasa si Cala no tiene el dato? | Se prueban las otras herramientas de Cala y, si no hay, la tarjeta dice "no data" con lo que se buscó. Nunca se inventa. |
-| ¿Cómo se calcula el afinidad? | Seis señales con pesos (sector, etapa, región, ticket, actividad reciente y cercanía en el grafo); cada una se explica con su dato y su fuente. Si falta una señal no cuenta como cero: baja la confianza. `docs/SPEC-grafo-afinidad.md`. **[CONFIRMAR]** al calibrar. |
-| ¿Por qué no usar Google? | Google da documentos; Cala da relaciones con fuente, fechas y roles. Un camino como "este fondo coinvirtió con tu inversor" no sale de un buscador. |
-| ¿Los datos están actualizados? | Cada nodo guarda cuándo se cargó y la app lo muestra. Cala devuelve la fecha de cada fuente. |
-| ¿Funciona fuera de Slush? | El catálogo es de Slush por ser finito para la demo; el chat y el detalle consultan Cala en vivo para cualquier empresa. |
-| ¿Y el límite de uso de Cala? | Lo medimos: unas 1,4 llamadas por segundo sostenidas. Por eso el catálogo es precalculado y compartido. |
-| ¿Qué harían con más tiempo? | Camino de introducción entre personas, alertas de nuevas rondas, y pesos del afinidad aprendidos con datos reales. |
+| What if Cala does not have the data? | We try Cala's other tools and, if none has it, the card says "no data" and shows what was searched. Nothing is made up. |
+| How is affinity calculated? | Six weighted signals (sector, stage, region, ticket size, recent activity, and graph proximity); each is explained with its data and source. A missing signal does not count as zero: confidence goes down. `docs/SPEC-GRAPH-AFFINITY.md`. **[CONFIRM]** during calibration. |
+| Why not use Google? | Google gives documents; Cala gives relationships with sources, dates, and roles. A path like "this fund co-invested with your investor" does not come from a search engine. |
+| Is the data up to date? | Each node stores when it was loaded, and the app shows it. Cala returns the date for each source. |
+| Does it work beyond Slush? | The catalog is limited to Slush for the demo; chat and detail query Cala live for any company. |
+| What about Cala's usage limit? | We measured around 1.4 sustained calls per second. That is why the catalog is precomputed and shared. |
+| What would you do with more time? | Build an introduction path between people, alerts for new rounds, and affinity weights learned from real data. |
 
-## 7. Lista antes de presentar (propietario: `bau`)
-- [ ] Catálogo cargado en Valkey y archivo de respaldo exportado.
-- [ ] Perfil de la demo (Stayflow) creado y probado en las dos pestañas.
-- [ ] Pasos 4 y 5 precalentados en caché; probados sin red.
-- [ ] Video de reserva del recorrido completo (1 a 2 min).
-- [ ] Los **[CONFIRMAR]** de este documento resueltos y ensayo con cronómetro (3:00 de pitch más 2:00 de demo).
-- [ ] Fotos o capturas de las pantallas para las slides (salen de la web nueva ya corriendo).
-- [ ] Hora límite de entrega y formularios de Cala, Gemini, Aiven y Codex confirmados (sigue pendiente).
-- [ ] Registro de Codex de Fabricio y de Adrian en `docs/CODEX.md`.
+## 7. Checklist before presenting (owner: `bau`)
+- [ ] Catalog loaded in Valkey and backup file exported.
+- [ ] Demo profile (Stayflow) created and tested in both tabs.
+- [ ] Steps 4 and 5 warmed in the cache; tested offline.
+- [ ] Video of the complete booking flow (1 to 2 min).
+- [ ] All **[CONFIRM]** items in this document resolved and timed rehearsal completed (3:00 pitch plus 2:00 demo).
+- [ ] Photos or screenshots of the screens for the slides (taken from the new website running).
+- [ ] Cala, Gemini, Aiven, and Codex submission deadline and forms confirmed (still pending).
+- [ ] Fabricio and Adrian's Codex logs added to `docs/CODEX.md`.
