@@ -22,7 +22,7 @@ def _uniq(values):
     return result
 
 
-def normalize_profile(profile, mode, seeds):
+def normalize_profile(profile, mode, seeds, seed_sectors=None):
     profile = profile or {}
     interests = profile.get("interests") or {}
     raising = profile.get("raising") or {}
@@ -38,6 +38,8 @@ def normalize_profile(profile, mode, seeds):
     if profile_sector and str(profile_sector).strip().casefold() == "other":
         profile_sector = None
     sectors = _uniq(([profile_sector] if profile_sector else []) + sectors)
+    if not sectors:
+        sectors = _uniq(seed_sectors or [])[:5]
     regions = _uniq(([profile.get("location")] if profile.get("location") else [])
                     + (interests.get("regions") or []))
     if mode == "raising":
@@ -67,6 +69,22 @@ def _seeds(session_id, profile, store):
     if not seeds:
         seeds = [store.resolve(name) for name in seed_names(profile)]
     return list(dict.fromkeys(str(seed) for seed in seeds if seed))
+
+
+def _seed_sectors(seeds, catalog, store):
+    sectors = []
+    for ident in seeds:
+        features = catalog.get_features(ident) or {}
+        found = _uniq(features.get("sectors") or [])
+        if not found:
+            batch = neighbors_batch(store, [ident], rels=("INVESTED_IN",))
+            for edge, _ in batch.get(str(ident), []):
+                if edge.get("rel") != "INVESTED_IN" or str(edge.get("src")) != str(ident):
+                    continue
+                startup = catalog.get_features(edge.get("dst")) or {}
+                found.extend(_uniq(startup.get("sectors") or []))
+        sectors.extend(found)
+    return _uniq(sectors)[:5]
 
 
 def bfs_for_user(session_id, profile, store):
@@ -126,6 +144,7 @@ def candidate_for_entity(ident, session_id, profile, mode, catalog, store):
     if not features and not node:
         return None
     seeds, graph_data = bfs_for_user(session_id, profile, store)
+    seed_sectors = _seed_sectors(seeds, catalog, store)
     distance = graph_data["distance"].get(str(ident))
     kinds = features.get("kinds", []) if features else []
     if len(kinds) == 1:
@@ -157,7 +176,7 @@ def candidate_for_entity(ident, session_id, profile, mode, catalog, store):
     candidate["distance"] = distance[0] if distance else None
     candidate["distance_sources"] = distance[1] if distance else []
     candidate["features"] = features or {}
-    result = score_candidate(normalize_profile(profile, mode, seeds), candidate)
+    result = score_candidate(normalize_profile(profile, mode, seeds, seed_sectors), candidate)
     if from_pool:
         result = apply_evidence(result, candidate)
     return result | {
@@ -181,6 +200,7 @@ def _feature_candidate(features, kind, graph_data, ident):
 
 def build_feed(session_id, profile, mode, catalog, store, today=None):
     seeds, graph_data = bfs_for_user(session_id, profile, store)
+    seed_sectors = _seed_sectors(seeds, catalog, store)
     kind = "investor" if mode == "raising" else "startup"
     features = catalog.list_features(kind)
     seen = set()
@@ -213,7 +233,7 @@ def build_feed(session_id, profile, mode, catalog, store, today=None):
             candidate["distance"] = distance[0] if distance else None
             candidate["distance_sources"] = distance[1] if distance else []
             candidates.append(candidate)
-    normalized = normalize_profile(profile, mode, seeds)
+    normalized = normalize_profile(profile, mode, seeds, seed_sectors)
     results = []
     for candidate in candidates:
         result = score_candidate(normalized, candidate, today=today)

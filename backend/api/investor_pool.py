@@ -69,6 +69,9 @@ def portfolio_investors(catalog, store):
                 round_data = {"company": startup.get("name"),
                               "sector": ", ".join(str(value) for value in sectors) if sectors else None,
                               "location": location, "sources": edge.get("sources")}
+                stages = startup.get("stages") or []
+                if stages:
+                    round_data["round_type"] = stages[0]
                 event_date = edge.get("event_date") or edge.get("valid_since")
                 if event_date:
                     match = re.search(r"(?:19|20)\d{2}", str(event_date))
@@ -78,12 +81,27 @@ def portfolio_investors(catalog, store):
                     round_data["is_lead"] = edge["is_lead"]
                 record["rounds"].append(round_data)
                 record["deals"] += 1
+                record.setdefault("_sector_counts", {})
+                for sector in sectors:
+                    record["_sector_counts"][sector] = record["_sector_counts"].get(sector, 0) + 1
+                for attr in ("hq", "country"):
+                    value = startup.get(attr)
+                    if value:
+                        counts = record.setdefault(f"_{attr}_counts", {})
+                        counts[value] = counts.get(value, 0) + 1
                 record["attrs"]["sources"].extend(edge["sources"])
         minimum = max(1, int(os.getenv("INVESTOR_POOL_MIN_DEALS", "1")))
         result = []
         for record in grouped.values():
             if record["deals"] < minimum:
                 continue
+            sector_counts = record.pop("_sector_counts", {})
+            record["attrs"]["industries"] = [value for value, _ in sorted(
+                sector_counts.items(), key=lambda item: (-item[1], str(item[0]).casefold()))[:5]]
+            for attr in ("hq", "country"):
+                counts = record.pop(f"_{attr}_counts", {})
+                record["attrs"][attr] = (sorted(counts.items(), key=lambda item: (-item[1], str(item[0]).casefold()))[0][0]
+                                         if counts else None)
             sources, seen = [], set()
             for source in record["attrs"]["sources"]:
                 token = source.get("url") or source.get("name") or repr(source)
