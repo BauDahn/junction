@@ -2,18 +2,18 @@
 
 Hackathon Junction 2026, Espoo (Finlandia), del 13 al 15 de noviembre de 2026. Somos **cuatro personas (Bau, Fabricio, Gabriel y Adrian), cada una con su máquina y sus agentes**, trabajando en paralelo sobre este repo. Este archivo lo leen todos los agentes: Claude (`CLAUDE.md`), Codex (`AGENTS.md`) y los de Google (`GEMINI.md`); los tres nombres apuntan al mismo archivo. Respondé en español.
 
-## Producto (enfoque desde el 14/11 por la noche: Cala Match)
-**Marketplace de financiación de doble interfaz, construido sobre el grafo de Cala. Toda la app en inglés.** El README tiene la versión pública; el diseño demo está en `docs/design/stitch/` (hecho con Stitch).
-1. **Dos modos** con un interruptor arriba: *Raising* (startup que busca financiación, el feed muestra inversores) e *Investing* (inversor que busca startups, el feed muestra startups).
-2. **Feed**: cuadraditos, uno por inversor o startup, con **puntaje de afinidad** (0–100) y una línea "por qué encaja". Al entrar, el detalle con todo lo que Cala recolecta (rondas, líderes, portfolio, personas, cifras), cada dato con su fuente.
-3. **Chat**: el usuario pregunta por texto o voz; las consultas van por el **canonizador** y se muestran como tablas de datos de Cala con fuentes. El modelo nunca escribe cifras ni nombres que no vengan de Cala.
-4. **Contexto**: el usuario sube PDFs (por ejemplo el pitch), notas de voz o texto; Gemini extrae sector, etapa, región y ticket, y eso mejora el afinidad. **No es el verificador de decks** (ese sigue fuera del producto): el PDF solo alimenta el perfil.
-5. **Subgrafo local sobre Cala**: el vecindario de cada usuario se carga en local (nodos y aristas con fuente) y se explora con BFS; Cala solo se llama en el borde. Medido el 14/11 (semilla Amenitiz, 185 nodos): la carga son unos 14–18 s de trabajo real de Cala, el BFS local tarda 0,13 ms y el límite de uso salta con unas 10 llamadas seguidas. Los endpoints de entidades responden en ~1 s; los 16–60 s son de `knowledge/query` y `knowledge/search`.
-6. **Puntaje de afinidad (propuesta de `bau`, a validar)**: coincidencia con las restricciones del perfil (sector, etapa, región, ticket) + distancia en el grafo + rondas parecidas compartidas. Siempre explicable: cada punto se justifica con datos de Cala.
+## Producto (forma final, 15/11: Cala Match)
+**Marketplace de financiación alrededor de eventos, sobre el grafo de Cala. Toda la app en inglés.** El README tiene la versión pública. El prompt que se le dio a Gemini para la nueva web está resumido aquí.
+1. **Registro:** al registrarse se elige **Raiser** (startup que busca financiación) o **Investor**; es requisito para entrar y decide lo que muestra cada pantalla. Solo el modo Raiser está especificado; el de Investor es el espejo (startups a las que ver).
+2. **Eventos** (cuadrados con imagen, nombre, eslogan y fecha), dos pestañas:
+   - **Explorar eventos:** todos los eventos; se guarda uno como "asisto" o no; si se guarda pasa a Mis eventos.
+   - **Mis eventos:** al entrar en un evento, los **inversores recomendados** por el motor de afinidad y, por cada uno, una **carta de cómo plantear el contacto**. Al pinchar un inversor, una ficha muy simple con lo que da Cala (empresa, industria, factores importantes como los fondos) y **cómo conseguir la inversión**, según las inversiones previas, horarios y datos de Cala.
+3. **Asistente:** no hay pestaña Ask. Una **mascota en burbuja** abajo a la derecha abre un panel superpuesto con chat por texto y voz: pregunta por empresas (Cala + canonizador), **modifica el contexto** (lo que usa el motor de recomendación) y hace **atajos** ("quiero ir a Slush 2026" lo agrega a favoritos).
+4. **Perfil:** contexto, inversores favoritos y datos personales. Simple y minimalista.
+5. **Respaldo si no está en el grafo:** el chat nunca falla (canonizador, entidad, búsqueda, `not_found` con lo intentado); el detalle se trae de Cala en vivo y se guarda; `GET /api/search` mira el catálogo y luego Cala.
+6. **Subgrafo local sobre Cala y afinidad:** como en `docs/ARQUITECTURA.md` y `docs/SPEC-grafo-afinidad.md`. Datos de eventos: Slush 2026 tiene 2.990 empresas participantes con personas; Slush 2025 solo 8 speakers.
 
-El motor (router de mensajes, canonizador, bloques) sigue en `docs/PLAN-CALA-CENTRO.md`. **Fuera del producto (decisión del 14/11): el verificador de pitch decks y el journal.** Ya no hay código de ninguno de los dos en el repo; el PDF solo alimenta el perfil. Lo compartido que usaba el verificador (LLM, configuración, cliente de Cala, lectura de PDF) vive en `backend/core/`.
-
-Cala es el núcleo (no tocamos cómo funciona: mostramos para qué sirve). Todo dato de Cala se muestra con su fuente.
+La nueva web la construye Gemini (Antigravity). **Pendientes de producto que NO están en ese prompt** y quedan como ideas: planificador de reuniones en documento, aviso de "20 minutos libres". Fuera del producto: el verificador de decks y el journal. Cala es el núcleo; todo dato de Cala se muestra con su fuente.
 
 ## Retos
 - **Principal: Cala** (25% cada uno: necesidad real, ejecución end-to-end, originalidad, Cala como núcleo). Slush empieza justo después: usable al día siguiente.

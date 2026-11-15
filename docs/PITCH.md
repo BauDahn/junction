@@ -24,15 +24,15 @@ Versión corta para el stand de Cala: *"We turned Cala's knowledge graph into a 
 **2:30 – Cierre (30 s)**
 "Slush starts right after this hackathon. Tomorrow, a founder walking the floor can open this app and know in seconds who is worth a conversation, and why. Cala Match."
 
-## 3. Demo en vivo (2 minutos, 5 pasos)
+## 3. Demo en vivo (2 minutos, 5 pasos) — flujo Raiser
 | Paso | Qué se hace | Qué se dice | Depende de |
 |---|---|---|---|
-| 1 | Abrir la app en modo **Raising** con el perfil de la demo ya cargado | "Meet Stayflow, hotel software in Barcelona raising a Series A." | #62, perfil precargado **[CONFIRMAR]** |
-| 2 | Mostrar el feed y señalar los puntajes y el "why it matches" | "Ranked by affinity, and each score is explained." | #65, #72 **[CONFIRMAR]** |
-| 3 | Tocar la tarjeta de un fondo: rondas, líderes, fuentes; abrir una fuente | "Every figure links to where it came from." | #65 **[CONFIRMAR]** |
-| 4 | Chat por voz: "Who led Amenitiz's Series B?" | "Same question phrased any way, same answer." Mostrar la tabla con fuentes | **Ya funciona** (chat + canonizador) |
-| 5 | Pestaña Context: subir `sample_deck.pdf` o grabar una nota de voz y ver cómo sube el puntaje | "Context in, better matches out." | #66 **[CONFIRMAR]** |
-Cambiar a **Investing** al final, 10 segundos: "Same app, other side."
+| 1 | Registrarse eligiendo **Raiser** y cargar el contexto de la startup de la demo | "I sign up as a raiser: a hotel-software startup raising a Series A." | Nueva web **[CONFIRMAR]** |
+| 2 | **Explorar eventos**: guardar Slush 2026 | "One tap and it is in My events." | Nueva web **[CONFIRMAR]** |
+| 3 | **Mis eventos** → Slush 2026: investores recomendados con la carta de contacto; abrir uno: ficha simple y cómo conseguir la inversión, con fuentes | "Ranked for me, with a draft of how to approach each one. Every fact has its source." | Nueva web, feed y detalle (**ya en main** la API) **[CONFIRMAR]** |
+| 4 | **Asistente (burbuja)**: por voz "Who led Amenitiz's Series B?" y una empresa que no está en el catálogo | "Same answer however I phrase it; and if it is not in the graph, it searches Cala live." | **Ya funciona** (chat, canonizador, respaldo y búsqueda) |
+| 5 | Al asistente: "We now raise 2 million in seed" y "I want to go to Slush 2026" | "It edits my context and works as a shortcut." | Nueva web **[CONFIRMAR]** |
+Si sobra tiempo: **Perfil** con favoritos y contexto (10 segundos).
 
 **Plan B** (si Cala o la red fallan): recargar el catálogo desde el archivo de respaldo (`docs/ARQUITECTURA.md`, sección 2 punto 8) y hacer la demo con datos precargados. Tener un video grabado del recorrido completo de reserva. **Los pasos 4 y 5 deben funcionar aun sin red** gracias a la caché: precalentarlos antes.
 
