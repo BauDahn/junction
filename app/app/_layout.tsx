@@ -1,296 +1,36 @@
-import { Tabs, useRouter } from 'expo-router';
+﻿import { Tabs, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef } from 'react';
-import { Animated, Platform, Pressable, Text, View } from 'react-native';
-import { ModeProvider, useMode, type MatchMode } from '../src/mode';
+import { Platform, Pressable, Text, View } from 'react-native';
+import { ModeProvider, useMode } from '../src/mode';
 import { font, radius, space, ThemeProvider, useTheme } from '../src/theme';
+import OnboardingScreen from './onboarding';
+import FloatingMascotBubble from '../src/components/FloatingMascotBubble';
 
 export default function RootLayout() {
-  return (
-    <ThemeProvider mode="light">
-      <ModeProvider>
-        <ThemedTabs />
-      </ModeProvider>
-    </ThemeProvider>
-  );
+  return <ThemeProvider mode="light"><ModeProvider><ThemedTabs /></ModeProvider></ThemeProvider>;
 }
-
-const SEGMENT_WIDTH = 74;
-const TRACK_PADDING = 2;
-
-function ModeToggle() {
-  const { mode, setMode } = useMode();
-  const { colors } = useTheme();
-  const slide = useRef(new Animated.Value(mode === 'raising' ? 0 : 1)).current;
-
-  useEffect(() => {
-    Animated.timing(slide, {
-      toValue: mode === 'raising' ? 0 : 1,
-      duration: 160,
-      useNativeDriver: Platform.OS !== 'web',
-    }).start();
-  }, [mode, slide]);
-
-  const options: { value: MatchMode; label: string }[] = [
-    { value: 'raising', label: 'Raising' },
-    { value: 'investing', label: 'Investing' },
-  ];
-
-  const translateX = slide.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, SEGMENT_WIDTH],
-  });
-
-  return (
-    <View
-      accessibilityRole="tablist"
-      style={{
-        position: 'relative',
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: SEGMENT_WIDTH * 2 + TRACK_PADDING * 2 + 2,
-        backgroundColor: colors.surfaceAlt,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radius.pill,
-        padding: TRACK_PADDING,
-      }}
-    >
-      <Animated.View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          top: TRACK_PADDING,
-          bottom: TRACK_PADDING,
-          left: TRACK_PADDING,
-          width: SEGMENT_WIDTH,
-          borderRadius: radius.pill,
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.border,
-          transform: [{ translateX }],
-        }}
-      />
-      {options.map((opt) => {
-        const active = mode === opt.value;
-        return (
-          <Pressable
-            key={opt.value}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: active }}
-            onPress={() => setMode(opt.value)}
-            style={({ pressed }) => ({
-              width: SEGMENT_WIDTH,
-              paddingVertical: space.xs,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: radius.pill,
-              opacity: pressed ? 0.75 : 1,
-              ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
-            })}
-          >
-            <Text
-              numberOfLines={1}
-              style={{
-                fontSize: font.caption,
-                fontWeight: active ? '600' : '500',
-                color: active ? colors.accent : colors.textMuted,
-              }}
-            >
-              {opt.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
+function ProfileButton() {
+  const router = useRouter(); const { colors } = useTheme();
+  const { userProfile } = useMode();
+  const initial = (userProfile.name.trim()[0] || 'P').toUpperCase();
+  return <Pressable accessibilityRole="button" accessibilityLabel="Open profile" onPress={() => router.push('/perfil')} style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border }}><Text style={{ color: colors.textMuted, fontSize: font.small }}>{initial}</Text></Pressable>;
 }
-
-function ProfileAvatarButton() {
-  const router = useRouter();
-  const { colors } = useTheme();
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Open profile"
-      hitSlop={6}
-      onPress={() => router.push('/perfil')}
-      style={({ pressed }) => ({
-        width: 32,
-        height: 32,
-        borderRadius: radius.pill,
-        backgroundColor: colors.surfaceAlt,
-        borderWidth: 1,
-        borderColor: colors.border,
-        alignItems: 'center',
-        justifyContent: 'center',
-        opacity: pressed ? 0.75 : 1,
-        ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
-      })}
-    >
-      <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <View
-          style={{
-            width: 9,
-            height: 9,
-            borderRadius: radius.sm,
-            borderWidth: 1.5,
-            borderColor: colors.textMuted,
-          }}
-        />
-        <View
-          style={{
-            width: 15,
-            height: 6,
-            borderTopLeftRadius: 7,
-            borderTopRightRadius: 7,
-            borderWidth: 1.5,
-            borderBottomWidth: 0,
-            borderColor: colors.textMuted,
-            marginTop: space.xs,
-          }}
-        />
-      </View>
-    </Pressable>
-  );
-}
-
-function HeaderControls() {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-      <ModeToggle />
-      <ProfileAvatarButton />
-    </View>
-  );
-}
-
-function FeedIcon({ color }: { color: string }) {
-  return (
-    <View style={{ width: 20, height: 20, justifyContent: 'center', gap: space.xs, paddingHorizontal: space.xs }}>
-      <View style={{ height: 1.75, width: 16, borderRadius: radius.sm, backgroundColor: color }} />
-      <View style={{ height: 1.75, width: 11, borderRadius: radius.sm, backgroundColor: color }} />
-      <View style={{ height: 1.75, width: 16, borderRadius: radius.sm, backgroundColor: color }} />
-    </View>
-  );
-}
-
-function AskIcon({ color }: { color: string }) {
-  return (
-    <View style={{ width: 20, height: 20, alignItems: 'center', justifyContent: 'center' }}>
-      <View
-        style={{
-          width: 16,
-          height: 13,
-          borderRadius: radius.sm,
-          borderWidth: 1.6,
-          borderColor: color,
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'row',
-          gap: space.xs,
-        }}
-      >
-        <View style={{ width: 2, height: 2, borderRadius: radius.sm, backgroundColor: color }} />
-        <View style={{ width: 2, height: 2, borderRadius: radius.sm, backgroundColor: color }} />
-        <View style={{ width: 2, height: 2, borderRadius: radius.sm, backgroundColor: color }} />
-      </View>
-    </View>
-  );
-}
-
-function ContextIcon({ color }: { color: string }) {
-  return (
-    <View style={{ width: 20, height: 20, alignItems: 'center', justifyContent: 'center' }}>
-      <View
-        style={{
-          width: 14,
-          height: 17,
-          borderRadius: radius.sm,
-          borderWidth: 1.6,
-          borderColor: color,
-          justifyContent: 'center',
-          gap: space.xs,
-          paddingHorizontal: space.xs,
-        }}
-      >
-        <View style={{ height: 1.5, width: '100%', backgroundColor: color }} />
-        <View style={{ height: 1.5, width: '70%', backgroundColor: color }} />
-      </View>
-    </View>
-  );
-}
-
 function ThemedTabs() {
-  const { mode, colors } = useTheme();
-  return (
-    <>
-      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
-      <Tabs
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: colors.surface,
-            borderBottomWidth: 1,
-            borderBottomColor: colors.border,
-            elevation: 0,
-            shadowOpacity: 0,
-          },
-          headerShadowVisible: false,
-          headerTintColor: colors.text,
-          headerTitleAlign: 'left',
-          headerTitleStyle: {
-            fontSize: font.lead,
-            fontWeight: '600',
-            color: colors.text,
-          },
-          headerRightContainerStyle: {
-            paddingRight: space.lg,
-          },
-          headerRight: () => <HeaderControls />,
-          tabBarStyle: {
-            backgroundColor: colors.surface,
-            borderTopColor: colors.border,
-            borderTopWidth: 1,
-            elevation: 0,
-            shadowOpacity: 0,
-          },
-          tabBarActiveTintColor: colors.accent,
-          tabBarInactiveTintColor: colors.textFaint,
-          tabBarLabelStyle: {
-            fontSize: font.caption,
-            fontWeight: '600',
-          },
-          sceneStyle: { backgroundColor: colors.bg },
-        }}
-      >
-        <Tabs.Screen name="index" options={{ href: null }} />
-        <Tabs.Screen
-          name="feed"
-          options={{
-            title: 'Feed',
-            tabBarIcon: ({ color }) => <FeedIcon color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="chat"
-          options={{
-            title: 'Ask',
-            tabBarIcon: ({ color }) => <AskIcon color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="context"
-          options={{
-            title: 'Context',
-            tabBarIcon: ({ color }) => <ContextIcon color={color} />,
-          }}
-        />
-        <Tabs.Screen name="deck" options={{ href: null, headerShown: false }} />
-        <Tabs.Screen name="journal" options={{ href: null }} />
-        <Tabs.Screen name="estado" options={{ href: null }} />
-        <Tabs.Screen name="perfil" options={{ href: null, title: 'Profile' }} />
-        <Tabs.Screen name="entity/[id]" options={{ href: null, title: 'Details' }} />
-      </Tabs>
-    </>
-  );
+  const { colors, mode } = useTheme(); const { onboarded, hydrated } = useMode();
+  if (!hydrated) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  if (!onboarded) return <><StatusBar style={mode === 'dark' ? 'light' : 'dark'} /><OnboardingScreen /></>;
+  return <>
+    <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+    <Tabs screenOptions={{ headerStyle: { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border, elevation: 0, shadowOpacity: 0 }, headerShadowVisible: false, headerTintColor: colors.text, headerTitleAlign: 'left', headerTitleStyle: { fontSize: font.lead, fontWeight: '600', color: colors.text }, headerRight: () => <View style={{ paddingRight: space.lg }}><ProfileButton /></View>, tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: 1, elevation: 0, shadowOpacity: 0 }, tabBarActiveTintColor: colors.accent, tabBarInactiveTintColor: colors.textMuted, tabBarLabelStyle: { fontSize: font.caption, fontWeight: '600' }, sceneStyle: { backgroundColor: colors.bg } }}>
+      <Tabs.Screen name="index" options={{ href: null, headerShown: false }} />
+      <Tabs.Screen name="feed" options={{ title: 'Events' }} />
+      <Tabs.Screen name="context" options={{ title: 'Context' }} />
+      <Tabs.Screen name="chat" options={{ href: null, title: 'Ask' }} />
+      <Tabs.Screen name="onboarding" options={{ href: null, headerShown: false }} />
+      <Tabs.Screen name="perfil" options={{ href: null, title: 'Profile' }} />
+      <Tabs.Screen name="event/[id]" options={{ href: null, title: 'Event details' }} />
+      <Tabs.Screen name="entity/[id]" options={{ href: null, title: 'Investor dossier' }} />
+    </Tabs>
+    <FloatingMascotBubble />
+  </>;
 }

@@ -180,7 +180,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const payload = body as { error?: { code?: string; message?: string }; detail?: string } | null;
     throw new ApiError(
       payload?.error?.code ?? 'http_error',
-      payload?.error?.message ?? payload?.detail ?? `Error HTTP ${response.status}`,
+      payload?.error?.message ?? payload?.detail ?? `HTTP error ${response.status}`,
       response.status,
     );
   }

@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   Block,
   Card,
   Journal,
@@ -7,102 +7,73 @@ import type {
   Recommendations,
   SendTextResponse,
 } from './index';
+
 export const mockProfile: Profile = {
   startup_name: 'Nordleaf',
-  one_liner: 'Herramientas de eficiencia energética para edificios',
+  one_liner: 'Energy efficiency tools for buildings',
   sector: 'ClimateTech',
   stage: 'Pre-seed',
   location: 'Helsinki',
   competitors: ['GreenBuild'],
-  target_customers: 'Propietarios de edificios',
+  target_customers: 'Building owners',
   facts: [],
   updated_at: new Date().toISOString(),
 };
+
 const card = (type: Card['type'], title: string, subtitle: string, reason: string): Card => ({
   type,
   title,
   subtitle,
   reason,
-  sources: [{ name: 'Cala · ejemplo', url: 'https://cala.ai' }],
+  sources: [{ name: 'Cala · example', url: 'https://cala.ai' }],
 });
+
 export const mockRecommendations: Recommendations = {
   status: 'ready',
   updated_at: new Date().toISOString(),
   investors: [
-    card(
-      'investor',
-      'Polar Ventures',
-      'Climate · Finlandia',
-      'Invierte en soluciones de descarbonización.',
-    ),
-    card(
-      'investor',
-      'Northstar Capital',
-      'Pre-seed · Europa',
-      'Apoya equipos early-stage nórdicos.',
-    ),
-    card('investor', 'Arctic Seed', 'Impacto · Helsinki', 'Busca startups con impacto medible.'),
+    card('investor', 'Polar Ventures', 'Climate · Finland', 'Invests in decarbonization solutions.'),
+    card('investor', 'Northstar Capital', 'Pre-seed · Europe', 'Backs Nordic early-stage teams.'),
+    card('investor', 'Arctic Seed', 'Impact · Helsinki', 'Looks for startups with measurable impact.'),
   ],
   competitors: [
-    card(
-      'competitor',
-      'GreenBuild',
-      'Software · Suecia',
-      'Solución cercana para eficiencia de edificios.',
-    ),
-    card(
-      'competitor',
-      'Wattwise',
-      'ClimateTech · Dinamarca',
-      'Optimización de consumo energético.',
-    ),
-    card('competitor', 'BuildingOS', 'PropTech · Europa', 'Plataforma de datos para edificios.'),
+    card('competitor', 'GreenBuild', 'Software · Sweden', 'An adjacent solution for building efficiency.'),
+    card('competitor', 'Wattwise', 'ClimateTech · Denmark', 'Optimizes energy consumption.'),
+    card('competitor', 'BuildingOS', 'PropTech · Europe', 'A data platform for buildings.'),
   ],
   prospects: [
-    card(
-      'prospect',
-      'Helsinki Housing',
-      'Gestión inmobiliaria',
-      'Posible cliente con cartera de edificios.',
-    ),
-    card(
-      'prospect',
-      'Nordic Estates',
-      'Propietario · Finlandia',
-      'Perfil compatible con el producto.',
-    ),
-    card(
-      'prospect',
-      'City of Espoo',
-      'Sector público',
-      'Iniciativas locales de eficiencia energética.',
-    ),
+    card('prospect', 'Helsinki Housing', 'Property management', 'Potential customer with a portfolio of buildings.'),
+    card('prospect', 'Nordic Estates', 'Property owner · Finland', 'A profile that fits the product.'),
+    card('prospect', 'City of Espoo', 'Public sector', 'Local energy efficiency initiatives.'),
   ],
 };
 
 const histories = new Map<string, Message[]>();
 const wait = () => new Promise((resolve) => setTimeout(resolve, 800));
+
 export async function createMockSession(): Promise<string> {
   await wait();
   const id = 'mock-session';
   if (!histories.has(id)) histories.set(id, []);
   return id;
 }
+
 export async function listMockMessages(sessionId: string): Promise<Message[]> {
   await wait();
   return [...(histories.get(sessionId) ?? [])];
 }
+
 function exampleTable() {
   return {
     type: 'cala_table' as const,
-    title: 'Ejemplo ficticio: ronda Serie B de Amenitiz',
-    summary: 'Datos de demostración; no representan información real.',
-    call: { tool: 'knowledge_query' as const, query: 'DEMO: ronda Serie B Amenitiz' },
-    columns: ['Empresa', 'Ronda', 'Importe'],
-    rows: [['Amenitiz (ejemplo)', 'Serie B (ejemplo)', null]],
+    title: 'Sample data: Amenitiz Series B round',
+    summary: 'Demo data; this does not represent real information.',
+    call: { tool: 'knowledge_query' as const, query: 'DEMO: Amenitiz Series B round' },
+    columns: ['Company', 'Round', 'Amount'],
+    rows: [['Amenitiz (example)', 'Series B (example)', null]],
     sources: [
       {
-        name: 'Fuente de ejemplo',
+        name: 'Example source',
         url: 'https://example.com',
         date: '2026-11-14',
         source_rank: 'PRESS' as const,
@@ -111,46 +82,46 @@ function exampleTable() {
     row_sources: [[0]],
   };
 }
+
 function exampleBlocks(text: string): Block[] {
   const lower = text.toLowerCase();
   if (lower.includes('xyz'))
     return [
       {
         type: 'not_found',
-        title: 'Ejemplo: no se encontró información',
+        title: 'Example: no information found',
         tried: [
-          { tool: 'knowledge_query', query: 'DEMO: consulta canónica XYZ' },
-          { tool: 'entity', query: 'DEMO: entidades XYZ' },
-          { tool: 'knowledge_search', query: 'DEMO: búsqueda XYZ' },
+          { tool: 'knowledge_query', query: 'DEMO: canonical query XYZ' },
+          { tool: 'entity', query: 'DEMO: XYZ entities' },
+          { tool: 'knowledge_search', query: 'DEMO: XYZ search' },
         ],
       },
     ];
-  if (lower.includes('levantó') || lower.includes('raised'))
+  if (lower.includes('raised'))
     return [
       {
         type: 'claim_check',
         claim: text,
         verdict: 'partially_confirmed',
-        explanation: 'Resultado ficticio para demostrar el bloque.',
+        explanation: 'Sample result to demonstrate this block.',
         evidence: exampleTable(),
-        sources: [{ name: 'Fuente de ejemplo', url: 'https://example.com', source_rank: 'PRESS' }],
+        sources: [{ name: 'Example source', url: 'https://example.com', source_rank: 'PRESS' }],
       },
     ];
-  if (lower.includes('somos') || lower.includes('me interesa'))
-    return [{ type: 'profile_update', changes: { intereses: 'Ejemplo: fintech nórdicas' } }];
-  if (text.includes('?') || lower.includes('quién') || lower.includes('who'))
-    return [exampleTable()];
+  if (lower.includes('we are') || lower.includes('interested'))
+    return [{ type: 'profile_update', changes: { interests: 'Example: Nordic fintech' } }];
+  if (text.includes('?') || lower.includes('who')) return [exampleTable()];
   return [
     {
       type: 'cala_answer',
-      title: 'Respuesta de ejemplo',
+      title: 'Sample answer',
       call: { tool: 'knowledge_search', query: `DEMO: ${text}` },
-      markdown:
-        '**Ejemplo ficticio.** Cala mostraría aquí su respuesta tal cual.\n- Punto de demostración',
-      sources: [{ name: 'Fuente de ejemplo', url: 'https://example.com', source_rank: 'PRIMARY' }],
+      markdown: '**Sample data.** Cala would show its response here as returned.\n- Demo point',
+      sources: [{ name: 'Example source', url: 'https://example.com', source_rank: 'PRIMARY' }],
     },
   ];
 }
+
 function response(sessionId: string, text: string, transcript?: string): SendTextResponse {
   const now = new Date().toISOString();
   const user: Message = {
@@ -163,25 +134,27 @@ function response(sessionId: string, text: string, transcript?: string): SendTex
   const reply: Message = {
     id: `mock-assistant-${Date.now()}`,
     role: 'assistant',
-    text: 'Datos ficticios de demostración; no son resultados reales de Cala.',
+    text: 'Sample demo data; these are not real Cala results.',
     created_at: now,
     blocks: exampleBlocks(text),
-    sources: [{ name: 'Cala · ejemplo', url: 'https://cala.ai' }],
+    sources: [{ name: 'Cala · example', url: 'https://cala.ai' }],
   };
   const history = histories.get(sessionId) ?? [];
   histories.set(sessionId, [...history, user, reply]);
   return { message: user, reply, profile_updated: true, recommendations_status: 'ready' };
 }
+
 export async function sendMockText(sessionId: string, text: string): Promise<SendTextResponse> {
   await wait();
   return response(sessionId, text);
 }
+
 export async function sendMockAudio(sessionId: string): Promise<SendTextResponse> {
   await wait();
   return response(
     sessionId,
-    'Busco inversores para mi startup de energía en Helsinki.',
-    'Busco inversores para mi startup de energía en Helsinki.',
+    'Looking for energy and climate investors for my startup in Helsinki.',
+    'Looking for energy and climate investors for my startup in Helsinki.',
   );
 }
 
@@ -193,10 +166,10 @@ function mockJournal(edition: Journal['edition'], date: string): Journal {
   const table = exampleTable();
   const answer: Block = {
     type: 'cala_answer',
-    title: 'Ejemplo ficticio: actividad del ecosistema',
-    call: { tool: 'knowledge_search', query: 'DEMO: actividad reciente del ecosistema' },
-    markdown: '**Ejemplo ficticio.** Esta sección muestra cómo se vería una respuesta de Cala.',
-    sources: [{ name: 'Fuente de ejemplo', url: 'https://example.com' }],
+    title: 'Sample data: ecosystem activity',
+    call: { tool: 'knowledge_search', query: 'DEMO: recent ecosystem activity' },
+    markdown: '**Sample data.** This section shows how a Cala response would look.',
+    sources: [{ name: 'Example source', url: 'https://example.com' }],
   };
   const section = (
     id: string,
@@ -208,32 +181,14 @@ function mockJournal(edition: Journal['edition'], date: string): Journal {
   const sections =
     edition === 'ecosistema'
       ? [
-          section('rounds', 'Rondas recientes', 'Rondas destacadas por región.', table, true),
-          section('funds', 'Fondos activos', 'Inversores con actividad reciente.', answer, false),
-          section('slush', 'Slush 2026', 'Empresas y personas del ecosistema.', table, true),
+          section('rounds', 'Recent rounds', 'Notable rounds by region.', table, true),
+          section('funds', 'Active funds', 'Investors with recent activity.', answer, false),
+          section('slush', 'Slush 2026', 'Companies and people across the ecosystem.', table, true),
         ]
       : [
-          section(
-            'sectors',
-            'Rondas en tus sectores',
-            'Actividad reciente en sectores y regiones de tu interés.',
-            table,
-            true,
-          ),
-          section(
-            'investors',
-            'Inversores que lideran',
-            'Fondos con actividad como lead investor.',
-            answer,
-            false,
-          ),
-          section(
-            'competitors',
-            'Competidores que levantaron',
-            'Rondas recientes de empresas similares.',
-            table,
-            true,
-          ),
+          section('sectors', 'Rounds in your sectors', 'Recent activity across your sectors and regions of interest.', table, true),
+          section('investors', 'Investors leading rounds', 'Funds with activity as lead investors.', answer, false),
+          section('competitors', 'Competitors raising funds', 'Recent rounds from similar companies.', table, true),
         ];
   return {
     edition,
@@ -246,6 +201,7 @@ function mockJournal(edition: Journal['edition'], date: string): Journal {
     sections,
   };
 }
+
 export async function getMockJournal(
   edition: Journal['edition'],
   date = new Date().toISOString().slice(0, 10),
@@ -254,6 +210,7 @@ export async function getMockJournal(
   await wait();
   return mockJournal(edition, date);
 }
+
 export async function regenerateMockJournal(
   edition: Journal['edition'],
   sessionId?: string,

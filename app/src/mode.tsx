@@ -1,78 +1,104 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+﻿import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ApiError } from './api';
 import { getOrCreateSessionId, resetSessionId } from './session';
 
 export type MatchMode = 'raising' | 'investing';
-
-type ModeContextValue = {
+export type UserProfile = { name: string; organization: string; role: MatchMode };
+export type ModeContextValue = {
   mode: MatchMode;
   setMode: (next: MatchMode) => void;
+  hydrated: boolean;
+  onboarded: boolean;
+  userProfile: UserProfile;
+  myEventIds: string[];
+  favoriteInvestorIds: string[];
+  completeOnboarding: (profile: UserProfile) => void;
+  resetOnboarding: () => void;
+  toggleMyEvent: (eventId: string) => void;
+  addMyEvent: (eventId: string) => void;
+  toggleFavoriteInvestor: (investorId: string) => void;
+  addFavoriteInvestor: (investorId: string) => void;
 };
 
-const MODE_KEY = 'cala_match_mode';
+type PersistedState = Pick<ModeContextValue, 'mode' | 'onboarded' | 'userProfile' | 'myEventIds' | 'favoriteInvestorIds'>;
+const STORAGE_KEY = 'cala_v3_state';
+const DEFAULT_PROFILE: UserProfile = { name: 'Alex Lindqvist', organization: 'Nordleaf', role: 'raising' };
+const DEFAULT_STATE: PersistedState = {
+  mode: 'raising', onboarded: false, userProfile: DEFAULT_PROFILE,
+  myEventIds: ['slush-2026'], favoriteInvestorIds: ['eight-roads-ventures'],
+};
 const baseUrl = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
 const mockEnabled = process.env.EXPO_PUBLIC_MOCK === '1';
-
 const ModeContext = createContext<ModeContextValue>({
-  mode: 'raising',
-  setMode: () => {},
+  ...DEFAULT_STATE, hydrated: false, setMode: () => {}, completeOnboarding: () => {}, resetOnboarding: () => {},
+  toggleMyEvent: () => {}, addMyEvent: () => {}, toggleFavoriteInvestor: () => {}, addFavoriteInvestor: () => {},
 });
 
-async function postMode(sessionId: string, mode: MatchMode): Promise<Response> {
-  return fetch(`${baseUrl}/api/sessions/${encodeURIComponent(sessionId)}/mode`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode }),
-  });
-}
-
-async function syncSessionMode(mode: MatchMode): Promise<void> {
+async function syncSessionMode(mode: MatchMode) {
   if (mockEnabled) return;
   try {
-    let sessionId = await getOrCreateSessionId();
-    const res = await postMode(sessionId, mode);
-    if (res.status === 404) {
-      sessionId = await resetSessionId();
-      await postMode(sessionId, mode);
+    let id = await getOrCreateSessionId();
+    let response = await fetch(`${baseUrl}/api/sessions/${encodeURIComponent(id)}/mode`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }),
+    });
+    if (response.status === 404) {
+      id = await resetSessionId();
+      response = await fetch(`${baseUrl}/api/sessions/${encodeURIComponent(id)}/mode`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }),
+      });
     }
-  } catch (err) {
-    if (err instanceof ApiError) return;
-    // Silent fallback when the backend is unavailable.
-  }
+    if (!response.ok) return;
+  } catch (error) { if (error instanceof ApiError) return; }
 }
 
-/**
- * Shared Raising / Investing mode context synchronized with POST /api/sessions/{id}/mode.
- */
 export function ModeProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<MatchMode>('raising');
-
+  const [state, setState] = useState<PersistedState>(DEFAULT_STATE);
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     let active = true;
-    AsyncStorage.getItem(MODE_KEY)
-      .then((stored) => {
-        if (!active) return;
-        if (stored === 'raising' || stored === 'investing') {
-          setModeState(stored);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
+    AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
+      if (!active || !raw) return;
+      try {
+        const saved = JSON.parse(raw) as Partial<PersistedState>;
+        const mode = saved.mode === 'investing' ? 'investing' : 'raising';
+        setState({
+          mode, onboarded: Boolean(saved.onboarded),
+          userProfile: saved.userProfile && typeof saved.userProfile.name === 'string'
+            ? { ...DEFAULT_PROFILE, ...saved.userProfile, role: saved.userProfile.role === 'investing' ? 'investing' : 'raising' }
+            : DEFAULT_PROFILE,
+          myEventIds: Array.isArray(saved.myEventIds) ? saved.myEventIds.filter((id): id is string => typeof id === 'string') : DEFAULT_STATE.myEventIds,
+          favoriteInvestorIds: Array.isArray(saved.favoriteInvestorIds) ? saved.favoriteInvestorIds.filter((id): id is string => typeof id === 'string') : DEFAULT_STATE.favoriteInvestorIds,
+        });
+      } catch { /* Use the fresh-start state when storage is invalid. */ }
+    }).catch(() => {}).finally(() => {
+      if (active) setHydrated(true);
+    });
+    return () => { active = false; };
   }, []);
-
-  const setMode = useCallback((next: MatchMode) => {
-    setModeState((prev) => {
-      if (prev === next) return prev;
-      void AsyncStorage.setItem(MODE_KEY, next).catch(() => {});
-      void syncSessionMode(next);
+  const commit = useCallback((updater: (current: PersistedState) => PersistedState) => {
+    setState((current) => {
+      const next = updater(current);
+      void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
+      if (next.mode !== current.mode) void syncSessionMode(next.mode);
       return next;
     });
   }, []);
-
-  return <ModeContext.Provider value={{ mode, setMode }}>{children}</ModeContext.Provider>;
+  const setMode = useCallback((mode: MatchMode) => commit((current) => ({ ...current, mode })), [commit]);
+  const completeOnboarding = useCallback((profile: UserProfile) => {
+    commit((current) => ({ ...current, userProfile: profile, mode: profile.role, onboarded: true }));
+    void syncSessionMode(profile.role);
+  }, [commit]);
+  const resetOnboarding = useCallback(() => commit((current) => ({ ...current, onboarded: false })), [commit]);
+  const toggleMyEvent = useCallback((id: string) => commit((current) => ({
+    ...current, myEventIds: current.myEventIds.includes(id) ? current.myEventIds.filter((item) => item !== id) : [...current.myEventIds, id],
+  })), [commit]);
+  const addMyEvent = useCallback((id: string) => commit((current) => current.myEventIds.includes(id) ? current : ({ ...current, myEventIds: [...current.myEventIds, id] })), [commit]);
+  const toggleFavoriteInvestor = useCallback((id: string) => commit((current) => ({
+    ...current, favoriteInvestorIds: current.favoriteInvestorIds.includes(id) ? current.favoriteInvestorIds.filter((item) => item !== id) : [...current.favoriteInvestorIds, id],
+  })), [commit]);
+  const addFavoriteInvestor = useCallback((id: string) => commit((current) => current.favoriteInvestorIds.includes(id) ? current : ({ ...current, favoriteInvestorIds: [...current.favoriteInvestorIds, id] })), [commit]);
+  const value = useMemo(() => ({ ...state, hydrated, setMode, completeOnboarding, resetOnboarding, toggleMyEvent, addMyEvent, toggleFavoriteInvestor, addFavoriteInvestor }), [state, hydrated, setMode, completeOnboarding, resetOnboarding, toggleMyEvent, addMyEvent, toggleFavoriteInvestor, addFavoriteInvestor]);
+  return <ModeContext.Provider value={value}>{children}</ModeContext.Provider>;
 }
-
 export const useMode = () => useContext(ModeContext);
