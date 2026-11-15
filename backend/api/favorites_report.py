@@ -77,12 +77,7 @@ def _render_rows(items, kind, by_url, sources):
         if kind == "data":
             text = f"{item.get('label') or ''}: {item.get('value') or ''}"
         elif kind == "rounds":
-            parts = [item.get("round_type"), item.get("amount"), item.get("date")]
-            text = " · ".join(_esc(part) for part in parts if part not in (None, ""))
-            if item.get("leads"):
-                text += (" · " if text else "") + "Leads: " + _esc(", ".join(map(str, item["leads"])))
-            if item.get("investors"):
-                text += (" · " if text else "") + "Investors: " + _esc(", ".join(map(str, item["investors"])))
+            text = _round_text(item, "")
         elif kind == "people":
             text = _esc(item.get("name") or "")
             if item.get("role"):
@@ -107,6 +102,75 @@ def _render_rows(items, kind, by_url, sources):
     return "".join(rows)
 
 
+def _refs(item, by_url, sources):
+    refs = []
+    for source in item.get("sources") or []:
+        if not isinstance(source, dict):
+            continue
+        number = by_url.get(str(source.get("url") or ""))
+        if number and number not in refs:
+            refs.append(number)
+        if len(refs) == 3:
+            break
+    return "".join(f'<a href="{_esc(sources[number - 1]["url"])}">[{number}]</a>' for number in refs)
+
+
+def _round_text(item, entity_name):
+    own_name = str(entity_name or "").casefold()
+    leads = [str(name) for name in (item.get("leads") or []) if str(name).casefold() != own_name]
+    investors = [str(name) for name in (item.get("investors") or []) if str(name).casefold() != own_name]
+    parts = [item.get("round_type"), item.get("amount"), item.get("date")]
+    text = " · ".join(_esc(part) for part in parts if part not in (None, ""))
+    if leads:
+        text += (" · " if text else "") + "Leads: " + _esc(", ".join(leads))
+    if investors:
+        text += (" · " if text else "") + "Investors: " + _esc(", ".join(investors))
+    return text
+
+
+def _round_rows(items, entity_name, by_url, sources):
+    detailed, private = [], []
+    for item in items or []:
+        if not isinstance(item, dict):
+            continue
+        text = _round_text(item, entity_name)
+        if text:
+            detailed.append((item, text))
+        else:
+            private.append(item)
+    detailed.sort(key=lambda pair: str(pair[0].get("date") or ""), reverse=True)
+    rows = []
+    for item, text in detailed[:8]:
+        refs = _refs(item, by_url, sources)
+        rows.append(f'<li>{text}{(" " + refs) if refs else ""}</li>')
+    if len(detailed) > 8:
+        rows.append(f"<li>and {len(detailed) - 8} more</li>")
+    if private:
+        refs = []
+        for item in private:
+            for source in item.get("sources") or []:
+                if isinstance(source, dict):
+                    number = by_url.get(str(source.get("url") or ""))
+                    if number and number not in refs:
+                        refs.append(number)
+                    if len(refs) == 3:
+                        break
+            if len(refs) == 3:
+                break
+        links = "".join(f'<a href="{_esc(sources[number - 1]["url"])}">[{number}]</a>' for number in refs)
+        rows.append(f'<li>{len(private)} more rounds on record in Cala without public details{(" " + links) if links else ""}</li>')
+    return "".join(rows)
+
+
+def _limited_rows(items, kind, by_url, sources, limit):
+    items = list(items or [])
+    visible = _render_rows(items[:limit], kind, by_url, sources)
+    remainder = len(items) - limit
+    if remainder > 0:
+        visible += f"<li>and {remainder} more</li>"
+    return visible
+
+
 def _date_label(generated_at):
     try:
         value = generated_at if isinstance(generated_at, datetime) else datetime.fromisoformat(str(generated_at).replace("Z", "+00:00"))
@@ -127,7 +191,17 @@ def _source_list(sources):
 def render_pdf(entries, not_included, mode, generated_at):
     stamp = _date_label(generated_at)
     mode_label = {"raising": "Raising (investors to approach)", "investing": "Investing (startups to back)"}.get(mode, mode)
-    pages = [f"<h1>Cala Match</h1><h2>Favorites report</h2><p>{_esc(stamp)}</p><p>Mode: {_esc(mode_label)}</p>"]
+    cover_entities = []
+    for entry in entries:
+        detail = entry["detail"]
+        score = f' · Score: {_esc(detail["score"])}' if detail.get("score") is not None else ""
+        cover_entities.append(f'<li>{_esc(detail.get("name") or "Not available in Cala")} · {_esc(detail.get("type") or "Not available in Cala")}{score}</li>')
+    cover_missing = [f'<li>{_esc(row["id"])}: {_esc(row["reason"])}</li>' for row in not_included or []]
+    cover = (f"<h1>Cala Match</h1><h2>Favorites report</h2><p>{_esc(stamp)}</p><p>Mode: {_esc(mode_label)}</p>"
+             f"<ul>{''.join(cover_entities)}</ul><p>Facts come from Cala, each with its numbered source. Action plans are generated by Gemini from those facts and labeled as such.</p>")
+    if cover_missing:
+        cover += f'<h3>Not included</h3><ul>{"".join(cover_missing)}</ul>'
+    pages = [cover]
     for entry in entries:
         d = entry["detail"]
         sources, by_url = _source_catalog(d)
@@ -136,7 +210,14 @@ def render_pdf(entries, not_included, mode, generated_at):
                                  ("People", "people", "people"), ("Portfolio", "portfolio", "portfolio"),
                                  ("Why it matches", "why_match", "why")):
             items = d.get(key) or []
-            content = _render_rows(items, kind, by_url, sources)
+            if kind == "rounds":
+                content = _round_rows(items, d.get("name"), by_url, sources)
+            elif kind == "people":
+                content = _limited_rows(items, kind, by_url, sources, 12)
+            elif kind == "portfolio":
+                content = _limited_rows(items, kind, by_url, sources, 12)
+            else:
+                content = _render_rows(items, kind, by_url, sources)
             if content:
                 sections.append(f"<h3>{title}</h3><ul>{content}</ul>")
         score = f'<p>Score: {_esc(d["score"])}</p>' if d.get("score") is not None else ""
@@ -144,8 +225,6 @@ def render_pdf(entries, not_included, mode, generated_at):
         plan = "<p>Action plan unavailable</p>" if not entry.get("plan") else "<ol>" + "".join(f"<li>{_esc(s)}</li>" for s in entry["plan"]) + "</ol>"
         source_content = f'<ul>{_source_list(sources)}</ul>' if sources else "Not available in Cala"
         pages.append(f'<h1>{_esc(d.get("name") or "Not available in Cala")}</h1><p>Type: {_esc(d.get("type") or "Not available in Cala")}</p>{score}{desc}{"".join(sections)}<h3>Cala sources</h3>{source_content}<div class="plan"><h2>Proposed action plan</h2><p>Generated by Gemini from the Cala data above. Not Cala data.</p>{plan}</div>')
-    if not_included:
-        pages.append('<h1>Not included</h1><ul>' + "".join(f'<li>{_esc(row["id"])}: {_esc(row["reason"])}</li>' for row in not_included) + "</ul>")
     css = "body{font:10pt sans-serif;color:#17202a}h1{color:#006cbd}h2{color:#244}li{margin:4pt 0}.plan{border:1px solid #789;background:#eef4fa;padding:10pt;margin-top:18pt}a{color:#0563c1}"
     out = BytesIO()
     writer = fitz.DocumentWriter(out)
