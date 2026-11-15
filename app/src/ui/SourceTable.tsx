@@ -10,7 +10,7 @@ function host(url: string) {
   }
 }
 
-/** Lista de fuentes enlazadas (dominio visible). Todo dato de Cala lleva la suya. */
+/** Linked source list with visible domains. Every Cala fact includes its source. */
 export function SourceList({ sources }: { sources: Source[] }) {
   const { colors } = useTheme();
   if (!sources.length) return null;
@@ -19,14 +19,14 @@ export function SourceList({ sources }: { sources: Source[] }) {
       <Text
         style={{ color: colors.textFaint, fontSize: font.caption, fontWeight: '700', letterSpacing: 1 }}
       >
-        FUENTES
+        Sources
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
         {sources.map((s, i) => (
           <Pressable
             key={`${s.url}-${i}`}
             accessibilityRole="link"
-            accessibilityLabel={`Fuente: ${s.name}`}
+            accessibilityLabel={`Source: ${s.name}`}
             onPress={() => Linking.openURL(s.url)}
             style={{
               borderWidth: 1,
@@ -49,8 +49,8 @@ export function SourceList({ sources }: { sources: Source[] }) {
 }
 
 /**
- * Tabla de datos de Cala tal cual (filas de texto) con sus fuentes debajo.
- * Se desplaza en horizontal si no cabe (móvil).
+ * Cala data table with its sources below.
+ * Scrolls horizontally when it does not fit on mobile.
  */
 export default function SourceTable({
   columns,

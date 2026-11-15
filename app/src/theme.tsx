@@ -1,21 +1,22 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, type TextStyle } from 'react-native';
 
-/** Sistema de diseño de Junction: herramienta de datos sobria; Cala (datos + fuentes) es la protagonista. */
+/** Minimalist Cala Match design tokens: single indigo accent, clean neutrals, 1px borders, zero decorative shadows. */
 export type Colors = {
-  bg: string; // fondo de pantalla
-  surface: string; // tarjetas
-  surfaceAlt: string; // filas alternas, cabeceras de tabla
+  bg: string;
+  surface: string;
+  surfaceAlt: string;
   border: string;
   text: string;
   textMuted: string;
   textFaint: string;
-  accent: string; // acción principal / enlaces
-  accentText: string; // texto sobre accent
-  accentSoft: string; // fondo suave de acento
+  accent: string;
+  accentText: string;
+  accentSoft: string;
+  secondary: string;
+  secondarySoft: string;
   danger: string;
   dangerSoft: string;
-  // veredictos de Cala (texto + fondo suave)
   confirmed: string;
   confirmedSoft: string;
   partial: string;
@@ -26,54 +27,59 @@ export type Colors = {
   neutralSoft: string;
 };
 
-export const dark: Colors = {
-  bg: '#0a0f1c',
-  surface: '#121a2c',
-  surfaceAlt: '#17213a',
-  border: '#25304a',
-  text: '#eef2f9',
-  textMuted: '#9aa8c2',
-  textFaint: '#6b7a96',
-  accent: '#6ea8fe',
-  accentText: '#07101f',
-  accentSoft: '#15284a',
-  danger: '#fca5a5',
-  dangerSoft: '#3a1b25',
-  confirmed: '#5ddba0',
-  confirmedSoft: '#10321f',
-  partial: '#f5c451',
-  partialSoft: '#38300f',
-  contradicted: '#fb8a8a',
-  contradictedSoft: '#3d1a22',
-  neutral: '#9aa8c2',
-  neutralSoft: '#1d2740',
+export const light: Colors = {
+  bg: '#f8f9fc',
+  surface: '#ffffff',
+  surfaceAlt: '#f1f5f9',
+  border: '#e2e8f0',
+  text: '#0f172a',
+  textMuted: '#475569',
+  textFaint: '#475569',
+  accent: '#3730A3',
+  accentText: '#ffffff',
+  accentSoft: '#eef2ff',
+  secondary: '#006CFF',
+  secondarySoft: '#eaf2ff',
+  danger: '#b42318',
+  dangerSoft: '#fef2f2',
+  confirmed: '#166534',
+  confirmedSoft: '#f0fdf4',
+  partial: '#92400e',
+  partialSoft: '#fffbeb',
+  contradicted: '#991b1b',
+  contradictedSoft: '#fef2f2',
+  neutral: '#475569',
+  neutralSoft: '#f1f5f9',
 };
 
-export const light: Colors = {
-  bg: '#f4f6fb',
-  surface: '#ffffff',
-  surfaceAlt: '#f0f3f9',
-  border: '#dde3ee',
-  text: '#0e1626',
-  textMuted: '#4d5b75',
-  textFaint: '#7a879e',
-  accent: '#1f5fd6',
-  accentText: '#ffffff',
-  accentSoft: '#e3edff',
-  danger: '#b42318',
-  dangerSoft: '#fdeaea',
-  confirmed: '#117a4b',
-  confirmedSoft: '#dcf5e8',
-  partial: '#8a5a00',
-  partialSoft: '#fdf0cc',
-  contradicted: '#b42318',
-  contradictedSoft: '#fde4e4',
-  neutral: '#4d5b75',
-  neutralSoft: '#e8ecf4',
+export const dark: Colors = {
+  bg: '#0b1120',
+  surface: '#111827',
+  surfaceAlt: '#1e293b',
+  border: '#273449',
+  text: '#f1f5f9',
+  textMuted: '#94a3b8',
+  textFaint: '#94a3b8',
+  accent: '#818cf8',
+  accentText: '#0b1120',
+  accentSoft: '#1e1b4b',
+  secondary: '#5AA2FF',
+  secondarySoft: '#132b4a',
+  danger: '#fca5a5',
+  dangerSoft: '#3a1b25',
+  confirmed: '#6ee7b7',
+  confirmedSoft: '#0f291e',
+  partial: '#fcd34d',
+  partialSoft: '#2e2409',
+  contradicted: '#fca5a5',
+  contradictedSoft: '#3a1b25',
+  neutral: '#94a3b8',
+  neutralSoft: '#1e293b',
 };
 
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
-export const radius = { sm: 8, md: 12, lg: 16, pill: 999 } as const;
+export const pageMargin = 20;
+export const radius = { sm: 6, md: 8, lg: 12, pill: 999 } as const;
 export const font = {
   caption: 12,
   small: 13,
@@ -81,36 +87,36 @@ export const font = {
   lead: 17,
   h2: 20,
   h1: 28,
-  display: 34,
 } as const;
-/** Ancho máximo del contenido (web ancho). */
-export const maxWidth = 880;
-/** Sombra suave (RN web la traduce a box-shadow). */
+export const tabularNums: Pick<TextStyle, 'fontVariant'> = { fontVariant: ['tabular-nums'] };
+export const maxWidth = 760;
+/** Altura de la barra inferior: el boton flotante debe usar bottom >= tabBarHeight + space.md para no tapar pestanas. */
+export const tabBarHeight = 64;
+/** Kept for compatibility with existing components; intentionally flat without decorative shadows. */
 export const shadow = {
-  shadowColor: '#000',
-  shadowOpacity: 0.18,
-  shadowRadius: 14,
-  shadowOffset: { width: 0, height: 6 },
-  elevation: 3,
+  shadowColor: 'transparent',
+  shadowOpacity: 0,
+  shadowRadius: 0,
+  shadowOffset: { width: 0, height: 0 },
+  elevation: 0,
 } as const;
 
 export type Theme = { mode: 'dark' | 'light'; colors: Colors };
 
-const ThemeContext = createContext<Theme>({ mode: 'dark', colors: dark });
+const ThemeContext = createContext<Theme>({ mode: 'light', colors: light });
 
 /**
- * mode: 'dark' (por defecto, coincide con el resto de la app), 'light', o 'system'.
- * Cuando chat/journal/layout adopten los tokens se puede pasar 'system'.
+ * Provides theme colors across the app. Defaults to light mode.
  */
 export function ThemeProvider({
-  mode = 'dark',
+  mode = 'light',
   children,
 }: {
   mode?: 'dark' | 'light' | 'system';
   children: ReactNode;
 }) {
   const scheme = useColorScheme();
-  const resolved = mode === 'system' ? (scheme === 'light' ? 'light' : 'dark') : mode;
+  const resolved = mode === 'system' ? (scheme === 'dark' ? 'dark' : 'light') : mode;
   return (
     <ThemeContext.Provider value={{ mode: resolved, colors: resolved === 'light' ? light : dark }}>
       {children}
